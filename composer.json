@@ -1,0 +1,19 @@
+{
+  "name": "pay-now/paynow-prestashop",
+  "description": "PrestaShop Paynow Module",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "mBank S.A.",
+      "email": "kontakt@paynow.pl"
+    }
+  ],
+  "require": {
+    "php": "~5.5.0|~5.6.0|~7.0|~7.2",
+    "guzzlehttp/guzzle": "^5.3"
+  },
+  "config": {
+    "preferred-install": "dist"
+  },
+  "type": "prestashop-module"
+}

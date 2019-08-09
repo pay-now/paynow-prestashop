@@ -1,0 +1,21 @@
+/**
+* NOTICE OF LICENSE
+*
+* This source file is subject to the MIT License (MIT)
+* that is bundled with this package in the file LICENSE.md.
+*
+* @copyright mBank S.A.
+* @license   MIT License
+*/
+p.payment_module .paynow {
+    padding-left: 17px;
+}
+
+p.payment_module .paynow img {
+    padding: 8px 10px;
+    max-width: 100px;
+}
+
+.option img[src*="logo-paynow.png"] {
+  max-width: 60px;
+}

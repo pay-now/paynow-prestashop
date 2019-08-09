@@ -1,0 +1,31 @@
+<?php
+
+global $_MODULE;
+$_MODULE = array();
+$_MODULE['<{paynow}prestashop>paynow_47350854b6158594556c569032669a66'] = 'Akceptuj płatności internetowe przez Paynow';
+$_MODULE['<{paynow}prestashop>paynow_533937acf0e84c92e787614bbb16a7a0'] = 'Jesteś pewien, że chcesz odinstalować? Stracisz wszystkie ustawienia!';
+$_MODULE['<{paynow}prestashop>paynow_dc34c9c3d4e62630ad62b58828cae5d8'] = 'Musisz wprowadzić klucze integracyjne';
+$_MODULE['<{paynow}prestashop>paynow_20015706a8cbd457cbb6ea3e7d5dc9b3'] = 'Konfiguracja zapisana';
+$_MODULE['<{paynow}prestashop>paynow_0d541e74cb2e3fa72f7d2e1eece61ef7'] = 'Konfiguracja środowiska testowego';
+$_MODULE['<{paynow}prestashop>paynow_ffb4ba01697ea40ea9c497b336c61cfa'] = 'Testowa integracja?';
+$_MODULE['<{paynow}prestashop>paynow_00d23a76e43b46dae9ec7aa9dcbebb32'] = 'Włączona';
+$_MODULE['<{paynow}prestashop>paynow_b9f5c797ebbf55adccdd8539a65a0241'] = 'Wyłączona';
+$_MODULE['<{paynow}prestashop>paynow_d876ff8da67c3731ae25d8335a4168b4'] = 'Klucz API';
+$_MODULE['<{paynow}prestashop>paynow_c28ae0597ff765c21c4da3efc8946d44'] = 'Klucz podpisu';
+$_MODULE['<{paynow}prestashop>paynow_c9cc8cce247e49bae79f15173ce97354'] = 'Zapisz';
+$_MODULE['<{paynow}prestashop>paynow_6f744347d54de2e46edf108f065b377c'] = 'Konfiguracja produkcyjna';
+$_MODULE['<{paynow}prestashop>information_a82be0f551b8708bc08eb33cd9ded0cf'] = 'Informacja';
+$_MODULE['<{paynow}prestashop>information_123d8e033e1fc2afc47974cec3abc3b0'] = 'Musisz zdefiniować adres powiadomień w';
+$_MODULE['<{paynow}prestashop>information_c4f0a7146dda33ab4cf920ae8b1d07fe'] = 'Panelu Merchanta Paynow';
+$_MODULE['<{paynow}prestashop>information_e9f1e0ab2c72e3dbee6972fc16fdb8da'] = 'dla konfiguracji swojego sklepu:';
+$_MODULE['<{paynow}prestashop>return_3eea8b36c11f4bdf099b22d3f8788cff'] = 'Zapłać przelewem online lub BLIK';
+$_MODULE['<{paynow}prestashop>return_3df406952f3377a5e419d4d63abb1b1d'] = 'Numer zamówienia:';
+$_MODULE['<{paynow}prestashop>return_24a23d787190f2c4812ff9ab11847a72'] = 'Status:';
+$_MODULE['<{paynow}prestashop>return_f5d74ea75357b5e139854c14f8e24fe3'] = 'Szczegóły zamówienia';
+$_MODULE['<{paynow}prestashop>error_3eea8b36c11f4bdf099b22d3f8788cff'] = 'Zapłać przelewem online lub BLIK';
+$_MODULE['<{paynow}prestashop>error_1e2a75e709cadff2cf957168c56fda54'] = 'Całkowita kwota do zapłaty';
+$_MODULE['<{paynow}prestashop>error_b48be21602cfe26c1385f2cdfaa6b675'] = 'Podczas płatności wystąpił błąd. Skontaktuj się z obsługą sklepu lub spróbuj ponownie.';
+$_MODULE['<{paynow}prestashop>error_0effa98ef798afd1f8ed07a2f12b2be3'] = 'Ponów płatność przez Paynow';
+$_MODULE['<{paynow}prestashop>payment_3eea8b36c11f4bdf099b22d3f8788cff'] = 'Zapłać przelewem online lub BLIK';
+$_MODULE['<{paynow}prestashop>payment_e2b7dec8fa4b498156dfee6e4c84b156'] = 'Wybrana metoda płatności nie jest dostępna.';
+$_MODULE['<{paynow}prestashop>payment_074a66386a715de41da17d2e9c9eb8ac'] = 'Moduł Paynow jest nieaktywny';
