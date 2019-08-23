@@ -7,6 +7,7 @@
 * @copyright mBank S.A.
 * @license   MIT License
 */
+
 p.payment_module .paynow {
     padding-left: 17px;
 }
@@ -16,6 +17,12 @@ p.payment_module .paynow img {
     max-width: 100px;
 }
 
-.option img[src*="logo-paynow.png"] {
+.payment-option img[src*="logo-paynow.png"] {
   max-width: 60px;
+    height: auto;
+}
+@media (max-width: 768px) {
+    .payment-option img[src*="logo-paynow.png"] {
+        display: none;
+    }
 }

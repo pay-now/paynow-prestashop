@@ -26,7 +26,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.0.0';
+        $this->version = '1.0.1';
         $this->ps_versions_compliancy = array('min' => '1.6.0', 'max' => _PS_VERSION_);
         $this->author = 'mBank S.A.';
         $this->is_eu_compatible = 1;
@@ -118,7 +118,7 @@ class Paynow extends PaymentModule
     {
         return Configuration::updateValue('PAYNOW_PROD_API_KEY', '') &&
             Configuration::updateValue('PAYNOW_PROD_API_SIGNATURE_KEY', '') &&
-            Configuration::updateValue('PAYNOW_SANDBOX_ENABLED', 1) &&
+            Configuration::updateValue('PAYNOW_SANDBOX_ENABLED', 0) &&
             Configuration::updateValue('PAYNOW_SANDBOX_API_KEY', '') &&
             Configuration::updateValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY', '');
     }
@@ -229,7 +229,7 @@ class Paynow extends PaymentModule
 
         $payment_option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $payment_option->setModuleName($this->name)
-            ->setCallToActionText($this->l('Pay by online transfer or BLIK'))
+            ->setCallToActionText($this->l('Pay by online transfer or BLIK', 'paynow'))
             ->setLogo($this->getLogo())
             ->setAction($this->context->link->getModuleLink($this->name, 'payment', [], true));
 
@@ -253,7 +253,7 @@ class Paynow extends PaymentModule
     public function hookDisplayPaymentEU()
     {
         $payment_option = [
-            'cta_text' => $this->l('Pay by online transfer or BLIK'),
+            'cta_text' => $this->l('Pay by online transfer or BLIK', 'paynow'),
             'logo' => $this->getLogo(),
             'action' => $this->context->link->getModuleLink('paynow', 'payment')
         ];
