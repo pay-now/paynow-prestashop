@@ -19,19 +19,14 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     public function initContent()
     {
         $this->display_column_left = false;
-
         parent::initContent();
 
-        if ($this->isRetry()) {
-            $this->retryPayment();
-        } else {
-            $this->processPayment();
-        }
+        $this->canBeRetried() ? $this->retryPayment() : $this->processPayment();
     }
 
-    private function isRetry()
+    private function canBeRetried()
     {
-        $last_payment_status = $this->paynow->getLastPaymentStatusByOrderId((int)Tools::getValue('id_order'));
+        $last_payment_status = $this->module->getLastPaymentStatusByOrderId((int)Tools::getValue('id_order'));
         return Tools::getValue('id_order') !== false &&
             Tools::getValue('order_reference') !== false &&
             $last_payment_status['status'] !== PaymentStatus::STATUS_CONFIRMED;
@@ -66,7 +61,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             die($this->module->l('Paynow module isn\'t active.', 'payment'));
         }
 
-        if ($this->isRetry()) {
+        if ($this->canBeRetried()) {
             $this->retryPayment();
         } else {
             $this->cartValidation();
@@ -130,7 +125,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     {
         try {
             $api_payment = $this->apiClient->createPayment($this->preparePaymentRequest($this->order));
-            $this->paynow->storePaymentState(
+            $this->module->storePaymentState(
                 $api_payment->paymentId,
                 $api_payment->status,
                 $this->order->id,
@@ -153,7 +148,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             'amount' => $this->convertAmount($order->total_paid),
             'currency' => $currency['iso_code'],
             'externalId' => $order->reference,
-            'description' => 'Testowa transakcja',
+            'description' => $this->l('Order No: ', 'payment') . $order->reference,
             'buyer' => [
                 'email' => $customer->email
             ]

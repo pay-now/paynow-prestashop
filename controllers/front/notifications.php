@@ -20,7 +20,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         $request = $this->getNotificationBody();
         PaynowLogger::log(print_r($request, true), $request['paymentId'], 'Incoming notification: ');
 
-        $payment = $this->paynow->getLastPaymentStatus($request['paymentId']);
+        $payment = $this->module->getLastPaymentStatus($request['paymentId']);
 
         if (!$payment) {
             PaynowLogger::log(print_r($request, true), $request['paymentId'], 'Order for payment not exists: ');
@@ -95,7 +95,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                         break;
                 }
 
-                $this->paynow->storePaymentState($request['paymentId'], $request['status'], $payment['id_order'], $payment['id_cart'], $payment['order_reference'], (new DateTime($request['modifiedAt']))->format('Y-m-d H:i:s'));
+                $this->module->storePaymentState($request['paymentId'], $request['status'], $payment['id_order'], $payment['id_cart'], $payment['order_reference'], (new DateTime($request['modifiedAt']))->format('Y-m-d H:i:s'));
             }
         }
     }

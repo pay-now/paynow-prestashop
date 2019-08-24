@@ -19,6 +19,7 @@ $_MODULE['<{paynow}prestashop>paynow_c9cc8cce247e49bae79f15173ce97354'] = 'Zapis
 $_MODULE['<{paynow}prestashop>paynow_6f744347d54de2e46edf108f065b377c'] = 'Konfiguracja produkcyjna';
 $_MODULE['<{paynow}prestashop>payment_e2b7dec8fa4b498156dfee6e4c84b156'] = 'Wybrana metoda płatności nie jest dostępna.';
 $_MODULE['<{paynow}prestashop>payment_074a66386a715de41da17d2e9c9eb8ac'] = 'Moduł Paynow jest nieaktywny';
+$_MODULE['<{paynow}prestashop>payment_3ff90ea8eeb6e1b5c133cecfd1ec5880'] = 'Zamówienie numer: ';
 $_MODULE['<{paynow}prestashop>information_a82be0f551b8708bc08eb33cd9ded0cf'] = 'Informacja';
 $_MODULE['<{paynow}prestashop>information_4486578efe86ecede1e2c92ecffb0913'] = 'Musisz dokonać konfiguracji ustawień sklepu w ';
 $_MODULE['<{paynow}prestashop>information_c3d865f8e4eef1877a607d3084b80f61'] = 'Panelu Merchanta Paynow';

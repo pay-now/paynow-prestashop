@@ -11,24 +11,17 @@
 
 class PaynowFrontController extends ModuleFrontController
 {
-
     /**
      * @var PaynowApiClient
      */
     protected $apiClient;
 
-    /**
-     * @var Paynow
-     */
-    protected $paynow;
-
     public function __construct()
     {
         parent::__construct();
 
-        $this->paynow = new Paynow();
-        $user_agent = 'Prestashop-'._PS_VERSION_.'/Plugin-'.$this->paynow->version;
-        $this->apiClient = new PaynowApiClient($this->paynow->getApiUrl(), $this->paynow->getApiKey(), $this->paynow->getSignatureKey(), $user_agent);
+        $user_agent = 'Prestashop-'._PS_VERSION_.'/Plugin-'.$this->module->version;
+        $this->apiClient = new PaynowApiClient($this->module->getApiUrl(), $this->module->getApiKey(), $this->module->getSignatureKey(), $user_agent);
     }
 
     public function renderTemplate($template_name)

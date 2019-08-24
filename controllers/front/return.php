@@ -24,7 +24,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             $this->redirectToOrderHistory();
         }
 
-        $payment = $this->paynow->getLastPaymentStatus($id_payment);
+        $payment = $this->module->getLastPaymentStatus($id_payment);
         if (!$payment) {
             $this->redirectToOrderHistory();
         }
