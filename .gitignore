@@ -1,4 +1,8 @@
-# Mac crap
+# composer.lock file should be ignored
+composer.lock
+
+# ignore Mac OS X file
 .DS_Store
 
-.idea/
+# ignore PhpStorm .idea folder
+.idea
