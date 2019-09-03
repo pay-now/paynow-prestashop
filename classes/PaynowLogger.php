@@ -11,17 +11,31 @@
 
 class PaynowLogger
 {
-    public static function log($message, $id_payment = '', $comment = '')
+    public static function log($message, $description = null, $id_payment = null)
     {
         if ((int)Configuration::get('PAYNOW_SANDBOX_ENABLED')) {
             $file = dirname(__FILE__) . '/../log/paynow.log';
-            self::writeToLog($message, $id_payment, $file, $comment);
+            self::writeToLog($file, $message, $description, $id_payment);
         }
     }
 
-    public static function formatMessage($message, $id_payment, $comment)
+    public static function formatMessage($message, $description = null, $id_payment = null)
     {
-        return '[' . self::getTimestamp() . '][' . $id_payment . ']' . (($comment == '') ? '' : ($comment . PHP_EOL)) . $message . PHP_EOL;
+        $log_message = '[' . self::getTimestamp() . ']';
+
+        if ($id_payment) {
+            $log_message .= '[' . $id_payment . ']';
+        }
+
+        if ($message) {
+            $log_message .= ' ' . $message;
+        }
+
+        if ($description) {
+            $log_message .= ' ' . $description;
+        }
+
+        return $log_message . PHP_EOL;
     }
 
     public static function getTimestamp()
@@ -32,12 +46,8 @@ class PaynowLogger
         return $date->format('Y-m-d G:i:s.u');
     }
 
-    private static function writeToLog($message, $id_payment, $logFile, $comment)
+    private static function writeToLog($log_file, $message, $description = null, $id_payment = null)
     {
-        if (!file_exists($logFile)) {
-            fopen($logFile, 'a');
-        }
-
-        file_put_contents($logFile, self::formatMessage($message, $id_payment, $comment), FILE_APPEND);
+        file_put_contents($log_file, self::formatMessage($message, $description, $id_payment), FILE_APPEND);
     }
 }
