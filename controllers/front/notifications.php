@@ -10,48 +10,36 @@
  */
 
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
-require_once(dirname(__FILE__) . '/../../classes/PaynowClientException.php');
 require_once(dirname(__FILE__) . '/../../classes/PaymentStatus.php');
 
 class PaynowNotificationsModuleFrontController extends PaynowFrontController
 {
     public function process()
     {
-        $request = $this->getNotificationBody();
-        PaynowLogger::log(print_r($request, true), $request['paymentId'], 'Incoming notification: ');
+        $payload = trim(Tools::file_get_contents('php://input'));
+        $headers = $this->getRequestHeaders();
+        $notification_data = json_decode($payload, true);
+        PaynowLogger::log('Incoming notification', $payload, $notification_data['paymentId']);
 
-        $payment = $this->module->getLastPaymentStatus($request['paymentId']);
+        $payment = $this->module->getLastPaymentStatus($notification_data['paymentId']);
 
         if (!$payment) {
-            PaynowLogger::log(print_r($request, true), $request['paymentId'], 'Order for payment not exists: ');
+            PaynowLogger::log('Order for payment not exists', $payload, $notification_data['paymentId']);
             header('HTTP/1.1 400 Bad Request', true, 400);
             exit;
         }
 
-        $headers = $this->getRequestHeaders();
-        $incomingSignature = isset($headers['Signature']) ? $headers['Signature'] : $headers['signature'];
-        PaynowLogger::log(print_r($headers, true), $request['paymentId'], 'Notification headers: ');
-        if (!$this->isNotificationVerified($request, $incomingSignature)) {
-            PaynowLogger::log(print_r($request, true), $request['paymentId'], 'Signature is invalid: ');
+        try {
+            new \Paynow\Notification($this->module->getSignatureKey(), $payload, $headers);
+        } catch (\Exception $exception) {
+            PaynowLogger::log($exception->getMessage(), $payload, $notification_data['paymentId']);
             header('HTTP/1.1 400 Bad Request', true, 400);
             exit;
         }
 
-        $this->updateOrderState($payment, $request);
-
-        header("HTTP/1.1 202 OK");
+        $this->updateOrderState($payment, $notification_data);
+        header("HTTP/1.1 202 Accepted");
         exit;
-    }
-
-    private function isNotificationVerified(array $request, $signature)
-    {
-        $calculated = $this->apiClient->calculateSignature($request);
-        return $calculated == $signature;
-    }
-
-    private function getNotificationBody()
-    {
-        return json_decode(trim(Tools::file_get_contents('php://input')), true);
     }
 
     private function getRequestHeaders()
@@ -69,15 +57,15 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         return apache_request_headers();
     }
 
-    private function updateOrderState($payment, $request)
+    private function updateOrderState($payment, $notification_data)
     {
         $order = new Order($payment['id_order']);
         if ($order) {
             $history = new OrderHistory();
             $history->id_order = $order->id;
 
-            if ($this->isCorrectStatus($payment['status'], $request['status'])) {
-                switch ($request['status']) {
+            if ($this->isCorrectStatus($payment['status'], $notification_data['status'])) {
+                switch ($notification_data['status']) {
                     case PaymentStatus::STATUS_PENDING:
                         break;
                     case PaymentStatus::STATUS_REJECTED:
@@ -95,7 +83,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                         break;
                 }
 
-                $this->module->storePaymentState($request['paymentId'], $request['status'], $payment['id_order'], $payment['id_cart'], $payment['order_reference'], (new DateTime($request['modifiedAt']))->format('Y-m-d H:i:s'));
+                $this->module->storePaymentState($notification_data['paymentId'], $notification_data['status'], $payment['id_order'], $payment['id_cart'], $payment['order_reference'], (new DateTime($notification_data['modifiedAt']))->format('Y-m-d H:i:s'));
             }
         }
     }

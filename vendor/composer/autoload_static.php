@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitc6a4493342db557c939edfd221d22ce7
+class ComposerStaticInita9d55597953c23e4651c2a303d1dbf5b
 {
     public static $files = array (
         'ad155f8f1cf0d418fe49e248db8c661b' => __DIR__ . '/..' . '/react/promise/src/functions_include.php',
@@ -14,6 +14,16 @@ class ComposerStaticInitc6a4493342db557c939edfd221d22ce7
         'R' => 
         array (
             'React\\Promise\\' => 14,
+        ),
+        'P' => 
+        array (
+            'Psr\\Log\\' => 8,
+            'Paynow\\Tests\\' => 13,
+            'Paynow\\' => 7,
+        ),
+        'M' => 
+        array (
+            'Monolog\\' => 8,
         ),
         'G' => 
         array (
@@ -27,6 +37,22 @@ class ComposerStaticInitc6a4493342db557c939edfd221d22ce7
         'React\\Promise\\' => 
         array (
             0 => __DIR__ . '/..' . '/react/promise/src',
+        ),
+        'Psr\\Log\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/log/Psr/Log',
+        ),
+        'Paynow\\Tests\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/pay-now/paynow-php-sdk/tests',
+        ),
+        'Paynow\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/pay-now/paynow-php-sdk/src/Paynow',
+        ),
+        'Monolog\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/monolog/monolog/src/Monolog',
         ),
         'GuzzleHttp\\Stream\\' => 
         array (
@@ -45,8 +71,8 @@ class ComposerStaticInitc6a4493342db557c939edfd221d22ce7
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitc6a4493342db557c939edfd221d22ce7::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitc6a4493342db557c939edfd221d22ce7::$prefixDirsPsr4;
+            $loader->prefixLengthsPsr4 = ComposerStaticInita9d55597953c23e4651c2a303d1dbf5b::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInita9d55597953c23e4651c2a303d1dbf5b::$prefixDirsPsr4;
 
         }, null, ClassLoader::class);
     }

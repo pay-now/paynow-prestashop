@@ -71,7 +71,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     private function cartValidation()
     {
         if (!$this->context->cart->id) {
-            PaynowLogger::log(null, null, 'Empty cart');
+            PaynowLogger::log('Empty cart');
             Tools::redirect('index.php?controller=cart');
         }
 
@@ -124,17 +124,18 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     private function makePayment()
     {
         try {
-            $api_payment = $this->apiClient->createPayment($this->preparePaymentRequest($this->order));
+            $payment_client = new \Paynow\Service\Payment($this->module->api_client);
+            $payment = $payment_client->authorize($this->preparePaymentRequest($this->order));
             $this->module->storePaymentState(
-                $api_payment->paymentId,
-                $api_payment->status,
+                $payment->paymentId,
+                $payment->status,
                 $this->order->id,
                 $this->order->id_cart,
                 $this->order->reference
             );
-            Tools::redirect($api_payment->redirectUrl);
-        } catch (PaynowClientException $e) {
-            PaynowLogger::log($e->getResponseBody(), $this->order->reference, $e->getMessage());
+            Tools::redirect($payment->redirectUrl);
+        } catch (\Paynow\Exception\PaynowException $e) {
+            PaynowLogger::log($e->getMessage(), $e->getResponseBody(), $this->order->reference);
             $this->showError();
         }
     }

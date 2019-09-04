@@ -13,20 +13,24 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+include_once(dirname(__FILE__) . '/vendor/autoload.php');
 include_once(dirname(__FILE__) . '/classes/PaynowLogger.php');
-include_once(dirname(__FILE__) . '/classes/PaynowApiClient.php');
-include_once(dirname(__FILE__) . '/classes/PaynowClientException.php');
 
 class Paynow extends PaymentModule
 {
     protected $html = '';
     protected $postErrors = [];
 
+    /**
+     * @var \Paynow\Client
+     */
+    public $api_client;
+
     public function __construct()
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.0.1';
+        $this->version = '1.1.0';
         $this->ps_versions_compliancy = array('min' => '1.6.0', 'max' => _PS_VERSION_);
         $this->author = 'mBank S.A.';
         $this->is_eu_compatible = 1;
@@ -44,6 +48,13 @@ class Paynow extends PaymentModule
 
         if (!$this->isConfigured()) {
             $this->warning = $this->l('API Keys must be configured before using this module.');
+        } else {
+            $this->api_client = new \Paynow\Client(
+                $this->getApiKey(),
+                $this->getSignatureKey(),
+                $this->isSandboxEnabled() ? \Paynow\Environment::SANDBOX : \Paynow\Environment::PRODUCTION,
+                'Prestashop-' . _PS_VERSION_ . '/Plugin-' . $this->version
+            );
         }
 
         if (!count(Currency::checkPaymentCurrencies($this->id))) {
@@ -172,24 +183,23 @@ class Paynow extends PaymentModule
         return true;
     }
 
-
     public function hookHeader()
     {
         $this->context->controller->addCSS(($this->_path) . 'views/css/front.css', 'all');
     }
 
-    public function getApiUrl() {
-        return (int)Configuration::get('PAYNOW_SANDBOX_ENABLED') ? 'https://api.sandbox.paynow.pl' : 'https://api.paynow.pl';
-    }
-
     public function getApiKey()
     {
-        return (int)Configuration::get('PAYNOW_SANDBOX_ENABLED') ? Configuration::get('PAYNOW_SANDBOX_API_KEY') : Configuration::get('PAYNOW_PROD_API_KEY');
+        return $this->isSandboxEnabled() ? Configuration::get('PAYNOW_SANDBOX_API_KEY') : Configuration::get('PAYNOW_PROD_API_KEY');
     }
 
     public function getSignatureKey()
     {
-        return (int)Configuration::get('PAYNOW_SANDBOX_ENABLED') ? Configuration::get('PAYNOW_SANDBOX_API_SIGNATURE_KEY') : Configuration::get('PAYNOW_PROD_API_SIGNATURE_KEY');
+        return $this->isSandboxEnabled() ? Configuration::get('PAYNOW_SANDBOX_API_SIGNATURE_KEY') : Configuration::get('PAYNOW_PROD_API_SIGNATURE_KEY');
+    }
+
+    public function isSandboxEnabled() {
+        return (int)Configuration::get('PAYNOW_SANDBOX_ENABLED') === 1;
     }
 
     private function isActive($params)
@@ -285,7 +295,21 @@ class Paynow extends PaymentModule
         Configuration::updateValue('PAYNOW_SANDBOX_API_KEY', Tools::getValue('PAYNOW_SANDBOX_API_KEY'));
         Configuration::updateValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY', Tools::getValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY'));
 
+        $this->sendShopUrlsConfiguration();
+
         $this->html .= $this->displayConfirmation($this->l('Configuration updated'));
+    }
+
+    private function sendShopUrlsConfiguration() {
+        $shop_configuration = new \Paynow\Service\ShopConfiguration($this->api_client);
+        try {
+            $shop_configuration->changeUrls([
+                'continueUrl' => $this->context->link->getModuleLink('paynow', 'return'),
+                'notificationUrl' => $this->context->link->getModuleLink('paynow', 'notifications')
+            ]);
+        } catch (Paynow\Exception\PaynowException $exception) {
+            PaynowLogger::log('Could not send shop urls configuration to Paynow');
+        }
     }
 
     public function getContent()
@@ -429,7 +453,7 @@ class Paynow extends PaymentModule
                 return (int)Db::getInstance()->Insert_ID();
             }
         } catch (PrestaShopDatabaseException $e) {
-            PaynowLogger::log(null, $order_reference, $e->getMessage());
+            PaynowLogger::log($e->getMessage(), null, $order_reference);
         }
 
         return false;
