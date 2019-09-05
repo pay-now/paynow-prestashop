@@ -28,7 +28,7 @@ class Error
     /**
      * @return string
      */
-    public function getErrorType(): string
+    public function getErrorType()
     {
         return $this->errorType;
     }
@@ -36,7 +36,7 @@ class Error
     /**
      * @return string
      */
-    public function getMessage(): string
+    public function getMessage()
     {
         return $this->message;
     }
