@@ -1,0 +1,9 @@
+{
+  "statusCode": 400,
+  "errors": [
+    {
+      "errorType": "VALIDATION_ERROR",
+      "message": "continue_url: invalid field value"
+    }
+  ]
+}

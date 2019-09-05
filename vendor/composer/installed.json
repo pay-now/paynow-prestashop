@@ -246,12 +246,12 @@
         "source": {
             "type": "git",
             "url": "https://github.com/pay-now/paynow-php-sdk.git",
-            "reference": "1d4d570ed6873657485417d4ab7e70f3ada4d5f9"
+            "reference": "d33a1cd1bfc5f1d28b01cc3ecb74d01beee8a9be"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/pay-now/paynow-php-sdk/zipball/1d4d570ed6873657485417d4ab7e70f3ada4d5f9",
-            "reference": "1d4d570ed6873657485417d4ab7e70f3ada4d5f9",
+            "url": "https://api.github.com/repos/pay-now/paynow-php-sdk/zipball/d33a1cd1bfc5f1d28b01cc3ecb74d01beee8a9be",
+            "reference": "d33a1cd1bfc5f1d28b01cc3ecb74d01beee8a9be",
             "shasum": ""
         },
         "require": {
@@ -267,7 +267,7 @@
             "phpunit/phpunit": "^7.5",
             "squizlabs/php_codesniffer": "^3.4"
         },
-        "time": "2019-09-03T12:22:57+00:00",
+        "time": "2019-09-05T14:06:33+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {

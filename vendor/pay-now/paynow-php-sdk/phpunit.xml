@@ -1,0 +1,17 @@
+<phpunit bootstrap="tests/bootstrap.php"
+         colors="false">
+    <testsuites>
+        <testsuite name="Paynow PHP Test Suite">
+            <directory suffix="Test.php">tests</directory>
+        </testsuite>
+    </testsuites>
+    <filter>
+        <whitelist>
+            <directory suffix=".php">./src</directory>
+            <exclude>
+                <directory>vendor</directory>
+                <directory suffix=".php">tests</directory>
+            </exclude>
+        </whitelist>
+    </filter>
+</phpunit>
