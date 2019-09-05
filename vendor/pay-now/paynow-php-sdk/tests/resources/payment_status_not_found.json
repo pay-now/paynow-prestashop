@@ -1,0 +1,9 @@
+{
+  "statusCode": 404,
+  "errors": [
+    {
+      "errorType": "NOT_FOUND",
+      "message": "Could not find status for payment {paymentId=PBYV-3AZ-UPW-DPCf}"
+    }
+  ]
+}

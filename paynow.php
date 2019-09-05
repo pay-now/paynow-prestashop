@@ -303,10 +303,10 @@ class Paynow extends PaymentModule
     private function sendShopUrlsConfiguration() {
         $shop_configuration = new \Paynow\Service\ShopConfiguration($this->api_client);
         try {
-            $shop_configuration->changeUrls([
-                'continueUrl' => $this->context->link->getModuleLink('paynow', 'return'),
-                'notificationUrl' => $this->context->link->getModuleLink('paynow', 'notifications')
-            ]);
+            $shop_configuration->changeUrls(
+                $this->context->link->getModuleLink('paynow', 'return'),
+                $this->context->link->getModuleLink('paynow', 'notifications')
+            );
         } catch (Paynow\Exception\PaynowException $exception) {
             PaynowLogger::log('Could not send shop urls configuration to Paynow');
         }

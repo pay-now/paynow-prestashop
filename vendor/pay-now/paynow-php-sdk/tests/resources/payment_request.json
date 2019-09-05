@@ -1,0 +1,9 @@
+{
+  "amount": 100,
+  "currency": "PLN",
+  "externalId": "success_1234567",
+  "description": "Test payment",
+  "buyer": {
+    "email": "customer@domain.com"
+  }
+}
