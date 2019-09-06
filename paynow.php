@@ -30,7 +30,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.0';
+        $this->version = '1.1.1';
         $this->ps_versions_compliancy = array('min' => '1.6.0', 'max' => _PS_VERSION_);
         $this->author = 'mBank S.A.';
         $this->is_eu_compatible = 1;
@@ -335,11 +335,6 @@ class Paynow extends PaymentModule
 
     private function displayBackOfficeInformation()
     {
-        $this->smarty->assign([
-            'notificationUrl' => $this->context->link->getModuleLink('paynow', 'notifications'),
-            'continueUrl' => $this->context->link->getModuleLink('paynow', 'return')
-        ]);
-
         return $this->display(__FILE__, '/views/templates/admin/information.tpl');
     }
 
@@ -355,8 +350,8 @@ class Paynow extends PaymentModule
                 'input' => [
                     [
                         'type' => 'switch',
-                        'label' => $this->l('Test integration'),
-                        'desc' => '',
+                        'label' => $this->l('Test mode (Sandbox)'),
+                        'desc' => $this->l('Enable if you are using test shop environment'),
                         'name' => 'PAYNOW_SANDBOX_ENABLED',
                         'values' => [
                             [

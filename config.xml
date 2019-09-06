@@ -2,7 +2,7 @@
 <module>
     <name>paynow</name>
     <displayName><![CDATA[Paynow]]></displayName>
-    <version><![CDATA[1.1.0]]></version>
+    <version><![CDATA[1.1.1]]></version>
     <description><![CDATA[Accepts payments by Paynow]]></description>
     <author><![CDATA[mBank S.A.]]></author>
     <tab><![CDATA[payments_gateways]]></tab>
