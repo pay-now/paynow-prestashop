@@ -19,7 +19,6 @@ To access Paynow API please contact our support at kontakt@paynow.pl.
 3. Search and select `Paynow` and click `Configure`
 4. Credential Keys can be found in `Settings > Shopes and poses > Authentication data` in Paynow merchant panel
 5. Type `Api-Key` and `Signature-Key` in proper fields
-6. Copy addresses from the module configuration and go to the `Settings > Shopes and poses` and specify Notification and Return addresses for Shop configuration in Paynow merchant panel
 
 ## Support
 If you have any questions or issues, please contact our support on kontakt@paynow.pl.
