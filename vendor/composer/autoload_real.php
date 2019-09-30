@@ -19,7 +19,7 @@ class ComposerAutoloaderInitcb341a62b0b6f964bbe82e2b94f3a786
             return self::$loader;
         }
 
-        spl_autoload_register(array('ComposerAutoloaderInitcb341a62b0b6f964bbe82e2b94f3a786', 'loadClassLoader'), true, true);
+        spl_autoload_register(array('ComposerAutoloaderInitcb341a62b0b6f964bbe82e2b94f3a786', 'loadClassLoader'), true, false);
         self::$loader = $loader = new \Composer\Autoload\ClassLoader();
         spl_autoload_unregister(array('ComposerAutoloaderInitcb341a62b0b6f964bbe82e2b94f3a786', 'loadClassLoader'));
 
@@ -45,7 +45,7 @@ class ComposerAutoloaderInitcb341a62b0b6f964bbe82e2b94f3a786
             }
         }
 
-        $loader->register(true);
+        $loader->register(false);
 
         if ($useStaticLoader) {
             $includeFiles = Composer\Autoload\ComposerStaticInitcb341a62b0b6f964bbe82e2b94f3a786::$files;

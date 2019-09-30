@@ -5,7 +5,8 @@
  * This source file is subject to the MIT License (MIT)
  * that is bundled with this package in the file LICENSE.md.
  *
- * @copyright mBank S.A.
+ * @author mElements S.A.
+ * @copyright mElements S.A.
  * @license MIT License
  */
 
@@ -36,7 +37,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
 
         $currentState = $this->order->getCurrentStateFull($this->context->language->id);
         $this->context->smarty->assign([
-            'redirect_url' => $this->getRedirectLink(),
+            'redirect_url' => $this->module->getOrderUrl($this->order),
             'order_status' => $currentState['name'],
             'reference' => $this->order->reference
         ]);
@@ -51,31 +52,6 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             __PS_BASE_URI__,
             null,
             'HTTP/1.1 301 Moved Permanently'
-        );
-    }
-
-    private function getRedirectLink()
-    {
-        if (Cart::isGuestCartByCartId($this->order->id_cart)) {
-            $customer = new Customer((int)$this->order->id_customer);
-            return $this->context->link->getPageLink(
-                'guest-tracking',
-                null,
-                $this->context->language->id,
-                [
-                    'order_reference' => $this->order->reference,
-                    'email' => $customer->email
-                ]
-            );
-        }
-
-        return $this->context->link->getPageLink(
-            'order-detail',
-            null,
-            $this->context->language->id,
-            [
-                'id_order' => $this->order->id
-            ]
         );
     }
 }

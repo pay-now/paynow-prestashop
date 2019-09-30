@@ -5,11 +5,11 @@
  * This source file is subject to the MIT License (MIT)
  * that is bundled with this package in the file LICENSE.md.
  *
- * @copyright mBank S.A.
+ * @author mElements S.A.
+ * @copyright mElements S.A.
  * @license   MIT License
  */
 
-require_once(dirname(__FILE__) . '/../../classes/PaymentStatus.php');
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 
 class PaynowPaymentModuleFrontController extends PaynowFrontController
@@ -29,7 +29,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         $last_payment_status = $this->module->getLastPaymentStatusByOrderId((int)Tools::getValue('id_order'));
         return Tools::getValue('id_order') !== false &&
             Tools::getValue('order_reference') !== false &&
-            $last_payment_status['status'] !== PaymentStatus::STATUS_CONFIRMED;
+            $last_payment_status['status'] !== \Paynow\Model\Payment\Status::STATUS_CONFIRMED;
     }
 
     private function retryPayment()
@@ -135,7 +135,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             );
             Tools::redirect($payment->redirectUrl);
         } catch (\Paynow\Exception\PaynowException $e) {
-            PaynowLogger::log($e->getMessage(), $e->getResponseBody(), $this->order->reference);
+            PaynowLogger::log($e->getMessage(), json_encode($e->getErrors()), $this->order->reference);
             $this->showError();
         }
     }
@@ -152,7 +152,8 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             'description' => $this->l('Order No: ', 'payment') . $order->reference,
             'buyer' => [
                 'email' => $customer->email
-            ]
+            ],
+            'continueUrl' => $this->module->getOrderUrl($order)
         ];
     }
 

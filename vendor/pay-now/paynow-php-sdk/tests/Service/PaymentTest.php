@@ -17,7 +17,7 @@ class PaymentTest extends TestCase
         $paymentData = $this->loadData('payment_request.json');
 
         // when
-        $response = $paymentService->authorize($paymentData);
+        $response = $paymentService->authorize($paymentData, 'idempotencyKey123');
 
         // then
         $this->assertNotEmpty($response->redirectUrl);
@@ -36,7 +36,7 @@ class PaymentTest extends TestCase
 
         // when
         try {
-            $paymentService->authorize($paymentData);
+            $paymentService->authorize($paymentData, 'idempotencyKey123');
         } catch (PaynowException $exception) {
             // then
             $this->assertEquals(400, $exception->getCode());
