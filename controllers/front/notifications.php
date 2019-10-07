@@ -5,12 +5,12 @@
  * This source file is subject to the MIT License (MIT)
  * that is bundled with this package in the file LICENSE.md.
  *
- * @copyright mBank S.A.
+ * @author mElements S.A.
+ * @copyright mElements S.A.
  * @license   MIT License
  */
 
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
-require_once(dirname(__FILE__) . '/../../classes/PaymentStatus.php');
 
 class PaynowNotificationsModuleFrontController extends PaynowFrontController
 {
@@ -66,18 +66,18 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
 
             if ($this->isCorrectStatus($payment['status'], $notification_data['status'])) {
                 switch ($notification_data['status']) {
-                    case PaymentStatus::STATUS_PENDING:
+                    case \Paynow\Model\Payment\Status::STATUS_PENDING:
                         break;
-                    case PaymentStatus::STATUS_REJECTED:
+                    case \Paynow\Model\Payment\Status::STATUS_REJECTED:
                         $history->changeIdOrderState(6, $order->id);
                         $history->addWithemail(true);
                         break;
-                    case PaymentStatus::STATUS_CONFIRMED:
+                    case \Paynow\Model\Payment\Status::STATUS_CONFIRMED:
                         $history->changeIdOrderState(2, $order->id);
                         $history->addWithemail(true);
                         $this->addPaymentIdToOrderPayments($order, $payment['id_payment']);
                         break;
-                    case PaymentStatus::STATUS_ERROR:
+                    case \Paynow\Model\Payment\Status::STATUS_ERROR:
                         $history->changeIdOrderState(8, $order->id);
                         $history->addWithemail(true);
                         break;
@@ -91,11 +91,11 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
     private function isCorrectStatus($previous_status, $next_status)
     {
         $payment_status_flow = [
-            PaymentStatus::STATUS_NEW => [PaymentStatus::STATUS_PENDING, PaymentStatus::STATUS_ERROR],
-            PaymentStatus::STATUS_PENDING => [PaymentStatus::STATUS_CONFIRMED, PaymentStatus::STATUS_REJECTED],
-            PaymentStatus::STATUS_REJECTED => [PaymentStatus::STATUS_CONFIRMED],
-            PaymentStatus::STATUS_CONFIRMED => [],
-            PaymentStatus::STATUS_ERROR => []
+            \Paynow\Model\Payment\Status::STATUS_NEW => [\Paynow\Model\Payment\Status::STATUS_PENDING, \Paynow\Model\Payment\Status::STATUS_ERROR],
+            \Paynow\Model\Payment\Status::STATUS_PENDING => [\Paynow\Model\Payment\Status::STATUS_CONFIRMED, \Paynow\Model\Payment\Status::STATUS_REJECTED],
+            \Paynow\Model\Payment\Status::STATUS_REJECTED => [\Paynow\Model\Payment\Status::STATUS_CONFIRMED],
+            \Paynow\Model\Payment\Status::STATUS_CONFIRMED => [],
+            \Paynow\Model\Payment\Status::STATUS_ERROR => []
         ];
         $previous_status_exists = isset($payment_status_flow[$previous_status]);
         $is_change_possible = in_array($next_status, $payment_status_flow[$previous_status]);

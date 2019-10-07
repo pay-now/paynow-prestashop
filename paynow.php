@@ -5,7 +5,8 @@
  * This source file is subject to the MIT License (MIT)
  * that is bundled with this package in the file LICENSE.md.
  *
- * @copyright mBank S.A.
+ * @author mElements S.A.
+ * @copyright mElements S.A.
  * @license   MIT License
  */
 
@@ -30,12 +31,13 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.1';
+        $this->version = '1.1.2';
         $this->ps_versions_compliancy = array('min' => '1.6.0', 'max' => _PS_VERSION_);
-        $this->author = 'mBank S.A.';
+        $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
         $this->controllers = array('payment', 'return');
         $this->bootstrap = true;
+        $this->module_key = '86f0413df24b36cc82b831f755669dc7';
 
         $this->currencies = true;
         $this->currencies_mode = 'radio';
@@ -198,7 +200,8 @@ class Paynow extends PaymentModule
         return $this->isSandboxEnabled() ? Configuration::get('PAYNOW_SANDBOX_API_SIGNATURE_KEY') : Configuration::get('PAYNOW_PROD_API_SIGNATURE_KEY');
     }
 
-    public function isSandboxEnabled() {
+    public function isSandboxEnabled()
+    {
         return (int)Configuration::get('PAYNOW_SANDBOX_ENABLED') === 1;
     }
 
@@ -262,13 +265,11 @@ class Paynow extends PaymentModule
 
     public function hookDisplayPaymentEU()
     {
-        $payment_option = [
+        return [
             'cta_text' => $this->l('Pay by online transfer or BLIK', 'paynow'),
             'logo' => $this->getLogo(),
             'action' => $this->context->link->getModuleLink('paynow', 'payment')
         ];
-
-        return $payment_option;
     }
 
     private function getLogo()
@@ -300,7 +301,8 @@ class Paynow extends PaymentModule
         $this->html .= $this->displayConfirmation($this->l('Configuration updated'));
     }
 
-    private function sendShopUrlsConfiguration() {
+    private function sendShopUrlsConfiguration()
+    {
         $shop_configuration = new \Paynow\Service\ShopConfiguration($this->api_client);
         try {
             $shop_configuration->changeUrls(
@@ -464,5 +466,30 @@ class Paynow extends PaymentModule
     {
         $sql = 'SELECT status FROM  ' . _DB_PREFIX_ . 'paynow_payments WHERE id_order="' . (int)$id_order . '" ORDER BY created_at DESC';
         return Db::getInstance()->getRow($sql);
+    }
+
+    public function getOrderUrl($order)
+    {
+        if (Cart::isGuestCartByCartId($order->id_cart)) {
+            $customer = new Customer((int)$order->id_customer);
+            return $this->context->link->getPageLink(
+                'guest-tracking',
+                null,
+                $this->context->language->id,
+                [
+                    'order_reference' => $order->reference,
+                    'email' => $customer->email
+                ]
+            );
+        }
+
+        return $this->context->link->getPageLink(
+            'order-detail',
+            null,
+            $this->context->language->id,
+            [
+                'id_order' => $order->id
+            ]
+        );
     }
 }

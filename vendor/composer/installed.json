@@ -161,17 +161,17 @@
     },
     {
         "name": "monolog/monolog",
-        "version": "1.24.0",
-        "version_normalized": "1.24.0.0",
+        "version": "1.25.1",
+        "version_normalized": "1.25.1.0",
         "source": {
             "type": "git",
             "url": "https://github.com/Seldaek/monolog.git",
-            "reference": "bfc9ebb28f97e7a24c45bdc3f0ff482e47bb0266"
+            "reference": "70e65a5470a42cfec1a7da00d30edb6e617e8dcf"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/Seldaek/monolog/zipball/bfc9ebb28f97e7a24c45bdc3f0ff482e47bb0266",
-            "reference": "bfc9ebb28f97e7a24c45bdc3f0ff482e47bb0266",
+            "url": "https://api.github.com/repos/Seldaek/monolog/zipball/70e65a5470a42cfec1a7da00d30edb6e617e8dcf",
+            "reference": "70e65a5470a42cfec1a7da00d30edb6e617e8dcf",
             "shasum": ""
         },
         "require": {
@@ -207,7 +207,7 @@
             "ruflin/elastica": "Allow sending log messages to an Elastic Search server",
             "sentry/sentry": "Allow sending log messages to a Sentry server"
         },
-        "time": "2018-11-05T09:00:11+00:00",
+        "time": "2019-09-06T13:49:17+00:00",
         "type": "library",
         "extra": {
             "branch-alias": {
@@ -241,17 +241,17 @@
     },
     {
         "name": "pay-now/paynow-php-sdk",
-        "version": "v1.0.0",
-        "version_normalized": "1.0.0.0",
+        "version": "v1.0.1",
+        "version_normalized": "1.0.1.0",
         "source": {
             "type": "git",
             "url": "https://github.com/pay-now/paynow-php-sdk.git",
-            "reference": "d33a1cd1bfc5f1d28b01cc3ecb74d01beee8a9be"
+            "reference": "4601b93add6428f6a4369ffd5a7e701473f32ecc"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/pay-now/paynow-php-sdk/zipball/d33a1cd1bfc5f1d28b01cc3ecb74d01beee8a9be",
-            "reference": "d33a1cd1bfc5f1d28b01cc3ecb74d01beee8a9be",
+            "url": "https://api.github.com/repos/pay-now/paynow-php-sdk/zipball/4601b93add6428f6a4369ffd5a7e701473f32ecc",
+            "reference": "4601b93add6428f6a4369ffd5a7e701473f32ecc",
             "shasum": ""
         },
         "require": {
@@ -267,7 +267,7 @@
             "phpunit/phpunit": "^7.5",
             "squizlabs/php_codesniffer": "^3.4"
         },
-        "time": "2019-09-05T14:06:33+00:00",
+        "time": "2019-09-30T06:57:32+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {
@@ -282,7 +282,7 @@
         ],
         "authors": [
             {
-                "name": "mBank S.A.",
+                "name": "mElements S.A.",
                 "email": "kontakt@paynow.pl"
             }
         ],

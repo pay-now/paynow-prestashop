@@ -19,11 +19,12 @@ class Payment extends Service
      * Authorize payment
      *
      * @param array $data
+     * @param string $idempotencyKey
      * @return mixed
      * @throws PaynowException
      * @throws ConfigurationException
      */
-    public function authorize(array $data)
+    public function authorize(array $data, $idempotencyKey = null)
     {
         try {
             return $this->getClient()
@@ -31,7 +32,7 @@ class Payment extends Service
                 ->post(
                     Configuration::API_VERSION . '/payments',
                     $data,
-                    $data['externalId']
+                    $idempotencyKey ? $idempotencyKey : $data['externalId']
                 )
                 ->decode();
         } catch (HttpClientException $exception) {
