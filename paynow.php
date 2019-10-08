@@ -69,8 +69,7 @@ class Paynow extends PaymentModule
         if (!parent::install() ||
             !$this->createDbTables() ||
             !$this->createModuleSettings() ||
-            !$this->registerHooks() ||
-            !$this->createOrderInitialState()) {
+            !$this->registerHooks()) {
             return false;
         }
         return true;
@@ -92,6 +91,7 @@ class Paynow extends PaymentModule
             `id_cart` INT(10) UNSIGNED NOT NULL,
             `id_payment` varchar(30) NOT NULL,
             `order_reference` varchar(9)  NOT NULL,
+            `external_id` varchar(50)  NOT NULL,
             `status` varchar(64) NOT NULL,
             `created_at` datetime,
             `modified_at` datetime,
@@ -102,7 +102,8 @@ class Paynow extends PaymentModule
     private function registerHooks()
     {
         $registerStatus = $this->registerHook('header') &&
-            $this->registerHook('paymentReturn');
+            $this->registerHook('paymentReturn') &&
+            $this->registerHook('displayOrderDetail');
 
         if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
             $registerStatus &= $this->registerHook('payment') && $this->registerHook('displayPaymentEU');
@@ -116,7 +117,8 @@ class Paynow extends PaymentModule
     private function unregisterHooks()
     {
         $registerStatus = $this->unregisterHook('header') &&
-            $this->unregisterHook('paymentReturn');
+            $this->unregisterHook('paymentReturn') &&
+            $this->unregisterHook('displayOrderDetail');
 
         if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
             $registerStatus &= $this->unregisterHook('displayPaymentEU') && $this->unregisterHook('payment');
@@ -133,7 +135,11 @@ class Paynow extends PaymentModule
             Configuration::updateValue('PAYNOW_PROD_API_SIGNATURE_KEY', '') &&
             Configuration::updateValue('PAYNOW_SANDBOX_ENABLED', 0) &&
             Configuration::updateValue('PAYNOW_SANDBOX_API_KEY', '') &&
-            Configuration::updateValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY', '');
+            Configuration::updateValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY', '') &&
+            Configuration::updateValue('PAYNOW_ORDER_INITIAL_STATE', $this->createOrderInitialState()) &&
+            Configuration::updateValue('PAYNOW_ORDER_CONFIRMED_STATE', 2) &&
+            Configuration::updateValue('PAYNOW_ORDER_REJECTED_STATE', 6) &&
+            Configuration::updateValue('PAYNOW_ORDER_ERROR_STATE', 8);
     }
 
     private function deleteModuleSettings()
@@ -143,17 +149,15 @@ class Paynow extends PaymentModule
             Configuration::deleteByName('PAYNOW_SANDBOX_ENABLED') &&
             Configuration::deleteByName('PAYNOW_SANDBOX_API_KEY') &&
             Configuration::deleteByName('PAYNOW_SANDBOX_API_SIGNATURE_KEY') &&
-            Configuration::deleteByName('PAYNOW_ORDER_INITIAL_STATE');
+            Configuration::deleteByName('PAYNOW_ORDER_INITIAL_STATE') &&
+            Configuration::deleteByName('PAYNOW_ORDER_CONFIRMED_STATE') &&
+            Configuration::deleteByName('PAYNOW_ORDER_REJECTED_STATE') &&
+            Configuration::deleteByName('PAYNOW_ORDER_ERROR_STATE');
     }
 
     public function createOrderInitialState()
     {
         $state_name = 'PAYNOW_ORDER_INITIAL_STATE';
-        if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
-            Configuration::updateValue($state_name, 1);
-            return true;
-        }
-
         if (!Configuration::get($state_name) || !Validate::isLoadedObject(new OrderState(Configuration::get($state_name)))) {
             $order_state = new OrderState();
             $languages = Language::getLanguages(false);
@@ -179,10 +183,11 @@ class Paynow extends PaymentModule
                 $destination = _PS_ROOT_DIR_ . '/img/os/' . $order_state->id . '.gif';
                 copy($source, $destination);
             }
-            Configuration::updateValue($state_name, $order_state->id);
+
+            return $order_state->id;
         }
 
-        return true;
+        return;
     }
 
     public function hookHeader()
@@ -270,6 +275,39 @@ class Paynow extends PaymentModule
             'logo' => $this->getLogo(),
             'action' => $this->context->link->getModuleLink('paynow', 'payment')
         ];
+    }
+
+    public function hookDisplayOrderDetail($params)
+    {
+        if (!$this->isActive($params)) {
+            return;
+        }
+
+        $id_order = (int)$params['order']->id;
+
+        if ($this->canOrderPaymentBeRetried($id_order)) {
+            $this->context->smarty->assign([
+                'paynow_url' => $this->context->link->getModuleLink('paynow', 'payment', [
+                    'id_order' => $id_order,
+                    'order_reference' => $params['order']->reference
+                ])
+            ]);
+            return $this->display(__FILE__, '/views/templates/hook/order_details.tpl');
+        }
+    }
+
+    public function canOrderPaymentBeRetried($id_order)
+    {
+        $last_payment_status = $this->getLastPaymentStatusByOrderId($id_order);
+        $order = new Order($id_order);
+        return $last_payment_status['status'] !== \Paynow\Model\Payment\Status::STATUS_CONFIRMED &&
+            in_array(
+                (int)$order->current_state,
+                [
+                    (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
+                    (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE')
+                ]
+            );
     }
 
     private function getLogo()
@@ -439,13 +477,13 @@ class Paynow extends PaymentModule
         ];
     }
 
-    public function storePaymentState($id_payment, $status, $id_order, $id_cart, $order_reference, $modified_at = null)
+    public function storePaymentState($id_payment, $status, $id_order, $id_cart, $order_reference, $external_id, $modified_at = null)
     {
         $modified_at = !$modified_at ? 'NOW()' : '"' . $modified_at . '"';
 
         try {
-            $sql = 'INSERT INTO ' . _DB_PREFIX_ . 'paynow_payments (id_order, id_cart, id_payment, order_reference, status, created_at, modified_at) 
-            VALUES (' . (int)$id_order . ', ' . (int)$id_cart . ', "' . pSQL($id_payment) . '", "' . pSQL($order_reference) . '", "' . pSQL($status) . '", NOW(), ' . $modified_at . ')';
+            $sql = 'INSERT INTO ' . _DB_PREFIX_ . 'paynow_payments (id_order, id_cart, id_payment, order_reference, external_id, status, created_at, modified_at) 
+            VALUES (' . (int)$id_order . ', ' . (int)$id_cart . ', "' . pSQL($id_payment) . '", "' . pSQL($order_reference) . '", "' . pSQL($external_id) . '", "' . pSQL($status) . '", NOW(), ' . $modified_at . ')';
             if (Db::getInstance()->execute($sql)) {
                 return (int)Db::getInstance()->Insert_ID();
             }
@@ -458,7 +496,7 @@ class Paynow extends PaymentModule
 
     public function getLastPaymentStatus($id_payment)
     {
-        $sql = 'SELECT id_order, id_cart, order_reference, status, id_payment FROM  ' . _DB_PREFIX_ . 'paynow_payments WHERE id_payment="' . pSQL($id_payment) . '" ORDER BY created_at DESC';
+        $sql = 'SELECT id_order, id_cart, order_reference, status, id_payment, external_id FROM  ' . _DB_PREFIX_ . 'paynow_payments WHERE id_payment="' . pSQL($id_payment) . '" ORDER BY created_at DESC';
         return Db::getInstance()->getRow($sql);
     }
 

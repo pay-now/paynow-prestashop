@@ -21,15 +21,14 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         $this->display_column_left = false;
         parent::initContent();
 
-        $this->canBeRetried() ? $this->retryPayment() : $this->processPayment();
+        $this->isPaymentRetry() ? $this->retryPayment() : $this->processPayment();
     }
 
-    private function canBeRetried()
+    private function isPaymentRetry()
     {
-        $last_payment_status = $this->module->getLastPaymentStatusByOrderId((int)Tools::getValue('id_order'));
         return Tools::getValue('id_order') !== false &&
             Tools::getValue('order_reference') !== false &&
-            $last_payment_status['status'] !== \Paynow\Model\Payment\Status::STATUS_CONFIRMED;
+            $this->module->canOrderPaymentBeRetried((int)Tools::getValue('id_order'));
     }
 
     private function retryPayment()
@@ -48,7 +47,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         }
 
         $this->customerValidation($this->order->id_customer);
-        $this->makePayment();
+        $this->sendPaymentRequest();
     }
 
     public function postProcess()
@@ -61,7 +60,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             die($this->module->l('Paynow module isn\'t active.', 'payment'));
         }
 
-        if ($this->canBeRetried()) {
+        if ($this->isPaymentRetry()) {
             $this->retryPayment();
         } else {
             $this->cartValidation();
@@ -118,29 +117,32 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         );
         $this->order = new Order($this->module->currentOrder);
 
-        $this->makePayment();
+        $this->sendPaymentRequest();
     }
 
-    private function makePayment()
+    private function sendPaymentRequest()
     {
         try {
             $payment_client = new \Paynow\Service\Payment($this->module->api_client);
-            $payment = $payment_client->authorize($this->preparePaymentRequest($this->order));
+            $idempotency_key = uniqid($this->order->reference . '_');
+            $external_id = $this->order->reference;
+            $payment = $payment_client->authorize($this->preparePaymentRequest($this->order, $external_id), $idempotency_key);
             $this->module->storePaymentState(
                 $payment->paymentId,
                 $payment->status,
                 $this->order->id,
                 $this->order->id_cart,
-                $this->order->reference
+                $this->order->reference,
+                $external_id
             );
             Tools::redirect($payment->redirectUrl);
         } catch (\Paynow\Exception\PaynowException $e) {
             PaynowLogger::log($e->getMessage(), json_encode($e->getErrors()), $this->order->reference);
-            $this->showError();
+            $this->displayError();
         }
     }
 
-    private function preparePaymentRequest($order)
+    private function preparePaymentRequest($order, $external_id)
     {
         $currency = Currency::getCurrency($order->id_currency);
         $customer = new Customer((int)$order->id_customer);
@@ -148,7 +150,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         return [
             'amount' => $this->convertAmount($order->total_paid),
             'currency' => $currency['iso_code'],
-            'externalId' => $order->reference,
+            'externalId' => $external_id,
             'description' => $this->l('Order No: ', 'payment') . $order->reference,
             'buyer' => [
                 'email' => $customer->email
@@ -162,7 +164,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         return (int)round($value * 100);
     }
 
-    private function showError()
+    private function displayError()
     {
         $this->context->smarty->assign([
             'total_to_pay' => Tools::displayPrice($this->order->total_paid, (int)$this->order->id_currency),

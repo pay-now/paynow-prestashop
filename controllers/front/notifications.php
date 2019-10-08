@@ -69,21 +69,21 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                     case \Paynow\Model\Payment\Status::STATUS_PENDING:
                         break;
                     case \Paynow\Model\Payment\Status::STATUS_REJECTED:
-                        $history->changeIdOrderState(6, $order->id);
+                        $history->changeIdOrderState((int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'), $order->id);
                         $history->addWithemail(true);
                         break;
                     case \Paynow\Model\Payment\Status::STATUS_CONFIRMED:
-                        $history->changeIdOrderState(2, $order->id);
+                        $history->changeIdOrderState((int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'), $order->id);
                         $history->addWithemail(true);
                         $this->addPaymentIdToOrderPayments($order, $payment['id_payment']);
                         break;
                     case \Paynow\Model\Payment\Status::STATUS_ERROR:
-                        $history->changeIdOrderState(8, $order->id);
+                        $history->changeIdOrderState((int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'), $order->id);
                         $history->addWithemail(true);
                         break;
                 }
 
-                $this->module->storePaymentState($notification_data['paymentId'], $notification_data['status'], $payment['id_order'], $payment['id_cart'], $payment['order_reference'], (new DateTime($notification_data['modifiedAt']))->format('Y-m-d H:i:s'));
+                $this->module->storePaymentState($notification_data['paymentId'], $notification_data['status'], $payment['id_order'], $payment['id_cart'], $payment['order_reference'], $payment['external_id'], (new DateTime($notification_data['modifiedAt']))->format('Y-m-d H:i:s'));
             }
         }
     }
