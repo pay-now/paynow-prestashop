@@ -158,7 +158,8 @@ class Paynow extends PaymentModule
     public function createOrderInitialState()
     {
         $state_name = 'PAYNOW_ORDER_INITIAL_STATE';
-        if (!Configuration::get($state_name) || !Validate::isLoadedObject(new OrderState(Configuration::get($state_name)))) {
+        if (!Configuration::get($state_name) ||
+            !Validate::isLoadedObject(new OrderState(Configuration::get($state_name)))) {
             $order_state = new OrderState();
             $languages = Language::getLanguages(false);
             foreach ($languages as $language) {
@@ -186,8 +187,6 @@ class Paynow extends PaymentModule
 
             return $order_state->id;
         }
-
-        return;
     }
 
     public function hookHeader()
@@ -197,12 +196,16 @@ class Paynow extends PaymentModule
 
     public function getApiKey()
     {
-        return $this->isSandboxEnabled() ? Configuration::get('PAYNOW_SANDBOX_API_KEY') : Configuration::get('PAYNOW_PROD_API_KEY');
+        return $this->isSandboxEnabled() ?
+            Configuration::get('PAYNOW_SANDBOX_API_KEY') :
+                Configuration::get('PAYNOW_PROD_API_KEY');
     }
 
     public function getSignatureKey()
     {
-        return $this->isSandboxEnabled() ? Configuration::get('PAYNOW_SANDBOX_API_SIGNATURE_KEY') : Configuration::get('PAYNOW_PROD_API_SIGNATURE_KEY');
+        return $this->isSandboxEnabled() ?
+            Configuration::get('PAYNOW_SANDBOX_API_SIGNATURE_KEY') :
+                Configuration::get('PAYNOW_PROD_API_SIGNATURE_KEY');
     }
 
     public function isSandboxEnabled()
@@ -328,11 +331,26 @@ class Paynow extends PaymentModule
 
     private function postProcess()
     {
-        Configuration::updateValue('PAYNOW_PROD_API_KEY', Tools::getValue('PAYNOW_PROD_API_KEY'));
-        Configuration::updateValue('PAYNOW_PROD_API_SIGNATURE_KEY', Tools::getValue('PAYNOW_PROD_API_SIGNATURE_KEY'));
-        Configuration::updateValue('PAYNOW_SANDBOX_ENABLED', Tools::getValue('PAYNOW_SANDBOX_ENABLED'));
-        Configuration::updateValue('PAYNOW_SANDBOX_API_KEY', Tools::getValue('PAYNOW_SANDBOX_API_KEY'));
-        Configuration::updateValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY', Tools::getValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY'));
+        Configuration::updateValue(
+            'PAYNOW_PROD_API_KEY',
+            Tools::getValue('PAYNOW_PROD_API_KEY')
+        );
+        Configuration::updateValue(
+            'PAYNOW_PROD_API_SIGNATURE_KEY',
+            Tools::getValue('PAYNOW_PROD_API_SIGNATURE_KEY')
+        );
+        Configuration::updateValue(
+            'PAYNOW_SANDBOX_ENABLED',
+            Tools::getValue('PAYNOW_SANDBOX_ENABLED')
+        );
+        Configuration::updateValue(
+            'PAYNOW_SANDBOX_API_KEY',
+            Tools::getValue('PAYNOW_SANDBOX_API_KEY')
+        );
+        Configuration::updateValue(
+            'PAYNOW_SANDBOX_API_SIGNATURE_KEY',
+            Tools::getValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY')
+        );
 
         $this->sendShopUrlsConfiguration();
 
@@ -454,8 +472,9 @@ class Paynow extends PaymentModule
         $helper->title = $this->displayName;
         $helper->submit_action = 'submit' . $this->name;
         $helper->default_form_language = $lang->id;
-        $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
-        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
+        $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG', 0);
+        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&configure=' .
+            $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->tpl_vars = [
             'fields_value' => $this->getConfigFieldsValues(),
@@ -477,13 +496,31 @@ class Paynow extends PaymentModule
         ];
     }
 
-    public function storePaymentState($id_payment, $status, $id_order, $id_cart, $order_reference, $external_id, $modified_at = null)
-    {
+    public function storePaymentState(
+        $id_payment,
+        $status,
+        $id_order,
+        $id_cart,
+        $order_reference,
+        $external_id,
+        $modified_at = null
+    ) {
         $modified_at = !$modified_at ? 'NOW()' : '"' . $modified_at . '"';
 
         try {
-            $sql = 'INSERT INTO ' . _DB_PREFIX_ . 'paynow_payments (id_order, id_cart, id_payment, order_reference, external_id, status, created_at, modified_at) 
-            VALUES (' . (int)$id_order . ', ' . (int)$id_cart . ', "' . pSQL($id_payment) . '", "' . pSQL($order_reference) . '", "' . pSQL($external_id) . '", "' . pSQL($status) . '", NOW(), ' . $modified_at . ')';
+            $sql = '
+                INSERT INTO ' . _DB_PREFIX_ . 'paynow_payments 
+                    (id_order, id_cart, id_payment, order_reference, external_id, status, created_at, modified_at) 
+                VALUES (
+                    ' . (int)$id_order . ', 
+                    ' . (int)$id_cart . ', 
+                    "' . pSQL($id_payment) . '", 
+                    "' . pSQL($order_reference) . '", 
+                    "' . pSQL($external_id) . '", 
+                    "' . pSQL($status) . '", 
+                    NOW(), 
+                    ' . $modified_at . '
+                )';
             if (Db::getInstance()->execute($sql)) {
                 return (int)Db::getInstance()->Insert_ID();
             }
@@ -496,14 +533,18 @@ class Paynow extends PaymentModule
 
     public function getLastPaymentStatus($id_payment)
     {
-        $sql = 'SELECT id_order, id_cart, order_reference, status, id_payment, external_id FROM  ' . _DB_PREFIX_ . 'paynow_payments WHERE id_payment="' . pSQL($id_payment) . '" ORDER BY created_at DESC';
-        return Db::getInstance()->getRow($sql);
+        return Db::getInstance()->getRow('
+            SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
+            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
+            WHERE id_payment="' . pSQL($id_payment) . '" ORDER BY created_at DESC');
     }
 
     public function getLastPaymentStatusByOrderId($id_order)
     {
-        $sql = 'SELECT status FROM  ' . _DB_PREFIX_ . 'paynow_payments WHERE id_order="' . (int)$id_order . '" ORDER BY created_at DESC';
-        return Db::getInstance()->getRow($sql);
+        return Db::getInstance()->getRow('
+            SELECT status 
+            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
+            WHERE id_order="' . (int)$id_order . '" ORDER BY created_at DESC');
     }
 
     public function getOrderUrl($order)

@@ -44,17 +44,14 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
 
     private function getRequestHeaders()
     {
-        if (!function_exists('apache_request_headers')) {
-            $headers = [];
-            foreach ($_SERVER as $key => $value) {
-                if (Tools::substr($key, 0, 5) == 'HTTP_') {
-                    $subject = ucwords(str_replace('_', ' ', Tools::strtolower(Tools::substr($key, 5))));
-                    $headers[str_replace(' ', '-', $subject)] = $value;
-                }
+        $headers = [];
+        foreach ($_SERVER as $key => $value) {
+            if (Tools::substr($key, 0, 5) == 'HTTP_') {
+                $subject = str_replace('_', ' ', Tools::strtolower(Tools::substr($key, 5)));
+                $headers[str_replace(' ', '-', ucwords($subject))] = $value;
             }
-            return $headers;
         }
-        return apache_request_headers();
+        return $headers;
     }
 
     private function updateOrderState($payment, $notification_data)
@@ -69,21 +66,38 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                     case \Paynow\Model\Payment\Status::STATUS_PENDING:
                         break;
                     case \Paynow\Model\Payment\Status::STATUS_REJECTED:
-                        $history->changeIdOrderState((int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'), $order->id);
+                        $history->changeIdOrderState(
+                            (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
+                            $order->id
+                        );
                         $history->addWithemail(true);
                         break;
                     case \Paynow\Model\Payment\Status::STATUS_CONFIRMED:
-                        $history->changeIdOrderState((int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'), $order->id);
+                        $history->changeIdOrderState(
+                            (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'),
+                            $order->id
+                        );
                         $history->addWithemail(true);
                         $this->addPaymentIdToOrderPayments($order, $payment['id_payment']);
                         break;
                     case \Paynow\Model\Payment\Status::STATUS_ERROR:
-                        $history->changeIdOrderState((int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'), $order->id);
+                        $history->changeIdOrderState(
+                            (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
+                            $order->id
+                        );
                         $history->addWithemail(true);
                         break;
                 }
 
-                $this->module->storePaymentState($notification_data['paymentId'], $notification_data['status'], $payment['id_order'], $payment['id_cart'], $payment['order_reference'], $payment['external_id'], (new DateTime($notification_data['modifiedAt']))->format('Y-m-d H:i:s'));
+                $this->module->storePaymentState(
+                    $notification_data['paymentId'],
+                    $notification_data['status'],
+                    $payment['id_order'],
+                    $payment['id_cart'],
+                    $payment['order_reference'],
+                    $payment['external_id'],
+                    (new DateTime($notification_data['modifiedAt']))->format('Y-m-d H:i:s')
+                );
             }
         }
     }
@@ -91,8 +105,14 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
     private function isCorrectStatus($previous_status, $next_status)
     {
         $payment_status_flow = [
-            \Paynow\Model\Payment\Status::STATUS_NEW => [\Paynow\Model\Payment\Status::STATUS_PENDING, \Paynow\Model\Payment\Status::STATUS_ERROR],
-            \Paynow\Model\Payment\Status::STATUS_PENDING => [\Paynow\Model\Payment\Status::STATUS_CONFIRMED, \Paynow\Model\Payment\Status::STATUS_REJECTED],
+            \Paynow\Model\Payment\Status::STATUS_NEW => [
+                \Paynow\Model\Payment\Status::STATUS_PENDING,
+                \Paynow\Model\Payment\Status::STATUS_ERROR
+            ],
+            \Paynow\Model\Payment\Status::STATUS_PENDING => [
+                \Paynow\Model\Payment\Status::STATUS_CONFIRMED,
+                \Paynow\Model\Payment\Status::STATUS_REJECTED
+            ],
             \Paynow\Model\Payment\Status::STATUS_REJECTED => [\Paynow\Model\Payment\Status::STATUS_CONFIRMED],
             \Paynow\Model\Payment\Status::STATUS_CONFIRMED => [],
             \Paynow\Model\Payment\Status::STATUS_ERROR => []

@@ -126,7 +126,8 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             $payment_client = new \Paynow\Service\Payment($this->module->api_client);
             $idempotency_key = uniqid($this->order->reference . '_');
             $external_id = $this->order->reference;
-            $payment = $payment_client->authorize($this->preparePaymentRequest($this->order, $external_id), $idempotency_key);
+            $request = $this->preparePaymentRequest($this->order, $external_id);
+            $payment = $payment_client->authorize($request, $idempotency_key);
             $this->module->storePaymentState(
                 $payment->paymentId,
                 $payment->status,

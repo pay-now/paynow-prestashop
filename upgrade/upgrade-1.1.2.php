@@ -16,8 +16,11 @@ if (!defined('_PS_VERSION_')) {
 
 function upgrade_module_1_1_2($module)
 {
-    if (Db::getInstance()->executeS('SHOW COLUMNS FROM ' . _DB_PREFIX_ . 'paynow_payments LIKE "external_id"') == false) {
-        Db::getInstance()->execute('ALTER TABLE ' . _DB_PREFIX_ . 'paynow_payments ADD external_id VARCHAR(50) NOT NULL AFTER order_reference');
+    $query = 'SHOW COLUMNS FROM ' . _DB_PREFIX_ . 'paynow_payments LIKE "external_id"';
+    if (Db::getInstance()->executeS($query) == false) {
+        Db::getInstance()->execute('
+            ALTER TABLE ' . _DB_PREFIX_ . 'paynow_payments 
+            ADD external_id VARCHAR(50) NOT NULL AFTER order_reference');
     }
 
     return Configuration::updateValue('PAYNOW_ORDER_CONFIRMED_STATE', 2) &&
