@@ -2,7 +2,7 @@
 
 namespace Paynow\HttpClient;
 
-use GuzzleHttp\Message\ResponseInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class ApiResponse
 {
@@ -28,15 +28,22 @@ class ApiResponse
     protected $headers;
 
     /**
-     * ApiResponse constructor.
-     *
      * @param ResponseInterface $response
+     * @throws HttpClientException
      */
     public function __construct(ResponseInterface $response)
     {
         $this->body = $response->getBody();
         $this->status = $response->getStatusCode();
         $this->headers = $response->getHeaders();
+
+        if ($response->getStatusCode() >= 400) {
+            throw new HttpClientException(
+                'Error occurred during processing request',
+                $response->getStatusCode(),
+                $response->getBody()->getContents()
+            );
+        }
     }
 
     /**

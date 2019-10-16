@@ -31,7 +31,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.2';
+        $this->version = '1.1.3';
         $this->ps_versions_compliancy = array('min' => '1.6.0', 'max' => _PS_VERSION_);
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -51,12 +51,7 @@ class Paynow extends PaymentModule
         if (!$this->isConfigured()) {
             $this->warning = $this->l('API Keys must be configured before using this module.');
         } else {
-            $this->api_client = new \Paynow\Client(
-                $this->getApiKey(),
-                $this->getSignatureKey(),
-                $this->isSandboxEnabled() ? \Paynow\Environment::SANDBOX : \Paynow\Environment::PRODUCTION,
-                'Prestashop-' . _PS_VERSION_ . '/Plugin-' . $this->version
-            );
+            $this->initializeApiClient();
         }
 
         if (!count(Currency::checkPaymentCurrencies($this->id))) {
@@ -194,6 +189,16 @@ class Paynow extends PaymentModule
         $this->context->controller->addCSS(($this->_path) . 'views/css/front.css', 'all');
     }
 
+    private function initializeApiClient()
+    {
+        $this->api_client = new \Paynow\Client(
+            $this->getApiKey(),
+            $this->getSignatureKey(),
+            $this->isSandboxEnabled() ? \Paynow\Environment::SANDBOX : \Paynow\Environment::PRODUCTION,
+            'Prestashop-' . _PS_VERSION_ . '/Plugin-' . $this->version
+        );
+    }
+
     public function getApiKey()
     {
         return $this->isSandboxEnabled() ?
@@ -326,6 +331,12 @@ class Paynow extends PaymentModule
                     !Tools::getValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY'))) {
                 $this->postErrors[] = $this->l('Integration keys must be set');
             }
+
+            if ((int)Tools::getValue('PAYNOW_SANDBOX_ENABLED') == 0 &&
+                (!Tools::getValue('PAYNOW_PROD_API_KEY') ||
+                    !Tools::getValue('PAYNOW_PROD_API_SIGNATURE_KEY'))) {
+                $this->postErrors[] = $this->l('Integration keys must be set');
+            }
         }
     }
 
@@ -352,13 +363,16 @@ class Paynow extends PaymentModule
             Tools::getValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY')
         );
 
-        $this->sendShopUrlsConfiguration();
+        if ($this->isConfigured()) {
+            $this->sendShopUrlsConfiguration();
+        }
 
         $this->html .= $this->displayConfirmation($this->l('Configuration updated'));
     }
 
     private function sendShopUrlsConfiguration()
     {
+        $this->initializeApiClient();
         $shop_configuration = new \Paynow\Service\ShopConfiguration($this->api_client);
         try {
             $shop_configuration->changeUrls(

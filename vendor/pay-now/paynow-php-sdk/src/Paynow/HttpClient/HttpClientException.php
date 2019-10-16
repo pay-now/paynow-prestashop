@@ -4,11 +4,6 @@ namespace Paynow\HttpClient;
 
 use Exception;
 
-/**
- * Class HttpClientException
- *
- * @package Paynow\HttpClient
- */
 class HttpClientException extends Exception
 {
     /**
@@ -28,11 +23,12 @@ class HttpClientException extends Exception
 
     /**
      * HttpClientException constructor.
+     *
      * @param $message
      * @param $status
      * @param $body
      */
-    public function __construct($message, $status, $body)
+    public function __construct($message, $status = null, $body = null)
     {
         parent::__construct($message);
         $this->status = $status;
@@ -55,6 +51,9 @@ class HttpClientException extends Exception
         return $this->status;
     }
 
+    /**
+     * @return array
+     */
     public function getErrors()
     {
         return $this->errors;

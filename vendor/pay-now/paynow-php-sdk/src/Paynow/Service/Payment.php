@@ -3,16 +3,10 @@
 namespace Paynow\Service;
 
 use Paynow\Configuration;
-use Paynow\Exception\ConfigurationException;
 use Paynow\Exception\PaynowException;
 use Paynow\HttpClient\ApiResponse;
 use Paynow\HttpClient\HttpClientException;
 
-/**
- * Class Payment
- *
- * @package Paynow\Service
- */
 class Payment extends Service
 {
     /**
@@ -20,9 +14,8 @@ class Payment extends Service
      *
      * @param array $data
      * @param string $idempotencyKey
-     * @return mixed
      * @throws PaynowException
-     * @throws ConfigurationException
+     * @return ApiResponse
      */
     public function authorize(array $data, $idempotencyKey = null)
     {
@@ -30,7 +23,7 @@ class Payment extends Service
             return $this->getClient()
                 ->getHttpClient()
                 ->post(
-                    Configuration::API_VERSION . '/payments',
+                    Configuration::API_VERSION.'/payments',
                     $data,
                     $idempotencyKey ? $idempotencyKey : $data['externalId']
                 )
@@ -46,15 +39,15 @@ class Payment extends Service
 
     /**
      * @param string $paymentId
-     * @return ApiResponse
      * @throws PaynowException
+     * @return ApiResponse
      */
     public function status($paymentId)
     {
         try {
             return $this->getClient()
                 ->getHttpClient()
-                ->get(Configuration::API_VERSION . "/payments/$paymentId/status")
+                ->get(Configuration::API_VERSION."/payments/$paymentId/status")
                 ->decode();
         } catch (HttpClientException $exception) {
             throw new PaynowException(

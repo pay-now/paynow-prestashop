@@ -2,11 +2,6 @@
 
 namespace Paynow\Exception;
 
-/**
- * Class Error
- *
- * @package Paynow\Exception
- */
 class Error
 {
     /**

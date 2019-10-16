@@ -25,8 +25,8 @@ class TestCase extends BaseTestCase
 
     public function loadData($fileName, $asString = false)
     {
-        $filePath = dirname(__FILE__) . '/resources/' . $fileName;
-        if (!$asString) {
+        $filePath = dirname(__FILE__).'/resources/'.$fileName;
+        if (! $asString) {
             return json_decode(file_get_contents($filePath), true);
         } else {
             return file_get_contents($filePath);

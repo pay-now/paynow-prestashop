@@ -10,13 +10,12 @@
   ],
   "require": {
     "php": ">=5.4.0",
-    "guzzlehttp/guzzle": "^5.3",
-    "pay-now/paynow-php-sdk": "^1.0.1",
+    "pay-now/paynow-php-sdk": "^1.0.2",
     "ext-json": "*"
   },
   "config": {
-    "preferred-install": "dist",
-    "prepend-autoloader": false
+    "prepend-autoloader": false,
+    "optimize-autoloader": true
   },
   "type": "prestashop-module",
   "minimum-stability": "stable"

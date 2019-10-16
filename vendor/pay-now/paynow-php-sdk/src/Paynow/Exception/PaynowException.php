@@ -4,16 +4,11 @@ namespace Paynow\Exception;
 
 use Exception;
 
-/**
- * Class PaynowException
- *
- * @package Paynow\Exception
- */
 class PaynowException extends Exception
 {
     private $errors;
 
-    public function __construct($message = "", $code = 0, $body = null)
+    public function __construct($message = '', $code = 0, $body = null)
     {
         parent::__construct($message, $code, null);
 
