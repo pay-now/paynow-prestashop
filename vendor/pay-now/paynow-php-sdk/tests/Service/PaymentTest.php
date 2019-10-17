@@ -36,13 +36,13 @@ class PaymentTest extends TestCase
 
         // when
         try {
-            $paymentService->authorize($paymentData, 'idempotencyKey123');
+            $response = $paymentService->authorize($paymentData, 'idempotencyKey123');
         } catch (PaynowException $exception) {
             // then
             $this->assertEquals(400, $exception->getCode());
-            $this->assertEquals("VALIDATION_ERROR", $exception->getErrors()[0]->errorType);
+            $this->assertEquals('VALIDATION_ERROR', $exception->getErrors()[0]->errorType);
             $this->assertEquals(
-                "currency: invalid field value (EUR)",
+                'currency: invalid field value (EUR)',
                 $exception->getErrors()[0]->message
             );
         }
@@ -78,9 +78,9 @@ class PaymentTest extends TestCase
         } catch (PaynowException $exception) {
             // then
             $this->assertEquals(404, $exception->getCode());
-            $this->assertEquals("NOT_FOUND", $exception->getErrors()[0]->errorType);
+            $this->assertEquals('NOT_FOUND', $exception->getErrors()[0]->errorType);
             $this->assertEquals(
-                "Could not find status for payment {paymentId=PBYV-3AZ-UPW-DPCf}",
+                'Could not find status for payment {paymentId=PBYV-3AZ-UPW-DPCf}',
                 $exception->getErrors()[0]->message
             );
         }

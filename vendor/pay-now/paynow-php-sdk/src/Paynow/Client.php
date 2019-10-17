@@ -11,8 +11,6 @@ class Client
     private $httpClient;
 
     /**
-     * Client constructor.
-     *
      * @param $apiKey
      * @param $apiSignatureKey
      * @param $environment

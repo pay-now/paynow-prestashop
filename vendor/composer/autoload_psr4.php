@@ -6,12 +6,14 @@ $vendorDir = dirname(dirname(__FILE__));
 $baseDir = dirname($vendorDir);
 
 return array(
-    'React\\Promise\\' => array($vendorDir . '/react/promise/src'),
-    'Psr\\Log\\' => array($vendorDir . '/psr/log/Psr/Log'),
+    'Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-message/src'),
     'Paynow\\Tests\\' => array($vendorDir . '/pay-now/paynow-php-sdk/tests'),
     'Paynow\\' => array($vendorDir . '/pay-now/paynow-php-sdk/src/Paynow'),
-    'Monolog\\' => array($vendorDir . '/monolog/monolog/src/Monolog'),
-    'GuzzleHttp\\Stream\\' => array($vendorDir . '/guzzlehttp/streams/src'),
-    'GuzzleHttp\\Ring\\' => array($vendorDir . '/guzzlehttp/ringphp/src'),
-    'GuzzleHttp\\' => array($vendorDir . '/guzzlehttp/guzzle/src'),
+    'Http\\Promise\\' => array($vendorDir . '/php-http/promise/src'),
+    'Http\\Message\\' => array($vendorDir . '/php-http/message/src', $vendorDir . '/php-http/message-factory/src'),
+    'Http\\Discovery\\' => array($vendorDir . '/php-http/discovery/src'),
+    'Http\\Client\\Curl\\' => array($vendorDir . '/php-http/curl-client/src'),
+    'Http\\Client\\' => array($vendorDir . '/php-http/httplug/src'),
+    'GuzzleHttp\\Psr7\\' => array($vendorDir . '/guzzlehttp/psr7/src'),
+    'Clue\\StreamFilter\\' => array($vendorDir . '/clue/stream-filter/src'),
 );

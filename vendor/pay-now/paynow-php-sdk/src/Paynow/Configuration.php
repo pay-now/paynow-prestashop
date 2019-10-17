@@ -2,28 +2,23 @@
 
 namespace Paynow;
 
-/**
- * Class Configuration
- *
- * @package Paynow
- */
 class Configuration implements ConfigurationInterface
 {
-    const API_VERSION = "v1";
-    const API_PRODUCTION_URL = "https://api.paynow.pl";
-    const API_SANDBOX_URL = "https://api.sandbox.paynow.pl";
-    const USER_AGENT = "paynow-php-sdk";
+    const API_VERSION = 'v1';
+    const API_PRODUCTION_URL = 'https://api.paynow.pl/';
+    const API_SANDBOX_URL = 'https://api.sandbox.paynow.pl/';
+    const USER_AGENT = 'paynow-php-sdk';
 
     /**
      * @var array
      */
-    protected $data = array();
+    protected $data = [];
 
     /**
      * Set a key value pair
      *
-     * @param string $key Key to set
-     * @param mixed $value Value to set
+     * @param string $key   Key to set
+     * @param mixed  $value Value to set
      */
     private function set($key, $value)
     {
@@ -31,10 +26,9 @@ class Configuration implements ConfigurationInterface
     }
 
     /**
-     * Get a specific key value.
+     * Get a specific key value
      *
-     * @param string $key Key to retrieve.
-     *
+     * @param string $key key to retrieve
      * @return mixed|null Value of the key or NULL
      */
     private function get($key)
@@ -109,7 +103,7 @@ class Configuration implements ConfigurationInterface
      */
     public function setEnvironment($environment)
     {
-        if ($environment === Environment::PRODUCTION) {
+        if (Environment::PRODUCTION === $environment) {
             $this->set('environment', Environment::PRODUCTION);
             $this->set('url', self::API_PRODUCTION_URL);
         } else {

@@ -2,10 +2,13 @@
 
 namespace Paynow\HttpClient;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
+use Http\Client\Curl\Client;
+use Http\Client\Exception\RequestException;
+use Http\Message\MessageFactory\GuzzleMessageFactory;
+use Http\Message\StreamFactory\GuzzleStreamFactory;
 use Paynow\Configuration;
 use Paynow\Util\SignatureCalculator;
+use Psr\Http\Message\RequestInterface;
 
 class HttpClient implements HttpClientInterface
 {
@@ -14,33 +17,24 @@ class HttpClient implements HttpClientInterface
      */
     protected $client;
 
+    protected $messageFactory;
+
     /**
      * @var Configuration
      */
     protected $config;
 
     /**
-     * HttpClient constructor.
-     *
      * @param Configuration $config
      */
     public function __construct(Configuration $config)
     {
         $this->config = $config;
-        $this->client = new Client(
-            [
-                'base_url' => $this->config->getUrl(),
-                'timeout' => 10.0,
-                'defaults' => [
-                    'headers' => [
-                        'Api-Key' => $this->config->getApiKey(),
-                        'User-Agent' => $this->getUserAgent(),
-                        'Accept' => 'application/json',
-                        'Content-Type' => 'application/json'
-                    ]
-                ]
-            ]
-        );
+        $options = [
+            CURLOPT_CONNECTTIMEOUT => 10,
+        ];
+        $this->messageFactory = new GuzzleMessageFactory();
+        $this->client = new Client($this->messageFactory, new GuzzleStreamFactory(), $options);
     }
 
     /**
@@ -49,85 +43,106 @@ class HttpClient implements HttpClientInterface
     private function getUserAgent()
     {
         if ($this->config->getApplicationName()) {
-            return $this->config->getApplicationName() . ' (' . Configuration::USER_AGENT . ')';
+            return $this->config->getApplicationName().' ('.Configuration::USER_AGENT.')';
         }
+
         return Configuration::USER_AGENT;
     }
 
     /**
-     * @param $url
-     * @param array $data
-     * @param null $idempotencyKey
-     * @return ApiResponse
+     * @param RequestInterface $request
      * @throws HttpClientException
+     * @return ApiResponse
      */
-    public function post($url, array $data, $idempotencyKey = null)
+    private function send(RequestInterface $request)
     {
-        $options = $this->defaultOptions($data);
-
-        if ($idempotencyKey) {
-            $options['headers']['Idempotency-Key'] = $idempotencyKey;
-        }
-
         try {
-            return new ApiResponse($this->client->post($url, $options));
-        } catch (RequestException $e) {
-            throw new HttpClientException(
-                "Error occurred during processing request",
-                $e->getResponse()->getStatusCode(),
-                $e->getResponse()->getBody()->getContents()
-            );
+            return new ApiResponse($this->client->sendRequest($request));
+        } catch (RequestException $exception) {
+            throw new HttpClientException($exception->getMessage());
         }
     }
 
     /**
      * @param $url
      * @param array $data
-     * @return ApiResponse
+     * @param null  $idempotencyKey
      * @throws HttpClientException
+     * @return ApiResponse
+     */
+    public function post($url, array $data, $idempotencyKey = null)
+    {
+        $headers = $this->prepareHeaders($data);
+
+        if ($idempotencyKey) {
+            $headers['Idempotency-Key'] = $idempotencyKey;
+        }
+
+        $request = $this->messageFactory->createRequest(
+            'POST',
+            $this->config->getUrl().$url,
+            $headers,
+            $this->prepareData($data)
+        );
+
+        try {
+            return $this->send($request);
+        } catch (RequestException $exception) {
+            throw new HttpClientException($exception->getMessage());
+        }
+    }
+
+    /**
+     * @param $url
+     * @param array $data
+     * @throws HttpClientException
+     * @return ApiResponse
      */
     public function patch($url, array $data)
     {
-        try {
-            return new ApiResponse($this->client->patch($url, $this->defaultOptions($data)));
-        } catch (RequestException $e) {
-            throw new HttpClientException(
-                "Error occurred during processing request",
-                $e->getResponse()->getStatusCode(),
-                $e->getResponse()->getBody()->getContents()
-            );
-        }
+        $headers = $this->prepareHeaders($data);
+        $request = $this->messageFactory->createRequest(
+            'PATCH',
+            $this->config->getUrl().$url,
+            $headers,
+            $this->prepareData($data)
+        );
+
+        return $this->send($request);
     }
 
     /**
      * @param  $url
-     * @return ApiResponse
      * @throws HttpClientException
+     * @return ApiResponse
      */
     public function get($url)
     {
-        try {
-            return new ApiResponse($this->client->get($url));
-        } catch (RequestException $e) {
-            throw new HttpClientException(
-                "Error occurred during processing request",
-                $e->getResponse()->getStatusCode(),
-                $e->getResponse()->getBody()->getContents()
-            );
-        }
+        $request = $this->messageFactory->createRequest(
+            'GET',
+            $this->config->getUrl().$url
+        );
+
+        return $this->send($request);
+    }
+
+    private function prepareData(array $data)
+    {
+        return json_encode($data);
     }
 
     /**
      * @param array $data
      * @return array
      */
-    private function defaultOptions(array $data)
+    private function prepareHeaders(array $data)
     {
         return [
-            'json' => $data,
-            'headers' => [
-                'Signature' => (string)new SignatureCalculator($this->config->getSignatureKey(), $data)
-            ]
+            'Api-Key' => $this->config->getApiKey(),
+            'User-Agent' => $this->getUserAgent(),
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+            'Signature' => (string) new SignatureCalculator($this->config->getSignatureKey(), $data),
         ];
     }
 }
