@@ -21,16 +21,15 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         $notification_data = json_decode($payload, true);
         PaynowLogger::log('Incoming notification', $payload, $notification_data['paymentId']);
 
-        $payment = $this->module->getLastPaymentStatus($notification_data['paymentId']);
-
-        if (!$payment) {
-            PaynowLogger::log('Order for payment not exists', $payload, $notification_data['paymentId']);
-            header('HTTP/1.1 400 Bad Request', true, 400);
-            exit;
-        }
-
         try {
             new \Paynow\Notification($this->module->getSignatureKey(), $payload, $headers);
+            $payment = $this->module->getLastPaymentStatus($notification_data['paymentId']);
+
+            if (!$payment) {
+                PaynowLogger::log('Order for payment not exists', $payload, $notification_data['paymentId']);
+                header('HTTP/1.1 400 Bad Request', true, 400);
+                exit;
+            }
         } catch (\Exception $exception) {
             PaynowLogger::log($exception->getMessage(), $payload, $notification_data['paymentId']);
             header('HTTP/1.1 400 Bad Request', true, 400);
