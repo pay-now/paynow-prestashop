@@ -1,27 +1,35 @@
-# Paynow PrestaShop Plugin
+[**English version**][ext0]
+# Wtyczka Paynow dla PrestaShop 
 
-This plugin supports PrestaShop 1.6.0 and higher.
+Wtyczka wspiera PrestaShop w wersji 1.6.0 lub wyższej.
 
-To access Paynow API please contact our support at kontakt@paynow.pl.
+Aby uzyskać dostęp do API Paynow skontaktuj się z nami: kontakt@paynow.pl.
 
-## Installation
-1. Download plugin from Github repository to local directory as zip.
-2. Unzip locally downloaded file
-3. Create zip archive of paynow.zip
-4. Go to the PrestaShop administration page
-5. Go to `Modules`
-6. Use `Install module` option and point the archive containing the plugin (created in step 3)
-7. Load the plugin
+## Instalacja
+1. Pobierz wtyczkę z [repozytorium Github][ext1] i zapisz plik .zip na dysku swojego komputera
+2. Rozpakuj pobrane archiwum
+3. Zmień nazwę rozpakowanego folderu na `paynow` 
+4. Z folderu `paynow` utwórz archiwum paynow.zip
+5. Przejdź do panelu administracyjnego PrestaShop
+6. Przejdź do zakładki `Moduły > Module Manager`
+7. Wybierz opcję `Załaduj moduł` i wskaż archiwum zawierające wtyczkę (utworzone w kroku 3)
+8. Załaduj wtyczkę
 
-## Configuration
-1. Go to the PrestaShop administration page
-2. Go to `Modules > Module manager`
-3. Search and select `Paynow` and click `Configure`
-4. Credential Keys can be found in `Settings > Shopes and poses > Authentication data` in Paynow merchant panel
-5. Type `Api-Key` and `Signature-Key` in proper fields
+## Konfiguracja
+1. Przejdź do panelu administracyjnego PrestaShop
+2. Przejdź do zakładki `Moduły > Module Manager`
+3. Wyszukaj `Paynow` i wybierz opcję `Konfiguruj`
+4. Klucze dostępu znajdziesz w `Ustawienia > Sklepy i punkty płatności > Dane uwierzytelniające` w panelu sprzedawcy Paynow
+5. W zależności od środowiska, z którym chesz się połaczyć w sekcji `Konfiguracja środowiska produkcyjnego` lub `Konfiguracja środowiska testowego` wpisz `Klucz API` i `Klucz podpisu` 
 
-## Support
-If you have any questions or issues, please contact our support on kontakt@paynow.pl.
+## Wsparcie
+Jeśli masz jakiekolwiek pytania lub problemy, skontaktuj się z naszym wsparciem technicznym: support@paynow.pl.
 
-## License
-MIT license. For more information, see the LICENSE file.
+## Więcej informacji
+Jeśli chciałbyś dowiedzieć się więcej o bramce płatności Paynow odwiedź naszą stronę: https://www.paynow.pl/
+
+## Licencja
+Licencja MIT. Szczegółowe informacje znajdziesz w pliku LICENSE.
+
+[ext0]: README.EN.md
+[ext1]: https://github.com/pay-now/paynow-prestashop/releases/latest
