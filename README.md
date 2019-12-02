@@ -6,13 +6,14 @@ Wtyczka wspiera PrestaShop w wersji 1.6.0 lub wyższej.
 Aby uzyskać dostęp do API Paynow skontaktuj się z nami: kontakt@paynow.pl.
 
 ## Instalacja
-1. Pobierz wtyczkę z [repozytorium Github][ext1] i zapisz plik .zip na dysku swojego komputera.
-2. Rozpakuj pobrane archiwum.
-3. Zmień nazwę rozpakowanego folderu na `paynow`, a następnie utwórz z niego archiwum paynow.zip
-4. Przejdź do panelu administracyjnego PrestaShop
-5. Przejdź do zakładki `Moduły > Module Manager`
-6. Wybierz opcję `Załaduj moduł` i wskaż archiwum zawierające wtyczkę (utworzone w kroku 3)
-
+1. Pobierz wtyczkę z [repozytorium Github][ext1] i zapisz plik .zip na dysku swojego komputera
+2. Rozpakuj pobrane archiwum
+3. Zmień nazwę rozpakowanego folderu na `paynow` 
+4. Z folderu `paynow` utwórz archiwum paynow.zip
+5. Przejdź do panelu administracyjnego PrestaShop
+6. Przejdź do zakładki `Moduły > Module Manager`
+7. Wybierz opcję `Załaduj moduł` i wskaż archiwum zawierające wtyczkę (utworzone w kroku 3)
+8. Załaduj wtyczkę
 
 ## Konfiguracja
 1. Przejdź do panelu administracyjnego PrestaShop
@@ -30,8 +31,5 @@ Jeśli chciałbyś dowiedzieć się więcej o bramce płatności Paynow odwied�
 ## Licencja
 Licencja MIT. Szczegółowe informacje znajdziesz w pliku LICENSE.
 
-<!--LINKS-->
-
-<!--external links:-->
 [ext0]: README.EN.md
 [ext1]: https://github.com/pay-now/paynow-prestashop/releases/latest
