@@ -74,10 +74,18 @@ class Notification
      */
     private function getPayloadSignature(array $headers)
     {
-        if (! isset($headers['Signature']) || ! $headers['Signature']) {
+        if (isset($headers['Signature']) && $headers['Signature']) {
+            $signature = $headers['Signature'];
+        }
+
+        if (isset($headers['signature']) && $headers['signature']) {
+            $signature = $headers['signature'];
+        }
+
+        if (empty($signature)) {
             throw new SignatureVerificationException('No signature was found for payload');
         }
 
-        return $headers['Signature'];
+        return $signature;
     }
 }

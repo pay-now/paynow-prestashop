@@ -126,6 +126,10 @@ class HttpClient implements HttpClientInterface
         return $this->send($request);
     }
 
+    /**
+     * @param array $data
+     * @return string
+     */
     private function prepareData(array $data)
     {
         return json_encode($data);
