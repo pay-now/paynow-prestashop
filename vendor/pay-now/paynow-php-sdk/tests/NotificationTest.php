@@ -6,17 +6,33 @@ use Paynow\Notification;
 
 class NotificationTest extends TestCase
 {
-    public function testVerifyPayloadSuccessfully()
+    /**
+     * @dataProvider requestsToTest
+     */
+    public function testVerifyPayloadSuccessfully($payload, $headers)
     {
         // given
-        $payload = $this->loadData('notification.json', true);
-        $headers = ['Signature' => 'UZgTT6iSv174R/OyQ2DWRCE9UCmvdXDS8rbQQcjk+AA='];
 
         // when
         new Notification('s3ecret-k3y', $payload, $headers);
 
         // then
         $this->assertTrue(true);
+    }
+
+    public function requestsToTest()
+    {
+        $payload = $this->loadData('notification.json', true);
+        return [
+            [
+                $payload,
+                ['Signature' => 'UZgTT6iSv174R/OyQ2DWRCE9UCmvdXDS8rbQQcjk+AA=']
+            ],
+            [
+                $payload,
+                ['signature' => 'UZgTT6iSv174R/OyQ2DWRCE9UCmvdXDS8rbQQcjk+AA=']
+            ]
+        ];
     }
 
     /**

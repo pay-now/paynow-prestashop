@@ -12,7 +12,7 @@ class TestCase extends BaseTestCase
 
     protected $client;
 
-    public function setUp()
+    public function __construct($name = null, array $data = [], $dataName = '')
     {
         $this->client = new Client(
             'TestApiKey',
@@ -21,6 +21,7 @@ class TestCase extends BaseTestCase
             'PHPUnitTests'
         );
         $this->testHttpClient = new TestHttpClient($this->client->getConfiguration());
+        parent::__construct($name, $data, $dataName);
     }
 
     public function loadData($fileName, $asString = false)
