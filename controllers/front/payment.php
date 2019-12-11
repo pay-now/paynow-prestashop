@@ -152,7 +152,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             'amount' => $this->convertAmount($order->total_paid),
             'currency' => $currency['iso_code'],
             'externalId' => $external_id,
-            'description' => $this->l('Order No: ', 'payment') . $order->reference,
+            'description' => $this->module->l('Order No: ', 'payment') . $order->reference,
             'buyer' => [
                 'email' => $customer->email
             ],
