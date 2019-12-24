@@ -22,6 +22,9 @@ To access Paynow API, please contact us at kontakt@paynow.pl.
 4. Credential Keys can be found in `Settings > Shops and poses > Authentication data` in Paynow merchant panel
 5. Depending on the environment you want to connect with go to section `Production configuration` or `Sandbox configuration` and type `Api-Key` and `Signature-Key` in proper fields
 
+## Sandbox
+To be able to test our Paynow Sandbox environment register [here][ext2]
+
 ## Support
 If you have any questions or issues, please contact our support at support@paynow.pl.
 
@@ -33,3 +36,4 @@ MIT license. For more information, see the LICENSE file.
 
 [ext0]: README.md
 [ext1]: https://github.com/pay-now/paynow-prestashop/releases/latest
+[ext2]: https://panel.sandbox.paynow.pl/
