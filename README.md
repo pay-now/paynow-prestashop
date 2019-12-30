@@ -36,4 +36,4 @@ Licencja MIT. Szczegółowe informacje znajdziesz w pliku LICENSE.
 
 [ext0]: README.EN.md
 [ext1]: https://github.com/pay-now/paynow-prestashop/releases/latest
-[ext2]: https://panel.sandbox.paynow.pl/
+[ext2]: https://panel.sandbox.paynow.pl/auth/register
