@@ -1,7 +1,7 @@
 [**English version**][ext0]
 # Wtyczka Paynow dla PrestaShop 
 
-Wtyczka Paynow dodaje szybkie płatności i płatności BLIK do sklepu WooCommerce.
+Wtyczka Paynow dodaje szybkie płatności i płatności BLIK do sklepu PrestaShop.
 
 Wtyczka wspiera PrestaShop w wersji 1.6.0 lub wyższej.
 

@@ -1,7 +1,7 @@
 [**Wersja polska**][ext0]
 # Paynow PrestaShop Plugin
 
-Paynow plugin adds quick bank transfers and Blik payment to a WooCommerce shop.
+Paynow plugin adds quick bank transfers and Blik payment to PrestaShop.
 
 This plugin supports PrestaShop 1.6.0 and higher.
 
