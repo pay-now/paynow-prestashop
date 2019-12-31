@@ -1,7 +1,7 @@
 [**Wersja polska**][ext0]
 # Paynow PrestaShop Plugin
 
-Paynow plugin adds quick bank transfers and BLIK payment to PrestaShop.
+The Paynow plugin adds quick bank transfers and BLIK payments to PrestaShop.
 
 This plugin supports PrestaShop 1.6.0 and higher.
 
@@ -15,7 +15,7 @@ This plugin supports PrestaShop 1.6.0 and higher.
 * [License](#license)
 
 ## Installation
-1. Download the plugin from [Github repository][ext1] to the local directory as zip file
+1. Download the plugin from the [Github repository][ext1] to a local directory as a zip file
 2. Unzip the locally downloaded file
 3. Rename the unzipped folder to `paynow`
 4. Create a zip archive of that folder named paynow.zip
@@ -37,21 +37,21 @@ This plugin supports PrestaShop 1.6.0 and higher.
 
 ![Configuration step 3][ext5]
 
-4. Credential Keys can be found in `Settings > Shops and poses > Authentication data` in Paynow merchant panel
+4. Credential Keys can be found in `Settings > Shops and poses > Authentication data` in the Paynow merchant panel
 
 ![Configuration step 4][ext6]
 
-5. Depending on the environment you want to connect with go to section `Production configuration` or `Sandbox configuration` and type `Api-Key` and `Signature-Key` in proper fields
+5. Depending on the environment you want to connect to, go to the `Production configuration` or the `Sandbox configuration` section and type `Api-Key` and `Signature-Key` in the proper fields
 
 ![Configuration step 5][ext7]
 
 ## Sandbox
-To be able to test our Paynow Sandbox environment register [here][ext2]
+To be able to test our Paynow Sandbox environment, register [here][ext2].
 
 ## Support
 If you have any questions or issues, please contact our support at support@paynow.pl.
 
-If you wish to learn more about Paynow visit our website: https://www.paynow.pl/
+If you wish to learn more about Paynow, visit our website: https://www.paynow.pl/.
 
 ## License
 MIT license. For more information, see the LICENSE file.
