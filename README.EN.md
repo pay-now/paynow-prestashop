@@ -41,7 +41,7 @@ This plugin supports PrestaShop 1.6.0 and higher.
 
 ![Configuration step 4][ext6]
 
-5. Depending on the environment you want to connect to, go to the `Production configuration` or the `Sandbox configuration` section and type `Api-Key` and `Signature-Key` in the proper fields
+5. Depending on the environment you want to connect to, go to the `Production configuration` or the `Sandbox configuration` section and type `Api Key` and `API Signature Key` in the proper fields
 
 ![Configuration step 5][ext7]
 
