@@ -5,6 +5,15 @@ Paynow plugin adds quick bank transfers and BLIK payment to PrestaShop.
 
 This plugin supports PrestaShop 1.6.0 and higher.
 
+## Table of Contents
+
+* [Installation](#installation)
+* [Configuration](#configuration)
+* [FAQ](#FAQ)
+* [Sandbox](#sandbox)
+* [Support](#support)
+* [License](#license)
+
 ## Installation
 1. Download the plugin from [Github repository][ext1] to the local directory as zip file
 2. Unzip the locally downloaded file
@@ -42,7 +51,6 @@ To be able to test our Paynow Sandbox environment register [here][ext2]
 ## Support
 If you have any questions or issues, please contact our support at support@paynow.pl.
 
-## More info
 If you wish to learn more about Paynow visit our website: https://www.paynow.pl/
 
 ## License
