@@ -50,7 +50,7 @@ W celu przetestowania działania bramki Paynow zapraszamy do skorzystania z nasz
 ## Wsparcie
 Jeśli masz jakiekolwiek pytania lub problemy, skontaktuj się z naszym wsparciem technicznym: support@paynow.pl.
 
-Jeśli chciałbyś dowiedzieć się więcej o bramce płatności Paynow odwiedź naszą stronę: https://www.paynow.pl/
+Jeśli chciałbyś dowiedzieć się więcej o bramce płatności Paynow odwiedź naszą stronę: https://www.paynow.pl/.
 
 ## Licencja
 Licencja MIT. Szczegółowe informacje znajdziesz w pliku LICENSE.
