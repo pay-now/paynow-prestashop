@@ -1,6 +1,6 @@
 script: skip
 before_deploy:
-  - rsync -a --exclude '*.md' --exclude '.gitignore' ./* paynow
+  - rsync -a --exclude={'*.md','.gitignore',instruction} ./* paynow
   - zip -r paynow.zip ./paynow
 deploy:
   provider: releases
