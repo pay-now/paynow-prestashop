@@ -15,20 +15,17 @@ This plugin supports PrestaShop 1.6.0 and higher.
 * [License](#license)
 
 ## Installation
-1. Download the plugin from the [Github repository][ext1] to a local directory as a zip file
-2. Unzip the locally downloaded file
-3. Rename the unzipped folder to `paynow`
-4. Create a zip archive of that folder named paynow.zip
-5. Go to the PrestaShop administration page
-6. Go to `Modules > Module Manager`
+1. Download the paynow.zip file from [Github repository] [ext1] and save to your computer
+2. Go to the PrestaShop administration page
+3. Go to `Modules > Module Manager`
 
 ![Installation step 6][ext3]
 
-7. Use the `Upload a module` option in the top right corner and point to the archive containing the plugin (created in step 3)
+4. Use the `Upload a module` option in the top right corner and point to the archive containing the plugin (created in step 3)
 
 ![Installation step 7][ext4]
 
-8. Upload the plugin
+5. Upload the plugin
 
 ## Configuration
 1. Go to the PrestaShop administration page
