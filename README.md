@@ -14,13 +14,16 @@ Wtyczka wspiera PrestaShop w wersji 1.6.0 lub wyższej.
 * [Licencja](#licencja)
 
 ## Instalacja
+
+Zobacz również [filmik instruktażowy][ext8].
+
 1. Pobierz plik paynow.zip z [repozytorium Github][ext1] i zapisz na dysku swojego komputera
 2. Przejdź do panelu administracyjnego PrestaShop
 3. Przejdź do zakładki `Moduły > Module Manager`
 
 ![Instalacja krok 6][ext3]
 
-4. Wybierz opcję `Załaduj moduł` i wskaż archiwum zawierające wtyczkę (utworzone w kroku 3)
+4. Wybierz opcję `Załaduj moduł` i wskaż archiwum zawierające wtyczkę (pobrane w kroku 1)
 
 ![Instalacja krok 7][ext4]
 
@@ -60,3 +63,4 @@ Licencja MIT. Szczegółowe informacje znajdziesz w pliku LICENSE.
 [ext5]: instruction/step3.png
 [ext6]: instruction/step4.png
 [ext7]: instruction/step5.png
+[ext8]: https://paynow.wistia.com/medias/nym9wdwdwl
