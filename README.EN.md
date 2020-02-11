@@ -37,6 +37,14 @@ See also [the instructional video][ext8].
 
 ![Configuration step 3][ext5]
 
+4. Credential Keys can be found in `Settings > Shops and poses > Authentication data` in the Paynow merchant panel
+
+![Configuration step 4][ext6]
+
+5. Depending on the environment you want to connect to, go to the `Production configuration` or the `Sandbox configuration` section and type `Api Key` and `API Signature Key` in the proper fields
+
+![Configuration step 5][ext7]
+
 ## FAQ
 **How to configure the return address?**
 
@@ -47,14 +55,6 @@ The return address will be set automatically for each order. There is no need to
 In the Paynow merchant panel go to the tab `Settings > Shops and poses`, in the field `Notification address` set the address: `https://twoja-domena.pl/module/paynow/notifications`.
 
 ![Configuration of the notifiction address][ext9]
-
-4. Credential Keys can be found in `Settings > Shops and poses > Authentication data` in the Paynow merchant panel
-
-![Configuration step 4][ext6]
-
-5. Depending on the environment you want to connect to, go to the `Production configuration` or the `Sandbox configuration` section and type `Api Key` and `API Signature Key` in the proper fields
-
-![Configuration step 5][ext7]
 
 ## Sandbox
 To be able to test our Paynow Sandbox environment, register [here][ext2].
