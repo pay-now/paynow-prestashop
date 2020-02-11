@@ -40,9 +40,21 @@ Zobacz również [filmik instruktażowy][ext8].
 
 ![Konfiguracja krok 4][ext6]
 
-5. W zależności od środowiska, z którym chesz się połaczyć w sekcji `Konfiguracja środowiska produkcyjnego` lub `Konfiguracja środowiska testowego` wpisz `Klucz API` i `Klucz podpisu` 
+5. W zależności od środowiska, z którym chcesz się połączyć w sekcji `Konfiguracja środowiska produkcyjnego` lub `Konfiguracja środowiska testowego` wpisz `Klucz API` i `Klucz podpisu` 
 
 ![Konfiguracja krok 5][ext7]
+
+## FAQ
+**Jak skonfigurować adres powrotu?**
+
+Adres powrotu ustawi się automatycznie dla każdego zamówienia. Nie ma potrzeby ręcznej konfiguracji tego adresu.
+
+**Jak skonfigurować adres powiadomień?**
+
+W panelu sprzedawcy Paynow  przejdź do zakładki `Ustawienia > Sklepy i punkty płatności`, w polu `Adres powiadomień` ustaw adres:
+`https://twoja-domena.pl/module/paynow/notifications`.
+
+![Konfiguracja adresu powiadomień][ext9]
 
 ## Sandbox
 W celu przetestowania działania bramki Paynow zapraszamy do skorzystania z naszego środowiska testowego. W tym celu zarejestruj się na stronie: [panel.sandbox.paynow.pl][ext2]. 
@@ -64,3 +76,4 @@ Licencja MIT. Szczegółowe informacje znajdziesz w pliku LICENSE.
 [ext6]: instruction/step4.png
 [ext7]: instruction/step5.png
 [ext8]: https://paynow.wistia.com/medias/nym9wdwdwl
+[ext9]: instruction/step6.png

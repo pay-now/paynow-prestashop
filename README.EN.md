@@ -45,6 +45,17 @@ See also [the instructional video][ext8].
 
 ![Configuration step 5][ext7]
 
+## FAQ
+**How to configure the return address?**
+
+The return address will be set automatically for each order. There is no need to manually configure this address.
+
+**How to configure the notification address?**
+
+In the Paynow merchant panel go to the tab `Settings > Shops and poses`, in the field `Notification address` set the address: `https://twoja-domena.pl/module/paynow/notifications`.
+
+![Configuration of the notifiction address][ext9]
+
 ## Sandbox
 To be able to test our Paynow Sandbox environment, register [here][ext2].
 
@@ -65,3 +76,4 @@ MIT license. For more information, see the LICENSE file.
 [ext6]: instruction/step4.png
 [ext7]: instruction/step5_EN.png
 [ext8]: https://paynow.wistia.com/medias/nym9wdwdwl
+[ext9]: instruction/step6.png
