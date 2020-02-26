@@ -32,10 +32,10 @@ class Paynow extends PaymentModule
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
         $this->version = '1.1.5';
-        $this->ps_versions_compliancy = array('min' => '1.6.0', 'max' => _PS_VERSION_);
+        $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
-        $this->controllers = array('payment', 'return');
+        $this->controllers = ['payment', 'return'];
         $this->bootstrap = true;
         $this->module_key = '86f0413df24b36cc82b831f755669dc7';
 
@@ -153,35 +153,37 @@ class Paynow extends PaymentModule
     public function createOrderInitialState()
     {
         $state_name = 'PAYNOW_ORDER_INITIAL_STATE';
-        if (!Configuration::get($state_name) ||
-            !Validate::isLoadedObject(new OrderState(Configuration::get($state_name)))) {
-            $order_state = new OrderState();
-            $languages = Language::getLanguages(false);
-            foreach ($languages as $language) {
-                if (Tools::strtolower($language['iso_code']) == 'pl') {
-                    $order_state->name[$language['id_lang']] = 'Oczekuje na płatność';
-                } else {
-                    $order_state->name[$language['id_lang']] = "Awaiting for payment";
-                }
-            }
-
-            $order_state->send_email = false;
-            $order_state->invoice = false;
-            $order_state->unremovable = true;
-            $order_state->hidden = false;
-            $order_state->delivery = false;
-            $order_state->logable = false;
-            $order_state->color = '#f39200';
-            $order_state->module_name = $this->name;
-
-            if ($order_state->add()) {
-                $source = _PS_MODULE_DIR_ . $this->name . '/views/img/os-logo.gif';
-                $destination = _PS_ROOT_DIR_ . '/img/os/' . $order_state->id . '.gif';
-                copy($source, $destination);
-            }
-
-            return $order_state->id;
+        if (Configuration::get($state_name) ||
+            Validate::isLoadedObject(new OrderState(Configuration::get($state_name)))) {
+            return null;
         }
+
+        $order_state = new OrderState();
+        $languages = Language::getLanguages(false);
+        foreach ($languages as $language) {
+            if (Tools::strtolower($language['iso_code']) == 'pl') {
+                $order_state->name[$language['id_lang']] = 'Oczekuje na płatność';
+            } else {
+                $order_state->name[$language['id_lang']] = "Awaiting for payment";
+            }
+        }
+
+        $order_state->send_email = false;
+        $order_state->invoice = false;
+        $order_state->unremovable = true;
+        $order_state->hidden = false;
+        $order_state->delivery = false;
+        $order_state->logable = false;
+        $order_state->color = '#f39200';
+        $order_state->module_name = $this->name;
+
+        if ($order_state->add()) {
+            $source = _PS_MODULE_DIR_ . $this->name . '/views/img/os-logo.gif';
+            $destination = _PS_ROOT_DIR_ . '/img/os/' . $order_state->id . '.gif';
+            copy($source, $destination);
+        }
+
+        return $order_state->id;
     }
 
     public function hookHeader()
@@ -203,14 +205,14 @@ class Paynow extends PaymentModule
     {
         return $this->isSandboxEnabled() ?
             Configuration::get('PAYNOW_SANDBOX_API_KEY') :
-                Configuration::get('PAYNOW_PROD_API_KEY');
+            Configuration::get('PAYNOW_PROD_API_KEY');
     }
 
     public function getSignatureKey()
     {
         return $this->isSandboxEnabled() ?
             Configuration::get('PAYNOW_SANDBOX_API_SIGNATURE_KEY') :
-                Configuration::get('PAYNOW_PROD_API_SIGNATURE_KEY');
+            Configuration::get('PAYNOW_PROD_API_SIGNATURE_KEY');
     }
 
     public function isSandboxEnabled()
@@ -362,6 +364,22 @@ class Paynow extends PaymentModule
             'PAYNOW_SANDBOX_API_SIGNATURE_KEY',
             Tools::getValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY')
         );
+        Configuration::updateValue(
+            'PAYNOW_ORDER_INITIAL_STATE',
+            Tools::getValue('PAYNOW_ORDER_INITIAL_STATE')
+        );
+        Configuration::updateValue(
+            'PAYNOW_ORDER_CONFIRMED_STATE',
+            Tools::getValue('PAYNOW_ORDER_CONFIRMED_STATE')
+        );
+        Configuration::updateValue(
+            'PAYNOW_ORDER_REJECTED_STATE',
+            Tools::getValue('PAYNOW_ORDER_REJECTED_STATE')
+        );
+        Configuration::updateValue(
+            'PAYNOW_ORDER_ERROR_STATE',
+            Tools::getValue('PAYNOW_ORDER_ERROR_STATE')
+        );
 
         if ($this->isConfigured()) {
             $this->sendShopUrlsConfiguration();
@@ -479,6 +497,61 @@ class Paynow extends PaymentModule
             ]
         ];
 
+        $order_states = OrderState::getOrderStates(ContextCore::getContext()->language->id);
+        $form['payment_statuses'] = [
+            'form' => [
+                'legend' => [
+                    'title' => $this->l('Payment status mapping'),
+                    'icon' => 'icon-cog'
+                ],
+                'input' => [
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Awaiting payment confirmation'),
+                        'name' => 'PAYNOW_ORDER_INITIAL_STATE',
+                        'options' => [
+                            'query' => $order_states,
+                            'id' => 'id_order_state',
+                            'name' => 'name'
+                        ]
+                    ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Payment has been authorized by the buyer'),
+                        'name' => 'PAYNOW_ORDER_CONFIRMED_STATE',
+                        'options' => [
+                            'query' => $order_states,
+                            'id' => 'id_order_state',
+                            'name' => 'name'
+                        ]
+                    ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Payment has not been authorized by the buyer'),
+                        'name' => 'PAYNOW_ORDER_REJECTED_STATE',
+                        'options' => [
+                            'query' => $order_states,
+                            'id' => 'id_order_state',
+                            'name' => 'name'
+                        ]
+                    ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Error occurred during the payment process and the payment could not be completed'),
+                        'name' => 'PAYNOW_ORDER_ERROR_STATE',
+                        'options' => [
+                            'query' => $order_states,
+                            'id' => 'id_order_state',
+                            'name' => 'name'
+                        ]
+                    ]
+                ],
+                'submit' => [
+                    'title' => $this->l('Save')
+                ]
+            ]
+        ];
+
         $helper = new HelperForm();
         $helper->show_toolbar = false;
         $helper->name_controller = $this->name;
@@ -507,6 +580,10 @@ class Paynow extends PaymentModule
             'PAYNOW_SANDBOX_ENABLED' => Configuration::get('PAYNOW_SANDBOX_ENABLED'),
             'PAYNOW_SANDBOX_API_KEY' => Configuration::get('PAYNOW_SANDBOX_API_KEY'),
             'PAYNOW_SANDBOX_API_SIGNATURE_KEY' => Configuration::get('PAYNOW_SANDBOX_API_SIGNATURE_KEY'),
+            'PAYNOW_ORDER_INITIAL_STATE' => Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
+            'PAYNOW_ORDER_CONFIRMED_STATE' => Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'),
+            'PAYNOW_ORDER_REJECTED_STATE' => Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
+            'PAYNOW_ORDER_ERROR_STATE' => Configuration::get('PAYNOW_ORDER_ERROR_STATE')
         ];
     }
 
@@ -518,7 +595,8 @@ class Paynow extends PaymentModule
         $order_reference,
         $external_id,
         $modified_at = null
-    ) {
+    )
+    {
         $modified_at = !$modified_at ? 'NOW()' : '"' . $modified_at . '"';
 
         try {
