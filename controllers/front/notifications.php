@@ -56,7 +56,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
     private function updateOrderState($payment, $notification_data)
     {
         $order = new Order($payment['id_order']);
-        if ($order) {
+        if ($order && $order->module == $this->module->name) {
             $history = new OrderHistory();
             $history->id_order = $order->id;
 
