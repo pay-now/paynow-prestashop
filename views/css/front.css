@@ -22,8 +22,3 @@ p.payment_module .paynow img {
   max-width: 60px;
     height: auto;
 }
-@media (max-width: 768px) {
-    .payment-option img[src*="logo-paynow.png"] {
-        display: none;
-    }
-}
