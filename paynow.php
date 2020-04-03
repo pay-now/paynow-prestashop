@@ -126,7 +126,8 @@ class Paynow extends PaymentModule
 
     private function createModuleSettings()
     {
-        return Configuration::updateValue('PAYNOW_PROD_API_KEY', '') &&
+        return Configuration::updateValue('PAYNOW_DEBUG_LOGS_ENABLED', 0) &&
+            Configuration::updateValue('PAYNOW_PROD_API_KEY', '') &&
             Configuration::updateValue('PAYNOW_PROD_API_SIGNATURE_KEY', '') &&
             Configuration::updateValue('PAYNOW_SANDBOX_ENABLED', 0) &&
             Configuration::updateValue('PAYNOW_SANDBOX_API_KEY', '') &&
@@ -139,7 +140,8 @@ class Paynow extends PaymentModule
 
     private function deleteModuleSettings()
     {
-        return Configuration::deleteByName('PAYNOW_PROD_API_KEY') &&
+        return Configuration::deleteByName('PAYNOW_DEBUG_LOGS_ENABLED') &&
+            Configuration::deleteByName('PAYNOW_PROD_API_KEY') &&
             Configuration::deleteByName('PAYNOW_PROD_API_SIGNATURE_KEY') &&
             Configuration::deleteByName('PAYNOW_SANDBOX_ENABLED') &&
             Configuration::deleteByName('PAYNOW_SANDBOX_API_KEY') &&
@@ -344,6 +346,10 @@ class Paynow extends PaymentModule
 
     private function postProcess()
     {
+        Configuration::updateValue(
+            'PAYNOW_DEBUG_LOGS_ENABLED',
+            Tools::getValue('PAYNOW_DEBUG_LOGS_ENABLED')
+        );
         Configuration::updateValue(
             'PAYNOW_PROD_API_KEY',
             Tools::getValue('PAYNOW_PROD_API_KEY')
@@ -552,6 +558,38 @@ class Paynow extends PaymentModule
             ]
         ];
 
+        $form['debug_logs'] = [
+            'form' => [
+                'legend' => [
+                    'title' => $this->l('Debug'),
+                    'icon' => 'icon-cog'
+                ],
+                'input' => [
+                    [
+                        'type' => 'switch',
+                        'label' => $this->l('Enable logs'),
+                        'desc' => $this->l('This option enables debug logs for this module. Logs are available in ') . ' ' . _PS_MODULE_DIR_ . $this->name . '/logs',
+                        'name' => 'PAYNOW_DEBUG_LOGS_ENABLED',
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->l('Enabled')
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->l('Disabled')
+                            ]
+                        ],
+                    ]
+                ],
+                'submit' => [
+                    'title' => $this->l('Save')
+                ]
+            ]
+        ];
+
         $helper = new HelperForm();
         $helper->show_toolbar = false;
         $helper->name_controller = $this->name;
@@ -575,6 +613,7 @@ class Paynow extends PaymentModule
     private function getConfigFieldsValues()
     {
         return [
+            'PAYNOW_DEBUG_LOGS_ENABLED' => Configuration::get('PAYNOW_DEBUG_LOGS_ENABLED'),
             'PAYNOW_PROD_API_KEY' => Configuration::get('PAYNOW_PROD_API_KEY'),
             'PAYNOW_PROD_API_SIGNATURE_KEY' => Configuration::get('PAYNOW_PROD_API_SIGNATURE_KEY'),
             'PAYNOW_SANDBOX_ENABLED' => Configuration::get('PAYNOW_SANDBOX_ENABLED'),

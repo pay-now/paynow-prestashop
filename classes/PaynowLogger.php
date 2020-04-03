@@ -14,9 +14,10 @@ class PaynowLogger
 {
     public static function log($message, $description = null, $id_payment = null)
     {
-        if ((int)Configuration::get('PAYNOW_SANDBOX_ENABLED')) {
-            $file = dirname(__FILE__) . '/../log/paynow.log';
-            self::writeToLog($file, $message, $description, $id_payment);
+        if ((int)Configuration::get('PAYNOW_DEBUG_LOGS_ENABLED')) {
+            $file_name = 'paynow-' . date('Y-m-d');
+            $file_path = dirname(__FILE__) . '/../log/' . $file_name . '-' . Tools::encrypt($file_name) . '.log';
+            self::writeToLog($file_path, $message, $description, $id_payment);
         }
     }
 
@@ -41,10 +42,10 @@ class PaynowLogger
 
     public static function getTimestamp()
     {
-        $originalTime = microtime(true);
-        $micro = sprintf('%06d', ($originalTime - floor($originalTime)) * 1000000);
-        $date = new DateTime(date('Y-m-d H:i:s.' . $micro, $originalTime));
-        return $date->format('Y-m-d G:i:s.u');
+        $now = microtime(true);
+        $micro = sprintf('%06d', ($now - floor($now)) * 1000000);
+        $date_time = new DateTime(date('Y-m-d H:i:s.' . $micro, $now));
+        return $date_time->format('Y-m-d G:i:s.u');
     }
 
     private static function writeToLog($log_file, $message, $description = null, $id_payment = null)
