@@ -106,7 +106,9 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         $payment_status_flow = [
             \Paynow\Model\Payment\Status::STATUS_NEW => [
                 \Paynow\Model\Payment\Status::STATUS_PENDING,
-                \Paynow\Model\Payment\Status::STATUS_ERROR
+                \Paynow\Model\Payment\Status::STATUS_ERROR,
+                \Paynow\Model\Payment\Status::STATUS_CONFIRMED,
+                \Paynow\Model\Payment\Status::STATUS_REJECTED
             ],
             \Paynow\Model\Payment\Status::STATUS_PENDING => [
                 \Paynow\Model\Payment\Status::STATUS_CONFIRMED,
