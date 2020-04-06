@@ -116,7 +116,10 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             ],
             \Paynow\Model\Payment\Status::STATUS_REJECTED => [\Paynow\Model\Payment\Status::STATUS_CONFIRMED],
             \Paynow\Model\Payment\Status::STATUS_CONFIRMED => [],
-            \Paynow\Model\Payment\Status::STATUS_ERROR => []
+            \Paynow\Model\Payment\Status::STATUS_ERROR => [
+                \Paynow\Model\Payment\Status::STATUS_CONFIRMED,
+                \Paynow\Model\Payment\Status::STATUS_REJECTED
+            ]
         ];
         $previous_status_exists = isset($payment_status_flow[$previous_status]);
         $is_change_possible = in_array($next_status, $payment_status_flow[$previous_status]);
