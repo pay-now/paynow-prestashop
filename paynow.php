@@ -651,7 +651,9 @@ class Paynow extends PaymentModule
                     "' . pSQL($status) . '", 
                     NOW(), 
                     ' . $modified_at . '
-                )';
+                ) 
+                ON DUPLICATE KEY 
+                UPDATE modified_at=' . $modified_at;
             if (Db::getInstance()->execute($sql)) {
                 return (int)Db::getInstance()->Insert_ID();
             }

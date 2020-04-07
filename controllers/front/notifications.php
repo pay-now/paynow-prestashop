@@ -30,13 +30,13 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 header('HTTP/1.1 400 Bad Request', true, 400);
                 exit;
             }
+            $this->updateOrderState($payment, $notification_data);
         } catch (\Exception $exception) {
             PaynowLogger::log($exception->getMessage(), $payload, $notification_data['paymentId']);
             header('HTTP/1.1 400 Bad Request', true, 400);
             exit;
         }
 
-        $this->updateOrderState($payment, $notification_data);
         header("HTTP/1.1 202 Accepted");
         exit;
     }
@@ -60,51 +60,58 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             $history = new OrderHistory();
             $history->id_order = $order->id;
 
-            if ($this->isCorrectStatus($payment['status'], $notification_data['status'])) {
-                switch ($notification_data['status']) {
-                    case \Paynow\Model\Payment\Status::STATUS_PENDING:
-                        break;
-                    case \Paynow\Model\Payment\Status::STATUS_REJECTED:
-                        $history->changeIdOrderState(
-                            (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
-                            $order->id
-                        );
-                        $history->addWithemail(true);
-                        break;
-                    case \Paynow\Model\Payment\Status::STATUS_CONFIRMED:
-                        $history->changeIdOrderState(
-                            (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'),
-                            $order->id
-                        );
-                        $history->addWithemail(true);
-                        $this->addPaymentIdToOrderPayments($order, $payment['id_payment']);
-                        break;
-                    case \Paynow\Model\Payment\Status::STATUS_ERROR:
-                        $history->changeIdOrderState(
-                            (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
-                            $order->id
-                        );
-                        $history->addWithemail(true);
-                        break;
-                }
+            $notification_status = $notification_data['status'];
+            $payment_status = $payment['status'];
 
-                $this->module->storePaymentState(
-                    $notification_data['paymentId'],
-                    $notification_data['status'],
-                    $payment['id_order'],
-                    $payment['id_cart'],
-                    $payment['order_reference'],
-                    $payment['external_id'],
-                    (new DateTime($notification_data['modifiedAt']))->format('Y-m-d H:i:s')
-                );
+            if (!$this->isCorrectStatus($payment_status, $notification_status)) {
+                throw new Exception('Order status transition is incorrect ' . $payment_status . ' - ' . $notification_status . ' for order ' . $order->id);
             }
+
+            switch ($notification_status) {
+                case \Paynow\Model\Payment\Status::STATUS_PENDING:
+                    break;
+                case \Paynow\Model\Payment\Status::STATUS_REJECTED:
+                    $history->changeIdOrderState(
+                        (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
+                        $order->id
+                    );
+                    $history->addWithemail(true);
+                    break;
+                case \Paynow\Model\Payment\Status::STATUS_CONFIRMED:
+                    $history->changeIdOrderState(
+                        (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'),
+                        $order->id
+                    );
+                    $history->addWithemail(true);
+                    $this->addPaymentIdToOrderPayments($order, $payment['id_payment']);
+                    break;
+                case \Paynow\Model\Payment\Status::STATUS_ERROR:
+                    $history->changeIdOrderState(
+                        (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
+                        $order->id
+                    );
+                    $history->addWithemail(true);
+                    break;
+            }
+
+            $this->module->storePaymentState(
+                $notification_data['paymentId'],
+                $notification_status,
+                $payment['id_order'],
+                $payment['id_cart'],
+                $payment['order_reference'],
+                $payment['external_id'],
+                (new DateTime($notification_data['modifiedAt']))->format('Y-m-d H:i:s')
+            );
         }
     }
+
 
     private function isCorrectStatus($previous_status, $next_status)
     {
         $payment_status_flow = [
             \Paynow\Model\Payment\Status::STATUS_NEW => [
+                \Paynow\Model\Payment\Status::STATUS_NEW,
                 \Paynow\Model\Payment\Status::STATUS_PENDING,
                 \Paynow\Model\Payment\Status::STATUS_ERROR,
                 \Paynow\Model\Payment\Status::STATUS_CONFIRMED,
