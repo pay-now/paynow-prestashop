@@ -18,6 +18,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
 
     public function initContent()
     {
+        $this->display_column_left = false;
         parent::initContent();
 
         $id_payment = Tools::getValue('paymentId');
@@ -30,16 +31,20 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             $this->redirectToOrderHistory();
         }
 
-        $this->order = new Order($payment['id_order']);
+        $id_order = $payment['id_order'];
+        $this->order = new Order($id_order);
         if (!Validate::isLoadedObject($this->order)) {
             $this->redirectToOrderHistory();
         }
 
         $currentState = $this->order->getCurrentStateFull($this->context->language->id);
         $this->context->smarty->assign([
+            'logo' => $this->module->getLogo(),
             'redirect_url' => $this->module->getOrderUrl($this->order),
             'order_status' => $currentState['name'],
-            'reference' => $this->order->reference
+            'reference' => $this->order->reference,
+            'HOOK_ORDER_CONFIRMATION' => $this->displayOrderConfirmation(),
+            'HOOK_PAYMENT_RETURN' => $this->displayPaymentReturn()
         ]);
 
         $this->renderTemplate('return.tpl');
@@ -53,5 +58,28 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             null,
             'HTTP/1.1 301 Moved Permanently'
         );
+    }
+
+    private function displayPaymentReturn()
+    {
+        return Hook::exec('displayPaymentReturn', $this->hookParams(), $this->module->id);
+    }
+
+    private function displayOrderConfirmation()
+    {
+        return Hook::exec('displayOrderConfirmation', $this->hookParams());
+    }
+
+    private function hookParams()
+    {
+        $currency = new Currency((int)$this->order->id_currency);
+
+        return [
+            'objOrder' => $this->order,
+            'order' => $this->order,
+            'currencyObj' => $currency,
+            'currency' => $currency->sign,
+            'total_to_pay' => $this->order->getOrdersTotalPaid()
+        ];
     }
 }

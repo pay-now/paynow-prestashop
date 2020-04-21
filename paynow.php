@@ -322,7 +322,7 @@ class Paynow extends PaymentModule
             );
     }
 
-    private function getLogo()
+    public function getLogo()
     {
         return Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/logo-paynow.png');
     }

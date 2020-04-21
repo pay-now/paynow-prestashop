@@ -22,3 +22,11 @@ p.payment_module .paynow img {
   max-width: 60px;
     height: auto;
 }
+
+@media (max-width: 768px) {
+    .paynow-return img {
+        float: none !important;
+        margin-bottom: .5rem;
+        max-width: 50%;
+    }
+}
