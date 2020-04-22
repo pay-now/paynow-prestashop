@@ -21,18 +21,19 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         $this->display_column_left = false;
         parent::initContent();
 
-        $id_payment = Tools::getValue('paymentId');
-        if (!$id_payment) {
+        $order_reference = Tools::getValue('order_reference');
+        $token = Tools::getValue('token');
+
+        if (!$order_reference) {
             $this->redirectToOrderHistory();
         }
 
-        $payment = $this->module->getLastPaymentStatus($id_payment);
+        $payment = $this->module->getLastPaymentDataByOrderReference($order_reference);
         if (!$payment) {
             $this->redirectToOrderHistory();
         }
 
-        $id_order = $payment['id_order'];
-        $this->order = new Order($id_order);
+        $this->order = new Order($payment['id_order']);
         if (!Validate::isLoadedObject($this->order)) {
             $this->redirectToOrderHistory();
         }
@@ -40,9 +41,10 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         $currentState = $this->order->getCurrentStateFull($this->context->language->id);
         $this->context->smarty->assign([
             'logo' => $this->module->getLogo(),
-            'redirect_url' => $this->module->getOrderUrl($this->order),
+            'details_url' => $this->module->getOrderUrl($this->order),
             'order_status' => $currentState['name'],
-            'reference' => $this->order->reference,
+            'order_reference' => $this->order->reference,
+            'show_details_button' => $token == Tools::encrypt($order_reference),
             'HOOK_ORDER_CONFIRMATION' => $this->displayOrderConfirmation(),
             'HOOK_PAYMENT_RETURN' => $this->displayPaymentReturn()
         ]);

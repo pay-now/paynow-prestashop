@@ -160,7 +160,8 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 'paynow',
                 'return',
                 [
-                    'order_reference' => $order->reference
+                    'order_reference' => $order->reference,
+                    'token' => Tools::encrypt($order->reference)
                 ]
             )
         ];
