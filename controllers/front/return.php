@@ -18,14 +18,17 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
 
     public function initContent()
     {
+        $this->display_column_left = false;
         parent::initContent();
 
-        $id_payment = Tools::getValue('paymentId');
-        if (!$id_payment) {
+        $order_reference = Tools::getValue('order_reference');
+        $token = Tools::getValue('token');
+
+        if (!$order_reference) {
             $this->redirectToOrderHistory();
         }
 
-        $payment = $this->module->getLastPaymentStatus($id_payment);
+        $payment = $this->module->getLastPaymentDataByOrderReference($order_reference);
         if (!$payment) {
             $this->redirectToOrderHistory();
         }
@@ -37,9 +40,13 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
 
         $currentState = $this->order->getCurrentStateFull($this->context->language->id);
         $this->context->smarty->assign([
-            'redirect_url' => $this->module->getOrderUrl($this->order),
+            'logo' => $this->module->getLogo(),
+            'details_url' => $this->module->getOrderUrl($this->order),
             'order_status' => $currentState['name'],
-            'reference' => $this->order->reference
+            'order_reference' => $this->order->reference,
+            'show_details_button' => $token == Tools::encrypt($order_reference),
+            'HOOK_ORDER_CONFIRMATION' => $this->displayOrderConfirmation(),
+            'HOOK_PAYMENT_RETURN' => $this->displayPaymentReturn()
         ]);
 
         $this->renderTemplate('return.tpl');
@@ -53,5 +60,28 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             null,
             'HTTP/1.1 301 Moved Permanently'
         );
+    }
+
+    private function displayPaymentReturn()
+    {
+        return Hook::exec('displayPaymentReturn', $this->hookParams(), $this->module->id);
+    }
+
+    private function displayOrderConfirmation()
+    {
+        return Hook::exec('displayOrderConfirmation', $this->hookParams());
+    }
+
+    private function hookParams()
+    {
+        $currency = new Currency((int)$this->order->id_currency);
+
+        return [
+            'objOrder' => $this->order,
+            'order' => $this->order,
+            'currencyObj' => $currency,
+            'currency' => $currency->sign,
+            'total_to_pay' => $this->order->getOrdersTotalPaid()
+        ];
     }
 }

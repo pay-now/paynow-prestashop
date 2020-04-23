@@ -322,7 +322,7 @@ class Paynow extends PaymentModule
             );
     }
 
-    private function getLogo()
+    public function getLogo()
     {
         return Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/logo-paynow.png');
     }
@@ -678,6 +678,14 @@ class Paynow extends PaymentModule
             SELECT status 
             FROM  ' . _DB_PREFIX_ . 'paynow_payments 
             WHERE id_order="' . (int)$id_order . '" ORDER BY created_at DESC');
+    }
+
+    public function getLastPaymentDataByOrderReference($order_reference)
+    {
+        return Db::getInstance()->getRow('
+            SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
+            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
+            WHERE order_reference="' . pSQL($order_reference) . '" ORDER BY created_at DESC');
     }
 
     public function getOrderUrl($order)

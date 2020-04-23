@@ -156,7 +156,14 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             'buyer' => [
                 'email' => $customer->email
             ],
-            'continueUrl' => $this->module->getOrderUrl($order)
+            'continueUrl' => $this->context->link->getModuleLink(
+                'paynow',
+                'return',
+                [
+                    'order_reference' => $order->reference,
+                    'token' => Tools::encrypt($order->reference)
+                ]
+            )
         ];
     }
 
