@@ -9,9 +9,10 @@
     }
   ],
   "require": {
-    "php": ">=5.4.0",
-    "pay-now/paynow-php-sdk": "^1.0.4",
-    "ext-json": "*"
+    "php": ">=7.1",
+    "pay-now/paynow-php-sdk": "^2.0",
+    "nyholm/psr7": "^1.2",
+    "php-http/curl-client": "^2.1"
   },
   "config": {
     "prepend-autoloader": false,
