@@ -1,5 +1,6 @@
 script: skip
 before_deploy:
+  - composer install
   - rsync -a --exclude={'*.md','.gitignore',instruction} ./* paynow
   - zip -r paynow.zip ./paynow
 deploy:

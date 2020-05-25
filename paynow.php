@@ -31,7 +31,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.8';
+        $this->version = '1.1.9';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -404,7 +404,7 @@ class Paynow extends PaymentModule
                 $this->context->link->getModuleLink('paynow', 'notifications')
             );
         } catch (Paynow\Exception\PaynowException $exception) {
-            PaynowLogger::log('Could not send shop urls configuration to Paynow');
+            PaynowLogger::log($exception->getMessage(), 'Could not send shop urls configuration to Paynow');
         }
     }
 
@@ -415,8 +415,8 @@ class Paynow extends PaymentModule
             if (!count($this->postErrors)) {
                 $this->postProcess();
             } else {
-                foreach ($this->postErrors as $err) {
-                    $this->html .= $this->displayError($err);
+                foreach ($this->postErrors as $error) {
+                    $this->html .= $this->displayError($error);
                 }
             }
         } else {
