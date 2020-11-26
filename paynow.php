@@ -67,7 +67,6 @@ class Paynow extends PaymentModule
             !$this->registerHooks()) {
             return false;
         }
-        $this->updatePosition(Hook::getIdByName('displayPayment'), false, 1);
         return true;
     }
 
