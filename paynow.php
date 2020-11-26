@@ -64,7 +64,7 @@ class Paynow extends PaymentModule
         if (!parent::install() ||
             !$this->createDbTables() ||
             !$this->createModuleSettings() ||
-            !$this->registerHooks()) ||{
+            !$this->registerHooks()) {
             return false;
         }
         $this->updatePosition(Hook::getIdByName('displayPayment'), false, 1);
