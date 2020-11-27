@@ -23,7 +23,7 @@ Wtyczka Paynow dodaje szybkie płatności i płatności BLIK do sklepu PrestaSho
 
 Zobacz również [filmik instruktażowy][ext8].
 
-1. Pobierz plik paynow.zip z [repozytorium Github][ext1] i zapisz na dysku swojego komputera
+1. Pobierz plik [paynow.zip][ext1] i zapisz na dysku swojego komputera
 2. Przejdź do panelu administracyjnego PrestaShop
 3. Przejdź do zakładki `Moduły > Module Manager`
 
@@ -83,7 +83,7 @@ Jeśli chciałbyś dowiedzieć się więcej o bramce płatności Paynow odwied�
 Licencja MIT. Szczegółowe informacje znajdziesz w pliku LICENSE.
 
 [ext0]: README.EN.md
-[ext1]: https://github.com/pay-now/paynow-prestashop/releases/latest
+[ext1]: https://github.com/pay-now/paynow-prestashop/releases/latest/download/paynow.zip
 [ext2]: https://panel.sandbox.paynow.pl/auth/register
 [ext3]: instruction/step1.png
 [ext4]: instruction/step2.png

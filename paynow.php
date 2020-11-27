@@ -31,7 +31,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.1.9';
+        $this->version = '1.2.0';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -102,8 +102,11 @@ class Paynow extends PaymentModule
 
         if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
             $registerStatus &= $this->registerHook('payment') && $this->registerHook('displayPaymentEU');
+            $this->updatePosition(Hook::getIdByName('displayPayment'), false, 1);
+            $this->updatePosition(Hook::getIdByName('displayPaymentEU'), false, 1);
         } else {
             $registerStatus &= $this->registerHook('paymentOptions');
+            $this->updatePosition(Hook::getIdByName('paymentOptions'), false, 1);
         }
 
         return $registerStatus;
@@ -259,7 +262,7 @@ class Paynow extends PaymentModule
 
         $payment_option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $payment_option->setModuleName($this->name)
-            ->setCallToActionText($this->l('Pay by online transfer or BLIK', 'paynow'))
+            ->setCallToActionText($this->l('Secure BLIK, credit cards payments and fast online transfers', 'paynow'))
             ->setLogo($this->getLogo())
             ->setAction($this->context->link->getModuleLink($this->name, 'payment', [], true));
 
