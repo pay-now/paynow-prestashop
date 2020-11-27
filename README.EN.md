@@ -2,7 +2,7 @@
 
 # Paynow PrestaShop Plugin
 
-The Paynow plugin adds quick bank transfers and BLIK payments to PrestaShop.
+The Paynow plugin adds quick bank transfers, BLIK and cards payments to PrestaShop.
 
 ## Table of Contents
 

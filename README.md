@@ -2,7 +2,7 @@
 
 # Wtyczka Paynow dla PrestaShop
 
-Wtyczka Paynow dodaje szybkie płatności i płatności BLIK do sklepu PrestaShop.
+Wtyczka Paynow dodaje bezpieczne płatności BLIK, szybkie przelewy internetowe oraz płatności kartą.
 
 ## Spis treści
 
