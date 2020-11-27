@@ -160,6 +160,8 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             'externalId' => $external_id,
             'description' => $this->module->l('Order No: ', 'payment') . $order->reference,
             'buyer' => [
+                'firstName' => $customer->firstname,
+                'lastName' => $customer->lastname,
                 'email' => $customer->email
             ],
             'continueUrl' => $this->context->link->getModuleLink(
