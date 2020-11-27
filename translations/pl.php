@@ -6,6 +6,7 @@ $_MODULE['<{paynow}prestashop>paynow_47350854b6158594556c569032669a66'] = 'Akcep
 $_MODULE['<{paynow}prestashop>paynow_533937acf0e84c92e787614bbb16a7a0'] = 'Jesteś pewien, że chcesz odinstalować? Stracisz wszystkie ustawienia!';
 $_MODULE['<{paynow}prestashop>paynow_6855a2b93983cdf59c34e46eab95e5e4'] = 'Aby skorzystać z modułu musisz podać klucze do API.';
 $_MODULE['<{paynow}prestashop>paynow_a02758d758e8bec77a33d7f392eb3f8a'] = 'Żadna waluta nie została ustawiona dla tego modułu.';
+$_MODULE['<{paynow}prestashop>paynow_e4444305b86380798941f450c974598c'] = 'Bezpieczne płatności BLIK, szybkie przelewy internetowe i płatności kartą';
 $_MODULE['<{paynow}prestashop>paynow_3eea8b36c11f4bdf099b22d3f8788cff'] = 'Zapłać przelewem online lub BLIK';
 $_MODULE['<{paynow}prestashop>paynow_dc34c9c3d4e62630ad62b58828cae5d8'] = 'Musisz wprowadzić klucze integracyjne';
 $_MODULE['<{paynow}prestashop>paynow_20015706a8cbd457cbb6ea3e7d5dc9b3'] = 'Konfiguracja zapisana';

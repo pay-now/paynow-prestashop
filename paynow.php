@@ -259,7 +259,7 @@ class Paynow extends PaymentModule
 
         $payment_option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $payment_option->setModuleName($this->name)
-            ->setCallToActionText($this->l('Pay by online transfer or BLIK', 'paynow'))
+            ->setCallToActionText($this->l('Secure BLIK, credit cards payments and fast online transfers', 'paynow'))
             ->setLogo($this->getLogo())
             ->setAction($this->context->link->getModuleLink($this->name, 'payment', [], true));
 
