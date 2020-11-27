@@ -23,7 +23,7 @@ require_once('vendor/autoload.php');
 Making a payment
 ```php
 $client = new \Paynow\Client('TestApiKey', 'TestSignatureKey', Environment::SANDBOX);
-$orderReference = "success_1234567"
+$orderReference = "success_1234567";
 $idempotencyKey = uniqid($orderReference . '_');
 
 $paymentData = [
@@ -36,13 +36,17 @@ $paymentData = [
     ]
 ];
 
-$payment = new \Paynow\Service\Payment($client);
-$result = $payment->authorize($paymentData, $idempotencyKey);
+try {
+    $payment = new \Paynow\Service\Payment($client);
+    $result = $payment->authorize($paymentData, $idempotencyKey);
+} catch (PaynowException $exception) {
+    // catch errors
+}
 ```
 
 Handling notification with current payment status
 ```php
-$payload = trim(Tools::file_get_contents('php://input'));
+$payload = trim(file_get_contents('php://input'));
 $headers = getallheaders();
 $notificationData = json_decode($payload, true);
 
@@ -60,7 +64,7 @@ header('HTTP/1.1 202 Accepted', true, 202);
 See the [Paynow API documentation](https://docs.paynow.pl)
 
 ## Support
-If you have any problems, questions or suggestions contact with us on [Slack](https://pay-now.slack.com)
+If you have any questions or issues, please contact our support at support@paynow.pl.
 
 ## License
 MIT license. For more information see the [LICENSE file](LICENSE)

@@ -6,8 +6,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] - 2020-11-11
 
-## Unreleased
+- Added support for PHP 8.0.
+
+## [1.9.1] - 2020-10-13
+
+- Improved detection of binary stream to not consider newlines, carriage return or tabs as binary.
+
+## [1.9.0] - 2020-08-17
+
+- Omitted binary body in FullHttpMessageFormatter and CurlCommandFormatter.
+  `[binary stream omitted]` will be shown instead.
+
+### Added
+
+- New Header authentication method for arbitrary header authentication.
 
 ## [1.8.0] - 2019-08-05
 
@@ -188,7 +202,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Message factory (Guzzle, Diactoros)
 
 
-[Unreleased]: https://github.com/php-http/message/compare/1.7.2...HEAD
+[Unreleased]: https://github.com/php-http/message/compare/1.10.0...HEAD
+[1.10.0]: https://github.com/php-http/message/compare/1.9.1...1.10.0
+[1.9.1]: https://github.com/php-http/message/compare/1.9.0...1.9.1
+[1.9.0]: https://github.com/php-http/message/compare/1.8.0...1.9.0
+[1.8.0]: https://github.com/php-http/message/compare/1.7.2...1.8.0
 [1.7.2]: https://github.com/php-http/message/compare/v1.7.1...1.7.2
 [1.7.1]: https://github.com/php-http/message/compare/1.7.0...v1.7.1
 [1.7.0]: https://github.com/php-http/message/compare/1.6.0...1.7.0

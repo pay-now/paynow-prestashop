@@ -21,6 +21,7 @@ class Error
     }
 
     /**
+     * @deprecated
      * @return string
      */
     public function getErrorType()

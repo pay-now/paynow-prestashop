@@ -2,6 +2,7 @@
 
 namespace Paynow\Tests;
 
+use Paynow\Exception\SignatureVerificationException;
 use Paynow\Notification;
 
 class NotificationTest extends TestCase
@@ -35,12 +36,10 @@ class NotificationTest extends TestCase
         ];
     }
 
-    /**
-     * @expectedException \Paynow\Exception\SignatureVerificationException
-     */
     public function testShouldThrowExceptionOnIncorrectSignature()
     {
         // given
+        $this->expectException(SignatureVerificationException::class);
         $payload = $this->loadData('notification.json', true);
         $headers = ['Signature' => 'Aq/VmN15rtjVbuy9F7Yw+Ym76H+VZjVSuHGpg4dwitY='];
 
@@ -50,12 +49,10 @@ class NotificationTest extends TestCase
         // then
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testShouldThrowExceptionOnMissingPayload()
     {
         // given
+        $this->expectException(\InvalidArgumentException::class);
         $payload = null;
         $headers = [];
 
@@ -65,12 +62,10 @@ class NotificationTest extends TestCase
         // then
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testShouldThrowExceptionOnMissingPayloadHeaders()
     {
         // given
+        $this->expectException(\InvalidArgumentException::class);
         $payload = $this->loadData('notification.json', true);
         $headers = null;
 

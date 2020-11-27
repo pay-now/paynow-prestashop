@@ -120,7 +120,8 @@ class HttpClient implements HttpClientInterface
     {
         $request = $this->messageFactory->createRequest(
             'GET',
-            $this->config->getUrl().$url
+            $this->config->getUrl().$url,
+            $this->prepareHeaders()
         );
 
         return $this->send($request);
@@ -136,17 +137,25 @@ class HttpClient implements HttpClientInterface
     }
 
     /**
-     * @param array $data
+     * @param null|array|string $data
      * @return array
      */
-    private function prepareHeaders(array $data)
+    private function prepareHeaders($data = null)
     {
-        return [
+        $headers = [
             'Api-Key' => $this->config->getApiKey(),
             'User-Agent' => $this->getUserAgent(),
-            'Accept' => 'application/json',
-            'Content-Type' => 'application/json',
-            'Signature' => (string) new SignatureCalculator($this->config->getSignatureKey(), $data),
+            'Accept' => 'application/json'
         ];
+
+        if ($data) {
+            $headers['Content-Type'] = 'application/json';
+            if (is_array($data)) {
+                $data = $this->prepareData($data);
+            }
+            $headers['Signature'] = (string)new SignatureCalculator($this->config->getSignatureKey(), $data);
+        }
+
+        return $headers;
     }
 }

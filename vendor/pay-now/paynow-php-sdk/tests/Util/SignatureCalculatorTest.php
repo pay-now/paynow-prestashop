@@ -9,29 +9,36 @@ class SignatureCalculatorTest extends TestCase
 {
     public function testNotValidSuccessfully()
     {
+        // given + when
         $signatureCalculator = new SignatureCalculator('InvalidSecretKey', ['key' => 'value']);
+
+        // then
         $this->assertNotEquals('hash', $signatureCalculator->getHash());
     }
 
     public function testShouldValidSuccessfully()
     {
+        // given + when
         $signatureCalculator = new SignatureCalculator(
             'a621a1fb-b4d8-48ba-a6a3-2a28ed61f605',
             [
                 'key1' => 'value1',
-                'key2' => 'value2',
+                'key2' => 'val/ue2',
             ]
         );
-        $this->assertEquals('rFAkhfbUFRn4bTR82qb742Mwy34g/CSi8frEHciZhCU=', $signatureCalculator->getHash());
+
+        // then
+        $this->assertEquals('bqD6spGJwPABe58i+mbqsYoF/JLUDR58yqxRqrb0AR0=', $signatureCalculator->getHash());
     }
 
-    /**
-     * @expectedException \InvalidArgumentException
-     */
     public function testExceptionForEmptyData()
     {
+        // given
+        $this->expectException(\InvalidArgumentException::class);
+
+        // when
         $signatureCalculator = new SignatureCalculator('a621a1fb-b4d8-48ba-a6a3-2a28ed61f605', []);
 
-        return $signatureCalculator->getHash();
+        // then
     }
 }
