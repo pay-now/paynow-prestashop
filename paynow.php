@@ -102,8 +102,11 @@ class Paynow extends PaymentModule
 
         if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
             $registerStatus &= $this->registerHook('payment') && $this->registerHook('displayPaymentEU');
+            $this->updatePosition(Hook::getIdByName('displayPayment'), false, 1);
+            $this->updatePosition(Hook::getIdByName('displayPaymentEU'), false, 1);
         } else {
             $registerStatus &= $this->registerHook('paymentOptions');
+            $this->updatePosition(Hook::getIdByName('paymentOptions'), false, 1);
         }
 
         return $registerStatus;
