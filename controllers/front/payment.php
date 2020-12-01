@@ -192,7 +192,8 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                     'order_reference' => $this->order->reference
                 ]
             ),
-            'order_reference' => $this->order->reference
+            'order_reference' => $this->order->reference,
+            'cta_text' => $this->callToActionText
         ]);
 
         $this->renderTemplate('error.tpl');

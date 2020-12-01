@@ -9,8 +9,8 @@
 * @license   MIT License
 *}
 <p class="payment_module">
-    <a href="{$paynow_url|escape:'htmlall':'UTF-8'}" title="{l s='Pay by online transfer or BLIK' mod='paynow'}" class="paynow">
-        <img src="{$logo|escape:'htmlall':'UTF-8'}" alt="{l s='Pay by online transfer or BLIK' mod='paynow'}">
-        {l s='Pay by online transfer or BLIK' mod='paynow'}
+    <a href="{$paynow_url|escape:'htmlall':'UTF-8'}" title="{$this->cta_text}" class="paynow">
+        <img src="{$logo|escape:'htmlall':'UTF-8'}" alt="{$this->cta_text}">
+        {$this->cta_text}
     </a>
 </p>
