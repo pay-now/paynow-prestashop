@@ -1,8 +1,8 @@
 [**Wersja polska**][ext0]
 
-# Paynow PrestaShop Plugin
+# PrestaShop Plugin for paynow gateway
 
-The Paynow plugin adds quick bank transfers, BLIK and cards payments to PrestaShop.
+The `paynow` plugin adds quick bank transfers, BLIK and cards payments to PrestaShop.
 
 ## Table of Contents
 
@@ -39,7 +39,7 @@ See also [the instructional video][ext8].
 
 1. Go to the PrestaShop administration page
 2. Go to `Modules > Module Manager`
-3. Search and select `Paynow` and click `Configure`
+3. Search and select `paynow` and click `Configure`
 
 ![Configuration step 3][ext5]
 
@@ -62,19 +62,19 @@ The return address will be set automatically for each order. There is no need to
 
 **How to configure the notification address?**
 
-In the Paynow merchant panel go to the tab `Settings > Shops and poses`, in the field `Notification address` set the address: `https://twoja-domena.pl/module/paynow/notifications`.
+In the paynow merchant panel go to the tab `Settings > Shops and poses`, in the field `Notification address` set the address: `https://twoja-domena.pl/module/paynow/notifications`.
 
 ![Configuration of the notifiction address][ext9]
 
 ## Sandbox
 
-To be able to test our Paynow Sandbox environment, register [here][ext2].
+To be able to test our paynow Sandbox environment, register [here][ext2].
 
 ## Support
 
 If you have any questions or issues, please contact our support at support@paynow.pl.
 
-If you wish to learn more about Paynow, visit our website: https://www.paynow.pl/.
+If you wish to learn more about paynow, visit our website: https://www.paynow.pl/.
 
 ## License
 
