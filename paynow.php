@@ -44,8 +44,8 @@ class Paynow extends PaymentModule
 
         parent::__construct();
 
-        $this->displayName = 'Paynow';
-        $this->description = $this->l('Accepts payments by Paynow');
+        $this->displayName = 'paynow';
+        $this->description = $this->l('Accepts payments by paynow.pl');
         $this->confirm_uninstall = $this->l('Are you sure you want to uninstall? You will lose all your settings!');
         $this->callToActionText = $this->l('Pay by paynow.pl');
 
@@ -409,7 +409,7 @@ class Paynow extends PaymentModule
                 $this->context->link->getModuleLink('paynow', 'notifications')
             );
         } catch (Paynow\Exception\PaynowException $exception) {
-            PaynowLogger::log($exception->getMessage(), 'Could not send shop urls configuration to Paynow');
+            PaynowLogger::log($exception->getMessage(), 'Could not send shop urls configuration to paynow');
         }
     }
 

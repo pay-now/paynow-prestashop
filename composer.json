@@ -1,6 +1,6 @@
 {
   "name": "pay-now/paynow-prestashop",
-  "description": "PrestaShop Paynow Module",
+  "description": "Paynow gateway module for PrestaShop",
   "license": "MIT",
   "authors": [
     {

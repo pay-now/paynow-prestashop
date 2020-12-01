@@ -1,8 +1,8 @@
 [**English version**][ext0]
 
-# Wtyczka Paynow dla PrestaShop
+# Wtyczka do PrestaShop integrująca bramkę paynow
 
-Wtyczka Paynow dodaje bezpieczne płatności BLIK, szybkie przelewy internetowe oraz płatności kartą.
+Wtyczka `paynow` dodaje bezpieczne płatności BLIK, szybkie przelewy internetowe oraz płatności kartą.
 
 ## Spis treści
 
@@ -39,7 +39,7 @@ Zobacz również [filmik instruktażowy][ext8].
 
 1. Przejdź do panelu administracyjnego PrestaShop
 2. Przejdź do zakładki `Moduły > Module Manager`
-3. Wyszukaj `Paynow` i wybierz opcję `Konfiguruj`
+3. Wyszukaj `paynow` i wybierz opcję `Konfiguruj`
 
 ![Konfiguracja krok 3][ext5]
 
@@ -63,20 +63,20 @@ Adres powrotu ustawi się automatycznie dla każdego zamówienia. Nie ma potrzeb
 
 **Jak skonfigurować adres powiadomień?**
 
-W panelu sprzedawcy Paynow przejdź do zakładki `Ustawienia > Sklepy i punkty płatności`, w polu `Adres powiadomień` ustaw adres:
+W panelu sprzedawcy paynow przejdź do zakładki `Ustawienia > Sklepy i punkty płatności`, w polu `Adres powiadomień` ustaw adres:
 `https://twoja-domena.pl/module/paynow/notifications`.
 
 ![Konfiguracja adresu powiadomień][ext9]
 
 ## Sandbox
 
-W celu przetestowania działania bramki Paynow zapraszamy do skorzystania z naszego środowiska testowego. W tym celu zarejestruj się na stronie: [panel.sandbox.paynow.pl][ext2].
+W celu przetestowania działania bramki paynow zapraszamy do skorzystania z naszego środowiska testowego. W tym celu zarejestruj się na stronie: [panel.sandbox.paynow.pl][ext2].
 
 ## Wsparcie
 
 Jeśli masz jakiekolwiek pytania lub problemy, skontaktuj się z naszym wsparciem technicznym: support@paynow.pl.
 
-Jeśli chciałbyś dowiedzieć się więcej o bramce płatności Paynow odwiedź naszą stronę: https://www.paynow.pl/.
+Jeśli chciałbyś dowiedzieć się więcej o bramce płatności paynow odwiedź naszą stronę: https://www.paynow.pl/.
 
 ## Licencja
 
