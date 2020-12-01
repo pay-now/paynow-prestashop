@@ -47,6 +47,7 @@ class Paynow extends PaymentModule
         $this->displayName = 'Paynow';
         $this->description = $this->l('Accepts payments by Paynow');
         $this->confirm_uninstall = $this->l('Are you sure you want to uninstall? You will lose all your settings!');
+        $this->callToActionText = $this->l('Pay by paynow.pl');
 
         if (!$this->isConfigured()) {
             $this->warning = $this->l('API Keys must be configured before using this module.');
@@ -262,7 +263,7 @@ class Paynow extends PaymentModule
 
         $payment_option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $payment_option->setModuleName($this->name)
-            ->setCallToActionText($this->l('Secure BLIK, credit cards payments and fast online transfers', 'paynow'))
+            ->setCallToActionText($this->callToActionText)
             ->setLogo($this->getLogo())
             ->setAction($this->context->link->getModuleLink($this->name, 'payment', [], true));
 
@@ -276,6 +277,7 @@ class Paynow extends PaymentModule
         }
 
         $this->context->smarty->assign([
+            'cta_text' => $this->$this->callToActionText,
             'logo' => $this->getLogo(),
             'paynow_url' => $this->context->link->getModuleLink('paynow', 'payment')
         ]);
@@ -286,7 +288,7 @@ class Paynow extends PaymentModule
     public function hookDisplayPaymentEU()
     {
         return [
-            'cta_text' => $this->l('Pay by online transfer or BLIK', 'paynow'),
+            'cta_text' => $this->callToActionText,
             'logo' => $this->getLogo(),
             'action' => $this->context->link->getModuleLink('paynow', 'payment')
         ];
