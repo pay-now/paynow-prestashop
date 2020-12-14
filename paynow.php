@@ -31,7 +31,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.2.2';
+        $this->version = '1.2.3';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -277,7 +277,7 @@ class Paynow extends PaymentModule
         }
 
         $this->context->smarty->assign([
-            'cta_text' => $this->$this->callToActionText,
+            'cta_text' => $this->callToActionText,
             'logo' => $this->getLogo(),
             'paynow_url' => $this->context->link->getModuleLink('paynow', 'payment')
         ]);
