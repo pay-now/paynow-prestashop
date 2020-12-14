@@ -30,7 +30,7 @@
         </p>
       {/if}
     </div>
-    {$HOOK_ORDER_CONFIRMATION nofilter}
-    {$HOOK_PAYMENT_RETURN nofilter}
+    {$HOOK_ORDER_CONFIRMATION}
+    {$HOOK_PAYMENT_RETURN}
   </div>
 {/block}

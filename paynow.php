@@ -634,8 +634,7 @@ class Paynow extends PaymentModule
         $order_reference,
         $external_id,
         $modified_at = null
-    )
-    {
+    ) {
         $modified_at = !$modified_at ? 'NOW()' : '"' . $modified_at . '"';
 
         try {
