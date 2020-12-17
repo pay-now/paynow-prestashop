@@ -8,7 +8,7 @@
 * @copyright mElements S.A.
 * @license   MIT License
 *}
-{capture name=path}{$cta_text}{/capture}
+{capture name=path}{$cta_text|escape:'htmlall':'UTF-8'}{/capture}
 
 <div class="clearfix">
     <h2 class="amount-info">

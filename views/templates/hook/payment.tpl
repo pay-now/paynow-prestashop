@@ -9,8 +9,8 @@
 * @license   MIT License
 *}
 <p class="payment_module">
-    <a href="{$paynow_url|escape:'htmlall':'UTF-8'}" title="{$this->cta_text}" class="paynow">
-        <img src="{$logo|escape:'htmlall':'UTF-8'}" alt="{$this->cta_text}">
-        {$this->cta_text}
+    <a href="{$paynow_url|escape:'htmlall':'UTF-8'}" title="{$cta_text|escape:'htmlall':'UTF-8'}" class="paynow">
+        <img src="{$logo|escape:'htmlall':'UTF-8'}" alt="{$cta_text|escape:'htmlall':'UTF-8'}">
+        {$cta_text|escape:'htmlall':'UTF-8'}
     </a>
 </p>

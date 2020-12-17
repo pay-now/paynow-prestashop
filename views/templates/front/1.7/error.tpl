@@ -12,7 +12,7 @@
 {extends file=$layout}
 
 {block name='content'}
-  <h2>{$cta_text}</h2>
+  <h2>{$cta_text|escape:'htmlall':'UTF-8'}</h2>
   <div class="table-responsive-row clearfix">
     <div class="clearfix">
       <p class="amount-info">
