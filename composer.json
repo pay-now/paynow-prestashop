@@ -14,6 +14,9 @@
     "nyholm/psr7": "^1.2",
     "php-http/curl-client": "^2.1"
   },
+  "require-dev": {
+    "prestashop/autoindex": "^1.0"
+  },
   "config": {
     "prepend-autoloader": false,
     "optimize-autoloader": true

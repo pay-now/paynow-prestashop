@@ -98,11 +98,11 @@ class Paynow extends PaymentModule
     private function registerHooks()
     {
         $registerStatus = $this->registerHook('header') &&
-            $this->registerHook('paymentReturn') &&
             $this->registerHook('displayOrderDetail');
 
         if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
-            $registerStatus &= $this->registerHook('payment') && $this->registerHook('displayPaymentEU');
+            $registerStatus &= $this->registerHook('payment') &&
+                $this->registerHook('displayPaymentEU');
             $this->updatePosition(Hook::getIdByName('displayPayment'), false, 1);
             $this->updatePosition(Hook::getIdByName('displayPaymentEU'), false, 1);
         } else {
@@ -116,11 +116,11 @@ class Paynow extends PaymentModule
     private function unregisterHooks()
     {
         $registerStatus = $this->unregisterHook('header') &&
-            $this->unregisterHook('paymentReturn') &&
             $this->unregisterHook('displayOrderDetail');
 
         if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
-            $registerStatus &= $this->unregisterHook('displayPaymentEU') && $this->unregisterHook('payment');
+            $registerStatus &= $this->unregisterHook('displayPaymentEU') &&
+                $this->unregisterHook('payment');
         } else {
             $registerStatus &= $this->unregisterHook('paymentOptions');
         }
@@ -639,8 +639,7 @@ class Paynow extends PaymentModule
         $order_reference,
         $external_id,
         $modified_at = null
-    )
-    {
+    ) {
         $modified_at = !$modified_at ? 'NOW()' : '"' . $modified_at . '"';
 
         try {

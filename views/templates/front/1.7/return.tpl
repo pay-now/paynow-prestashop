@@ -12,7 +12,7 @@
 
 {block name='content'}
   <div class="paynow-return">
-    <img src="{$logo}" alt="{l s='Pay by online transfer or BLIK' mod='paynow'}" class="float-sm-right">
+    <img src="{$logo|escape:'htmlall':'UTF-8'}" alt="{l s='Pay by online transfer or BLIK' mod='paynow'}" class="float-sm-right">
     <h2>{l s='Thank you for your order!' mod='paynow'}</h2>
     <div class="table-responsive-row clearfix">
       <p>
@@ -31,6 +31,5 @@
       {/if}
     </div>
     {*HTML CONTENT*}{$HOOK_ORDER_CONFIRMATION nofilter}
-    {*HTML CONTENT*}{$HOOK_PAYMENT_RETURN nofilter}
   </div>
 {/block}
