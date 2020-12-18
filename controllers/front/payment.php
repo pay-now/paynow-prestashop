@@ -132,14 +132,14 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             $request = $this->preparePaymentRequest($this->order, $external_id);
             $payment = $payment_client->authorize($request, $idempotency_key);
             $this->module->storePaymentState(
-                $payment->getPaymentId(),
-                $payment->getStatus(),
+                $payment->paymentId,
+                $payment->status,
                 $this->order->id,
                 $this->order->id_cart,
                 $this->order->reference,
                 $external_id
             );
-            Tools::redirect($payment->getRedirectUrl());
+            Tools::redirect($payment->redirectUrl);
         } catch (PaynowException $e) {
             PaynowLogger::log($e->getMessage(), null, $this->order->reference);
             foreach ($e->getErrors() as $error) {
