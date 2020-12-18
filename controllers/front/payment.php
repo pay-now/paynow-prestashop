@@ -10,6 +10,9 @@
  * @license   MIT License
  */
 
+use Paynow\Exception\PaynowException;
+use Paynow\Service\Payment;
+
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 
 class PaynowPaymentModuleFrontController extends PaynowFrontController
@@ -123,22 +126,25 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     private function sendPaymentRequest()
     {
         try {
-            $payment_client = new \Paynow\Service\Payment($this->module->api_client);
+            $payment_client = new Payment($this->module->api_client);
             $idempotency_key = uniqid($this->order->reference . '_');
             $external_id = $this->order->reference;
             $request = $this->preparePaymentRequest($this->order, $external_id);
             $payment = $payment_client->authorize($request, $idempotency_key);
             $this->module->storePaymentState(
-                $payment->paymentId,
-                $payment->status,
+                $payment->getPaymentId(),
+                $payment->getStatus(),
                 $this->order->id,
                 $this->order->id_cart,
                 $this->order->reference,
                 $external_id
             );
-            Tools::redirect($payment->redirectUrl);
-        } catch (\Paynow\Exception\PaynowException $e) {
-            PaynowLogger::log($e->getMessage(), json_encode($e->getErrors()), $this->order->reference);
+            Tools::redirect($payment->getRedirectUrl());
+        } catch (PaynowException $e) {
+            PaynowLogger::log($e->getMessage(), null, $this->order->reference);
+            foreach ($e->getErrors() as $error) {
+                PaynowLogger::log($error->getType(), $error->getMessage(), $this->order->reference);
+            }
             $this->displayError();
         }
     }
@@ -154,6 +160,8 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             'externalId' => $external_id,
             'description' => $this->module->l('Order No: ', 'payment') . $order->reference,
             'buyer' => [
+                'firstName' => $customer->firstname,
+                'lastName' => $customer->lastname,
                 'email' => $customer->email
             ],
             'continueUrl' => $this->context->link->getModuleLink(
@@ -184,7 +192,8 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                     'order_reference' => $this->order->reference
                 ]
             ),
-            'order_reference' => $this->order->reference
+            'order_reference' => $this->order->reference,
+            'cta_text' => $this->callToActionText
         ]);
 
         $this->renderTemplate('error.tpl');

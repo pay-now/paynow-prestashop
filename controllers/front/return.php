@@ -45,8 +45,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             'order_status' => $currentState['name'],
             'order_reference' => $this->order->reference,
             'show_details_button' => $token == Tools::encrypt($order_reference),
-            'HOOK_ORDER_CONFIRMATION' => $this->displayOrderConfirmation(),
-            'HOOK_PAYMENT_RETURN' => $this->displayPaymentReturn()
+            'HOOK_ORDER_CONFIRMATION' => $this->displayOrderConfirmation()
         ]);
 
         $this->renderTemplate('return.tpl');
@@ -60,11 +59,6 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             null,
             'HTTP/1.1 301 Moved Permanently'
         );
-    }
-
-    private function displayPaymentReturn()
-    {
-        return Hook::exec('displayPaymentReturn', $this->hookParams(), $this->module->id);
     }
 
     private function displayOrderConfirmation()

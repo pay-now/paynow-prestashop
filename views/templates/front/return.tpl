@@ -11,7 +11,7 @@
 {capture name=path}{l s='Pay by online transfer or BLIK' mod='paynow'}{/capture}
 
 <div class="box clearfix paynow-return">
-    <img src="{$logo}" alt="{l s='Pay by online transfer or BLIK' mod='paynow'}" class="pull-right">
+    <img src="{$logo|escape:'htmlall':'UTF-8'}" alt="{l s='Pay by online transfer or BLIK' mod='paynow'}" class="pull-right">
     <h2>{l s='Thank you for your order!' mod='paynow'}</h2>
     <p>
         {l s='Your order number:' mod='paynow'} {$order_reference|escape:'htmlall':'UTF-8'} <br />
@@ -28,6 +28,4 @@
         </p>
     {/if}
 </div>
-
-{$HOOK_ORDER_CONFIRMATION}
-{$HOOK_PAYMENT_RETURN}
+{*HTML CONTENT*}{$HOOK_ORDER_CONFIRMATION nofilter}

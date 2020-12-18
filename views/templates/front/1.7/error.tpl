@@ -12,7 +12,7 @@
 {extends file=$layout}
 
 {block name='content'}
-  <h2>{l s='Pay by online transfer or BLIK' mod='paynow'}</h2>
+  <h2>{$cta_text|escape:'htmlall':'UTF-8'}</h2>
   <div class="table-responsive-row clearfix">
     <div class="clearfix">
       <p class="amount-info">
@@ -27,7 +27,7 @@
 
     <p class="cart_navigation clearfix" id="cart_navigation">
       <a class="button btn btn-default button-medium" href="{$button_action|escape:'htmlall':'UTF-8'}">
-        <span>{l s='Retry payment with Paynow' mod='paynow'}<i class="icon-chevron-right right"></i></span>
+        <span>{l s='Retry payment with paynow.pl' mod='paynow'}<i class="icon-chevron-right right"></i></span>
       </a>
     </p>
   </div>
