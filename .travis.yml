@@ -1,11 +1,9 @@
 script: skip
 before_deploy:
   - composer install
-  - rm -fR vendor/clue/stream-filter/.github
-  - rm -fR vendor/symfony/finder/Tests/Fixtures/.dot
   - rm -fR vendor/nikic/php-parser/test_old
   - rm -f vendor/symfony/console/Tests/Helper/TableTest.php
-  - rsync -a --exclude={'*.md','.gitignore',instruction} ./* paynow
+  - rsync -a --exclude={'*.md','.gitignore',instruction,'.*'} ./* paynow
   - php vendor/bin/autoindex prestashop:add:index paynow
   - zip -r paynow.zip ./paynow
 deploy:
