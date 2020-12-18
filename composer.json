@@ -13,6 +13,9 @@
     "pay-now/paynow-php-sdk": "^1.1.0",
     "ext-json": "*"
   },
+  "require-dev": {
+    "prestashop/autoindex": "^1.0"
+  },
   "config": {
     "prepend-autoloader": false,
     "optimize-autoloader": true
