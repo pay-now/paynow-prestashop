@@ -10,6 +10,10 @@
  * @license   MIT License
  */
 
+use Paynow\Exception\PaynowException;
+use Paynow\Service\Refund;
+use Paynow\Service\ShopConfiguration;
+
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -31,7 +35,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.2.4';
+        $this->version = '1.3.0';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -40,11 +44,10 @@ class Paynow extends PaymentModule
         $this->module_key = '86f0413df24b36cc82b831f755669dc7';
 
         $this->currencies = true;
-        $this->currencies_mode = 'radio';
 
         parent::__construct();
 
-        $this->displayName = 'paynow';
+        $this->displayName = $this->l('Pay by paynow.pl');
         $this->description = $this->l('Accepts payments by paynow.pl');
         $this->confirm_uninstall = $this->l('Are you sure you want to uninstall? You will lose all your settings!');
         $this->callToActionText = $this->l('Pay by paynow.pl');
@@ -98,7 +101,10 @@ class Paynow extends PaymentModule
     private function registerHooks()
     {
         $registerStatus = $this->registerHook('header') &&
-            $this->registerHook('displayOrderDetail');
+            $this->registerHook('displayOrderDetail') &&
+            $this->registerHook('actionOrderStatusPostUpdate') &&
+            $this->registerHook('actionOrderSlipAdd') &&
+            $this->registerHook('displayAdminOrderTop');
 
         if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
             $registerStatus &= $this->registerHook('payment') &&
@@ -116,7 +122,9 @@ class Paynow extends PaymentModule
     private function unregisterHooks()
     {
         $registerStatus = $this->unregisterHook('header') &&
-            $this->unregisterHook('displayOrderDetail');
+            $this->unregisterHook('displayOrderDetail') &&
+            $this->unregisterHook('actionOrderSlipAdd') &&
+            $this->unregisterHook('displayAdminOrderTop');
 
         if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
             $registerStatus &= $this->unregisterHook('displayPaymentEU') &&
@@ -131,6 +139,10 @@ class Paynow extends PaymentModule
     private function createModuleSettings()
     {
         return Configuration::updateValue('PAYNOW_DEBUG_LOGS_ENABLED', 0) &&
+            Configuration::updateValue('PAYNOW_REFUNDS_ENABLED', 1) &&
+            Configuration::updateValue('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED', 0) &&
+            Configuration::updateValue('PAYNOW_REFUNDS_ON_STATUS', Configuration::get('PS_OS_REFUND')) &&
+            Configuration::updateValue('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS', 0) &&
             Configuration::updateValue('PAYNOW_PROD_API_KEY', '') &&
             Configuration::updateValue('PAYNOW_PROD_API_SIGNATURE_KEY', '') &&
             Configuration::updateValue('PAYNOW_SANDBOX_ENABLED', 0) &&
@@ -145,6 +157,9 @@ class Paynow extends PaymentModule
     private function deleteModuleSettings()
     {
         return Configuration::deleteByName('PAYNOW_DEBUG_LOGS_ENABLED') &&
+            Configuration::deleteByName('PAYNOW_REFUNDS_ENABLED') &&
+            Configuration::deleteByName('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED') &&
+            Configuration::deleteByName('PAYNOW_REFUNDS_ON_STATUS') &&
             Configuration::deleteByName('PAYNOW_PROD_API_KEY') &&
             Configuration::deleteByName('PAYNOW_PROD_API_SIGNATURE_KEY') &&
             Configuration::deleteByName('PAYNOW_SANDBOX_ENABLED') &&
@@ -192,11 +207,6 @@ class Paynow extends PaymentModule
         return $order_state->id;
     }
 
-    public function hookHeader()
-    {
-        $this->context->controller->addCSS(($this->_path) . 'views/css/front.css', 'all');
-    }
-
     private function initializeApiClient()
     {
         $this->api_client = new \Paynow\Client(
@@ -226,9 +236,9 @@ class Paynow extends PaymentModule
         return (int)Configuration::get('PAYNOW_SANDBOX_ENABLED') === 1;
     }
 
-    private function isActive($params)
+    private function isActive()
     {
-        if (!$this->active || !$this->checkCurrency($params['cart']) || !$this->isConfigured()) {
+        if (!$this->active || !$this->isConfigured()) {
             return;
         }
 
@@ -255,9 +265,14 @@ class Paynow extends PaymentModule
         return $currency_order->id == $currencies_module->id;
     }
 
+    public function hookHeader()
+    {
+        $this->context->controller->addCSS(($this->_path) . 'views/css/front.css', 'all');
+    }
+
     public function hookPaymentOptions($params)
     {
-        if (!$this->isActive($params)) {
+        if (!$this->isActive() || !$this->checkCurrency($params['cart'])) {
             return;
         }
 
@@ -272,7 +287,7 @@ class Paynow extends PaymentModule
 
     public function hookPayment($params)
     {
-        if (!$this->isActive($params)) {
+        if (!$this->isActive() || !$this->checkCurrency($params['cart'])) {
             return;
         }
 
@@ -296,21 +311,124 @@ class Paynow extends PaymentModule
 
     public function hookDisplayOrderDetail($params)
     {
-        if (!$this->isActive($params)) {
+        if (!$this->isActive()) {
             return;
         }
 
         $id_order = (int)$params['order']->id;
 
-        if ($this->canOrderPaymentBeRetried($id_order)) {
-            $this->context->smarty->assign([
-                'paynow_url' => $this->context->link->getModuleLink('paynow', 'payment', [
-                    'id_order' => $id_order,
-                    'order_reference' => $params['order']->reference
-                ])
-            ]);
-            return $this->display(__FILE__, '/views/templates/hook/order_details.tpl');
+        if (!$this->canOrderPaymentBeRetried($id_order)) {
+            return;
         }
+
+        $this->context->smarty->assign([
+            'paynow_url' => $this->context->link->getModuleLink('paynow', 'payment', [
+                'id_order' => $id_order,
+                'order_reference' => $params['order']->reference
+            ])
+        ]);
+        return $this->display(__FILE__, '/views/templates/hook/order_details.tpl');
+    }
+
+    /**
+     * Handle status change to make a refund
+     *
+     * @param $params
+     */
+    public function hookActionOrderStatusPostUpdate($params)
+    {
+        if (Configuration::get('PAYNOW_REFUNDS_ENABLED') && Configuration::get('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED') && $this->context->controller instanceof AdminController) {
+            $order = new Order($params['id_order']);
+            $newOrderStatus = $params['newOrderStatus'];
+
+            if ((int)Configuration::get('PAYNOW_REFUNDS_ON_STATUS') === $newOrderStatus->id) {
+                $amount_to_refund = $order->total_paid;
+                if (!Configuration::get('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS')) {
+                    $amount_to_refund -= $order->total_shipping_tax_incl;
+                }
+                $payments = $order->getOrderPaymentCollection()->getResults();
+                $this->processRefund($order->reference, $payments, $amount_to_refund);
+            }
+        }
+    }
+
+    /**
+     * Handle add order slip to make a refund
+     *
+     * @param $params
+     */
+    public function hookActionOrderSlipAdd($params)
+    {
+        if (Configuration::get('PAYNOW_REFUNDS_ENABLED') && Tools::isSubmit('makeRefundViaPaynow')) {
+            $order = $params['order'];
+            PaynowLogger::info('Processing refund request {orderReference={}}', [$order->reference]);
+            if ($this->name = $order->module) {
+                $orderSlip = $order->getOrderSlipsCollection()
+                    ->orderBy('date_upd', 'desc')
+                    ->getFirst();
+                $payments = $order->getOrderPaymentCollection()->getResults();
+                $amount_from_slip = $orderSlip->amount + $orderSlip->shipping_cost_amount;
+                $this->processRefund($order->reference, $payments, $amount_from_slip);
+            }
+        }
+    }
+
+    private function processRefund($order_reference, array $payments, $amount)
+    {
+        if (!empty($payments)) {
+            foreach ($payments as $payment) {
+                if ($this->displayName != $payment->payment_method || $payment->amount < $amount) {
+                    continue;
+                }
+
+                $refund_amount = number_format($amount * 100, 0, '', '');
+                try {
+                    PaynowLogger::info(
+                        'Found transaction to make a refund {orderReference={}, paymentId={}, amount={}}',
+                        [
+                            $order_reference,
+                            $payment->transaction_id,
+                            $refund_amount
+                        ]
+                    );
+                    $refund_client = new Refund($this->api_client);
+                    $refund = $refund_client->create(
+                        $payment->transaction_id,
+                        uniqid($payment->order_reference, true),
+                        $refund_amount
+                    );
+                    PaynowLogger::info(
+                        'Refund has been created successfully {orderReference={}, refundId={}}',
+                        [
+                            $payment->order_reference,
+                            $refund->getRefundId()
+                        ]
+                    );
+                } catch (PaynowException $exception) {
+                    foreach ($exception->getErrors() as $error) {
+                        PaynowLogger::error(
+                            $exception->getMessage() . ' {orderReference={}, paymentId={}, type={}, message={}}',
+                            [
+                                $payment->order_reference,
+                                $payment->transaction_id,
+                                $error->getType(),
+                                $error->getMessage()
+                            ]
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    public function hookDisplayAdminOrderTop($params)
+    {
+        if (!Configuration::get('PAYNOW_REFUNDS_ENABLED')) {
+            return;
+        }
+
+        $this->context->smarty->assign('makePaynowRefundCheckboxLabel', $this->l('Make a refund via paynow.pl'));
+        return $this->fetchTemplate('/views/templates/hook/admin_order_top.tpl');
     }
 
     public function canOrderPaymentBeRetried($id_order)
@@ -356,6 +474,22 @@ class Paynow extends PaymentModule
             Tools::getValue('PAYNOW_DEBUG_LOGS_ENABLED')
         );
         Configuration::updateValue(
+            'PAYNOW_REFUNDS_ENABLED',
+            Tools::getValue('PAYNOW_REFUNDS_ENABLED')
+        );
+        Configuration::updateValue(
+            'PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED',
+            Tools::getValue('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED')
+        );
+        Configuration::updateValue(
+            'PAYNOW_REFUNDS_ON_STATUS',
+            Tools::getValue('PAYNOW_REFUNDS_ON_STATUS')
+        );
+        Configuration::updateValue(
+            'PAYNOW_REFUNDS_WITH_SHIPPING_COSTS',
+            Tools::getValue('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS')
+        );
+        Configuration::updateValue(
             'PAYNOW_PROD_API_KEY',
             Tools::getValue('PAYNOW_PROD_API_KEY')
         );
@@ -393,23 +527,41 @@ class Paynow extends PaymentModule
         );
 
         if ($this->isConfigured()) {
+            $this->html .= $this->displayConfirmation($this->l('Configuration updated'));
             $this->sendShopUrlsConfiguration();
         }
-
-        $this->html .= $this->displayConfirmation($this->l('Configuration updated'));
     }
 
     private function sendShopUrlsConfiguration()
     {
         $this->initializeApiClient();
-        $shop_configuration = new \Paynow\Service\ShopConfiguration($this->api_client);
+        $shop_configuration = new ShopConfiguration($this->api_client);
         try {
             $shop_configuration->changeUrls(
                 $this->context->link->getModuleLink('paynow', 'return'),
                 $this->context->link->getModuleLink('paynow', 'notifications')
             );
+            return true;
         } catch (Paynow\Exception\PaynowException $exception) {
-            PaynowLogger::log($exception->getMessage(), 'Could not send shop urls configuration to paynow');
+            PaynowLogger::error('Could not properly configure shop urls {message={}}', [$exception->getMessage()]);
+            if ($exception->getCode() == 401) {
+                $this->html .= $this->displayError($this->l('Wrong configuration for API credentials'));
+            } else {
+                if (sizeof($exception->getErrors()) > 1) {
+                    $errors = [];
+                    foreach ($exception->getErrors() as $error) {
+                        $errors[] = $this->l('API Response: ') . $error->getType() . ' - ' . $error->getMessage();
+                    }
+                    $this->html .= $this->displayWarning($errors);
+                } else {
+                    foreach ($exception->getErrors() as $error) {
+                        $this->html .= $this->displayWarning(
+                            $this->l('API Response: ') . $error->getType() . ' - ' . $error->getMessage()
+                        );
+                    }
+                }
+            }
+            return false;
         }
     }
 
@@ -428,15 +580,15 @@ class Paynow extends PaymentModule
             $this->html .= '<br />';
         }
 
-        $this->html .= $this->displayBackOfficeInformation();
+        $this->html .= $this->displayBackOfficeAccountInformation();
         $this->html .= $this->renderForm();
 
         return $this->html;
     }
 
-    private function displayBackOfficeInformation()
+    private function displayBackOfficeAccountInformation()
     {
-        return $this->display(__FILE__, '/views/templates/admin/information.tpl');
+        return $this->fetchTemplate('/views/templates/admin/_partials/account.tpl');
     }
 
     private function renderForm()
@@ -563,17 +715,98 @@ class Paynow extends PaymentModule
             ]
         ];
 
-        $form['debug_logs'] = [
+        $form['refunds'] = [
             'form' => [
                 'legend' => [
-                    'title' => $this->l('Debug'),
+                    'title' => $this->l('Refunds'),
+                    'icon' => 'icon-cog'
+                ],
+                'input' => [
+                    [
+                        'type' => 'html',
+                        'name' => '',
+                        'html_content' => $this->displayInfoMessage($this->l('The module allows you to make an automatic refund from the balance for payments made by paynow.pl. To use this option, you must select the daily payout frequency in the paynow panel. To do this, go to Settings -> Payout schedule and then select the setting for the appropriate store.'))
+                    ],
+                    [
+                        'type' => 'switch',
+                        'label' => $this->l('Enable refunds'),
+                        'name' => 'PAYNOW_REFUNDS_ENABLED',
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->l('Enabled')
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->l('Disabled')
+                            ]
+                        ],
+                    ],
+                    [
+                        'type' => 'switch',
+                        'label' => $this->l('After status change'),
+                        'name' => 'PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED',
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->l('Enabled')
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->l('Disabled')
+                            ]
+                        ],
+                    ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('On status'),
+                        'name' => 'PAYNOW_REFUNDS_ON_STATUS',
+                        'options' => [
+                            'query' => $order_states,
+                            'id' => 'id_order_state',
+                            'name' => 'name'
+                        ]
+                    ],
+                    [
+                        'type' => 'switch',
+                        'label' => $this->l('Include shipping costs'),
+                        'name' => 'PAYNOW_REFUNDS_WITH_SHIPPING_COSTS',
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->l('Yes')
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->l('No')
+                            ]
+                        ],
+                    ],
+                ],
+                'submit' => [
+                    'title' => $this->l('Save')
+                ]
+            ]
+        ];
+
+        $logs_path = _PS_MODULE_DIR_ . $this->name . '/logs';
+        $form['additional_options'] = [
+            'form' => [
+                'legend' => [
+                    'title' => $this->l('Additional options'),
                     'icon' => 'icon-cog'
                 ],
                 'input' => [
                     [
                         'type' => 'switch',
                         'label' => $this->l('Enable logs'),
-                        'desc' => $this->l('This option enables debug logs for this module. Logs are available in ') . ' ' . _PS_MODULE_DIR_ . $this->name . '/logs',
+                        'desc' => $this->l('Logs are available in ') . ' ' . $logs_path,
                         'name' => 'PAYNOW_DEBUG_LOGS_ENABLED',
                         'values' => [
                             [
@@ -615,9 +848,26 @@ class Paynow extends PaymentModule
         return $helper->generateForm($form);
     }
 
+    public function displayInfoMessage($message)
+    {
+        $this->context->smarty->assign([
+            'message' => $message
+        ]);
+        return $this->fetchTemplate('/views/templates/admin/_partials/info.tpl');
+    }
+
+    private function fetchTemplate($view)
+    {
+        return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . $view);
+    }
+
     private function getConfigFieldsValues()
     {
         return [
+            'PAYNOW_REFUNDS_ENABLED' => Configuration::get('PAYNOW_REFUNDS_ENABLED'),
+            'PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED' => Configuration::get('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED'),
+            'PAYNOW_REFUNDS_ON_STATUS' => Configuration::get('PAYNOW_REFUNDS_ON_STATUS'),
+            'PAYNOW_REFUNDS_WITH_SHIPPING_COSTS' => Configuration::get('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS'),
             'PAYNOW_DEBUG_LOGS_ENABLED' => Configuration::get('PAYNOW_DEBUG_LOGS_ENABLED'),
             'PAYNOW_PROD_API_KEY' => Configuration::get('PAYNOW_PROD_API_KEY'),
             'PAYNOW_PROD_API_SIGNATURE_KEY' => Configuration::get('PAYNOW_PROD_API_SIGNATURE_KEY'),
@@ -662,7 +912,7 @@ class Paynow extends PaymentModule
                 return (int)Db::getInstance()->Insert_ID();
             }
         } catch (PrestaShopDatabaseException $e) {
-            PaynowLogger::log($e->getMessage(), null, $order_reference);
+            PaynowLogger::error($e->getMessage() . '{orderReference={}}', [$order_reference]);
         }
 
         return false;

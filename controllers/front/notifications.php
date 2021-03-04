@@ -11,7 +11,6 @@
  */
 
 use Paynow\Model\Payment\Status;
-use Paynow\Notification;
 
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 
@@ -22,20 +21,39 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         $payload = trim(Tools::file_get_contents('php://input'));
         $headers = $this->getRequestHeaders();
         $notification_data = json_decode($payload, true);
-        PaynowLogger::log('Incoming notification', $payload, $notification_data['paymentId']);
+        PaynowLogger::info(
+            'Incoming notification {paymentId={}, status={}}',
+            [
+                $notification_data['paymentId'],
+                $notification_data['status']
+            ]
+        );
 
         try {
             new Notification($this->module->getSignatureKey(), $payload, $headers);
             $payment = $this->module->getLastPaymentStatus($notification_data['paymentId']);
 
             if (!$payment) {
-                PaynowLogger::log('Order for payment not exists', $payload, $notification_data['paymentId']);
+                PaynowLogger::warning(
+                    'Order for payment not exists {paymentId={}, status={}}',
+                    [
+                        $notification_data['paymentId'],
+                        $notification_data['status']
+                    ]
+                );
                 header('HTTP/1.1 400 Bad Request', true, 400);
                 exit;
             }
             $this->updateOrderState($payment, $notification_data);
-        } catch (\Exception $exception) {
-            PaynowLogger::log($exception->getMessage(), $payload, $notification_data['paymentId']);
+        } catch (Exception $exception) {
+            PaynowLogger::error(
+                'Error occurred during processing notification {paymentId={}, status={}, message={}}',
+                [
+                    $notification_data['paymentId'],
+                    $notification_data['status'],
+                    $exception->getMessage()
+                ]
+            );
             header('HTTP/1.1 400 Bad Request', true, 400);
             exit;
         }
@@ -67,7 +85,9 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             $payment_status = $payment['status'];
 
             if (!$this->isCorrectStatus($payment_status, $notification_status)) {
-                throw new Exception('Order status transition is incorrect ' . $payment_status . ' - ' . $notification_status . ' for order ' . $order->id);
+                throw new Exception(
+                    'Status transition is incorrect ' . $payment_status . ' - ' . $notification_status
+                );
             }
 
             switch ($notification_status) {
@@ -105,6 +125,15 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 $payment['order_reference'],
                 $payment['external_id'],
                 (new DateTime($notification_data['modifiedAt']))->format('Y-m-d H:i:s')
+            );
+
+            PaynowLogger::info(
+                'Changed order status {orderReference={}, paymentId={}, status={}}',
+                [
+                    $payment['order_reference'],
+                    $notification_data['paymentId'],
+                    $notification_data['status']
+                ]
             );
         }
     }
