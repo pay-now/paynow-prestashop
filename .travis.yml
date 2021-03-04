@@ -1,10 +1,12 @@
 script: skip
 before_deploy:
-  - composer install
-  - rm -fR vendor/nikic/php-parser/test_old
-  - rm -f vendor/symfony/console/Tests/Helper/TableTest.php
+  - composer install --no-dev
   - rsync -a --exclude={'*.md','.gitignore',instruction,'.*'} ./* paynow
-  - php vendor/bin/autoindex prestashop:add:index paynow
+  - git clone https://github.com/PrestaShopCorp/autoindex
+  - cd autoindex
+  - composer install
+  - php bin/autoindex prestashop:add:index ../paynow
+  - cd ..
   - zip -r paynow.zip ./paynow
 deploy:
   provider: releases
