@@ -73,7 +73,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     private function cartValidation()
     {
         if (!$this->context->cart->id) {
-            PaynowLogger::log('Empty cart');
+            PaynowLogger::warning('Empty cart');
             Tools::redirect('index.php?controller=cart');
         }
 
@@ -139,11 +139,30 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 $this->order->reference,
                 $external_id
             );
+            PaynowLogger::info(
+                'Payment has been successfully created {orderReference={}, paymentId={}}',
+                [
+                    $this->order->reference,
+                    $payment->getPaymentId()
+                ]
+            );
             Tools::redirect($payment->getRedirectUrl());
-        } catch (PaynowException $e) {
-            PaynowLogger::log($e->getMessage(), null, $this->order->reference);
-            foreach ($e->getErrors() as $error) {
-                PaynowLogger::log($error->getType(), $error->getMessage(), $this->order->reference);
+        } catch (PaynowException $exception) {
+            PaynowLogger::error(
+                $exception->getMessage() . '{orderReference={}}',
+                [
+                    $this->order->reference
+                ]
+            );
+            foreach ($exception->getErrors() as $error) {
+                PaynowLogger::error(
+                    $exception->getMessage() . '{orderReference={}, error={}, message={}}',
+                    [
+                        $this->order->reference,
+                        $error->getType(),
+                        $error->getMessage()
+                    ]
+                );
             }
             $this->displayError();
         }
@@ -155,7 +174,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         $customer = new Customer((int)$order->id_customer);
 
         return [
-            'amount' => $this->convertAmount($order->total_paid),
+            'amount' => number_format($order->total_paid * 100, 0, '', ''),
             'currency' => $currency['iso_code'],
             'externalId' => $external_id,
             'description' => $this->module->l('Order No: ', 'payment') . $order->reference,
@@ -173,11 +192,6 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 ]
             )
         ];
-    }
-
-    private function convertAmount($value)
-    {
-        return (int)round($value * 100);
     }
 
     private function displayError()
