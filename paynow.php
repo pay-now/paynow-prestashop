@@ -140,7 +140,7 @@ class Paynow extends PaymentModule
     {
         return Configuration::updateValue('PAYNOW_DEBUG_LOGS_ENABLED', 0) &&
             Configuration::updateValue('PAYNOW_REFUNDS_ENABLED', 1) &&
-            Configuration::updateValue('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED', 1) &&
+            Configuration::updateValue('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED', 0) &&
             Configuration::updateValue('PAYNOW_REFUNDS_ON_STATUS', Configuration::get('PS_OS_REFUND')) &&
             Configuration::updateValue('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS', 0) &&
             Configuration::updateValue('PAYNOW_PROD_API_KEY', '') &&
