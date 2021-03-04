@@ -19,7 +19,8 @@ function upgrade_module_1_3_0($module)
     if (!$module->registerHook('actionOrderStatusPostUpdate') ||
         !$module->registerHook('actionOrderSlipAdd') ||
         !$module->registerHook('displayAdminOrderTop') ||
-        !Configuration::updateValue('PAYNOW_REFUNDS_ENABLED', 1)) {
+        !Configuration::updateValue('PAYNOW_REFUNDS_ENABLED', 1) ||
+        !Configuration::updateValue('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED', 0)) {
         return false;
     }
 
