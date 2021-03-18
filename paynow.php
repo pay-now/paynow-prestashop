@@ -10,10 +10,6 @@
  * @license   MIT License
  */
 
-use Paynow\Exception\PaynowException;
-use Paynow\Service\Refund;
-use Paynow\Service\ShopConfiguration;
-
 if (!defined('_PS_VERSION_')) {
     exit;
 }
@@ -391,7 +387,7 @@ class Paynow extends PaymentModule
                             $refund_amount
                         ]
                     );
-                    $refund_client = new Refund($this->api_client);
+                    $refund_client = new Paynow\Service\Refund($this->api_client);
                     $refund = $refund_client->create(
                         $payment->transaction_id,
                         uniqid($payment->order_reference, true),
@@ -404,7 +400,7 @@ class Paynow extends PaymentModule
                             $refund->getRefundId()
                         ]
                     );
-                } catch (PaynowException $exception) {
+                } catch (Paynow\Exception\PaynowException $exception) {
                     foreach ($exception->getErrors() as $error) {
                         PaynowLogger::error(
                             $exception->getMessage() . ' {orderReference={}, paymentId={}, type={}, message={}}',
@@ -535,7 +531,7 @@ class Paynow extends PaymentModule
     private function sendShopUrlsConfiguration()
     {
         $this->initializeApiClient();
-        $shop_configuration = new ShopConfiguration($this->api_client);
+        $shop_configuration = new Paynow\Service\ShopConfiguration($this->api_client);
         try {
             $shop_configuration->changeUrls(
                 $this->context->link->getModuleLink('paynow', 'return'),
