@@ -10,8 +10,6 @@
  * @license   MIT License
  */
 
-use Paynow\Model\Payment\Status;
-
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 
 class PaynowNotificationsModuleFrontController extends PaynowFrontController
@@ -91,16 +89,16 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             }
 
             switch ($notification_status) {
-                case Status::STATUS_PENDING:
+                case Paynow\Model\Payment\Status::STATUS_PENDING:
                     break;
-                case Status::STATUS_REJECTED:
+                case Paynow\Model\Payment\Status::STATUS_REJECTED:
                     $history->changeIdOrderState(
                         (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
                         $order->id
                     );
                     $history->addWithemail(true);
                     break;
-                case Status::STATUS_CONFIRMED:
+                case Paynow\Model\Payment\Status::STATUS_CONFIRMED:
                     $history->changeIdOrderState(
                         (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'),
                         $order->id
@@ -108,7 +106,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                     $history->addWithemail(true);
                     $this->addPaymentIdToOrderPayments($order, $payment['id_payment']);
                     break;
-                case Status::STATUS_ERROR:
+                case Paynow\Model\Payment\Status::STATUS_ERROR:
                     $history->changeIdOrderState(
                         (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
                         $order->id
@@ -142,22 +140,22 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
     private function isCorrectStatus($previous_status, $next_status)
     {
         $payment_status_flow = [
-            Status::STATUS_NEW => [
-                Status::STATUS_NEW,
-                Status::STATUS_PENDING,
-                Status::STATUS_ERROR,
-                Status::STATUS_CONFIRMED,
-                Status::STATUS_REJECTED
+            Paynow\Model\Payment\Status::STATUS_NEW => [
+                Paynow\Model\Payment\Status::STATUS_NEW,
+                Paynow\Model\Payment\Status::STATUS_PENDING,
+                Paynow\Model\Payment\Status::STATUS_ERROR,
+                Paynow\Model\Payment\Status::STATUS_CONFIRMED,
+                Paynow\Model\Payment\Status::STATUS_REJECTED
             ],
-            Status::STATUS_PENDING => [
-                Status::STATUS_CONFIRMED,
-                Status::STATUS_REJECTED
+            Paynow\Model\Payment\Status::STATUS_PENDING => [
+                Paynow\Model\Payment\Status::STATUS_CONFIRMED,
+                Paynow\Model\Payment\Status::STATUS_REJECTED
             ],
-            Status::STATUS_REJECTED => [Status::STATUS_CONFIRMED],
-            Status::STATUS_CONFIRMED => [],
-            Status::STATUS_ERROR => [
-                Status::STATUS_CONFIRMED,
-                Status::STATUS_REJECTED
+            Paynow\Model\Payment\Status::STATUS_REJECTED => [Paynow\Model\Payment\Status::STATUS_CONFIRMED],
+            Paynow\Model\Payment\Status::STATUS_CONFIRMED => [],
+            Paynow\Model\Payment\Status::STATUS_ERROR => [
+                Paynow\Model\Payment\Status::STATUS_CONFIRMED,
+                Paynow\Model\Payment\Status::STATUS_REJECTED
             ]
         ];
         $previous_status_exists = isset($payment_status_flow[$previous_status]);

@@ -10,9 +10,6 @@
  * @license   MIT License
  */
 
-use Paynow\Exception\PaynowException;
-use Paynow\Service\Payment;
-
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 
 class PaynowPaymentModuleFrontController extends PaynowFrontController
@@ -126,7 +123,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     private function sendPaymentRequest()
     {
         try {
-            $payment_client = new Payment($this->module->api_client);
+            $payment_client = new Paynow\Service\Payment($this->module->api_client);
             $idempotency_key = uniqid($this->order->reference . '_');
             $external_id = $this->order->reference;
             $request = $this->preparePaymentRequest($this->order, $external_id);
@@ -147,7 +144,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 ]
             );
             Tools::redirect($payment->getRedirectUrl());
-        } catch (PaynowException $exception) {
+        } catch (Paynow\Exception\PaynowException $exception) {
             PaynowLogger::error(
                 $exception->getMessage() . '{orderReference={}}',
                 [
