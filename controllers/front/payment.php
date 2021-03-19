@@ -178,7 +178,8 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             'buyer' => [
                 'firstName' => $customer->firstname,
                 'lastName' => $customer->lastname,
-                'email' => $customer->email
+                'email' => $customer->email,
+                'locale' => $this->context->language->locale ? $this->context->language->locale : $this->context->language->language_code
             ],
             'continueUrl' => $this->context->link->getModuleLink(
                 'paynow',
