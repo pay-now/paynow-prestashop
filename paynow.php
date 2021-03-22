@@ -100,7 +100,8 @@ class Paynow extends PaymentModule
             $this->registerHook('displayOrderDetail') &&
             $this->registerHook('actionOrderStatusPostUpdate') &&
             $this->registerHook('actionOrderSlipAdd') &&
-            $this->registerHook('displayAdminOrderTop');
+            $this->registerHook('displayAdminOrderTop') &&
+            $this->registerHook('displayAdminAfterHeader');
 
         if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
             $registerStatus &= $this->registerHook('payment') &&
@@ -120,7 +121,8 @@ class Paynow extends PaymentModule
         $registerStatus = $this->unregisterHook('header') &&
             $this->unregisterHook('displayOrderDetail') &&
             $this->unregisterHook('actionOrderSlipAdd') &&
-            $this->unregisterHook('displayAdminOrderTop');
+            $this->unregisterHook('displayAdminOrderTop') &&
+            $this->unregisterHook('displayAdminAfterHeader');
 
         if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
             $registerStatus &= $this->unregisterHook('displayPaymentEU') &&
@@ -427,6 +429,27 @@ class Paynow extends PaymentModule
         return $this->fetchTemplate('/views/templates/hook/admin_order_top.tpl');
     }
 
+    public function hookDisplayAdminAfterHeader()
+    {
+        try {
+            $client = new \Github\Client();
+            $release = $client->api('repo')->releases()->latest('pay-now', 'paynow-prestashop');
+
+            if ($release && version_compare($this->version, $release['tag_name'], '<')) {
+                $this->context->smarty->assign([
+                    'download_url' => $release['assets'][0]['browser_download_url'],
+                    'version_name' => $release['name'],
+                    'changelog_url' => $release['html_url']
+                ]);
+                return $this->fetchTemplate('/views/templates/admin/_partials/upgrade.tpl');
+            }
+        } catch (Exception $exception) {
+            PaynowLogger::error($exception->getMessage());
+        }
+
+        return null;
+    }
+
     public function canOrderPaymentBeRetried($id_order)
     {
         $last_payment_status = $this->getLastPaymentStatusByOrderId($id_order);
@@ -576,15 +599,15 @@ class Paynow extends PaymentModule
             $this->html .= '<br />';
         }
 
-        $this->html .= $this->displayBackOfficeAccountInformation();
-        $this->html .= $this->renderForm();
+        $this->displayBackOfficeAccountInformation();
+        $this->renderForm();
 
         return $this->html;
     }
 
     private function displayBackOfficeAccountInformation()
     {
-        return $this->fetchTemplate('/views/templates/admin/_partials/account.tpl');
+        $this->html .= $this->fetchTemplate('/views/templates/admin/_partials/account.tpl');
     }
 
     private function renderForm()
@@ -841,7 +864,7 @@ class Paynow extends PaymentModule
             'id_language' => $this->context->language->id
         ];
 
-        return $helper->generateForm($form);
+        $this->html .= $helper->generateForm($form);
     }
 
     public function displayInfoMessage($message)
@@ -907,8 +930,8 @@ class Paynow extends PaymentModule
             if (Db::getInstance()->execute($sql)) {
                 return (int)Db::getInstance()->Insert_ID();
             }
-        } catch (PrestaShopDatabaseException $e) {
-            PaynowLogger::error($e->getMessage() . '{orderReference={}}', [$order_reference]);
+        } catch (PrestaShopDatabaseException $exception) {
+            PaynowLogger::error($exception->getMessage() . '{orderReference={}}', [$order_reference]);
         }
 
         return false;
