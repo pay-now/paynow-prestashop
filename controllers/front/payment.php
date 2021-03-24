@@ -170,7 +170,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         $currency = Currency::getCurrency($order->id_currency);
         $customer = new Customer((int)$order->id_customer);
 
-        return [
+        $request = [
             'amount' => number_format($order->total_paid * 100, 0, '', ''),
             'currency' => $currency['iso_code'],
             'externalId' => $external_id,
@@ -190,6 +190,12 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 ]
             )
         ];
+
+        if (!empty(Tools::getValue('paymentMethodId'))) {
+            $request['paymentMethodId'] = (int)Tools::getValue('paymentMethodId');
+        }
+
+        return $request;
     }
 
     private function displayError()
