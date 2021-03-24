@@ -5,7 +5,7 @@
                 <div class="col-lg-3 col-xs-4 paynow-payment-option-pbl">
                     <input type="radio" name="paymentMethodId" value="{$method->getId()}" id="paynow_method_{$method->getId()}" />
                     <label for="paynow_method_{$method->getId()}">
-                        <img src="{$method->getImage()}" alt="{$method->getName()}" />
+                        <img src="{$method->getImage()}" alt="{$method->getDescription()}" />
                     </label>
                 </div>
             {/foreach}

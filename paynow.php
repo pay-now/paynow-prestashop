@@ -294,14 +294,13 @@ class Paynow extends PaymentModule
                                 'action' => $this->context->link->getModuleLink($this->name, 'payment', [], true)
                             ]);
                             array_push($payment_options, $this->paymentOption(
-                                $this->l('Online transfer'),
+                                $this->getPaymentMethodTitle($payment_method->getType()),
                                 $this->getLogo(),
                                 $this->context->link->getModuleLink($this->name, 'payment', [], true)
                             )->setForm($this->context->smarty->fetch('module:paynow/views/templates/front/1.7/payment_form.tpl')));
                         } else {
                             array_push($payment_options, $this->paymentOption(
-                            // todo: tłumaczenia
-                                $this->l($payment_method->getName()),
+                                $this->getPaymentMethodTitle($payment_method->getType()),
                                 $payment_method->getImage(),
                                 $this->context->link->getModuleLink($this->name, 'payment', ['paymentMethodId' => $payment_method->getId()], true)
                             ));
@@ -321,7 +320,24 @@ class Paynow extends PaymentModule
         return $payment_options;
     }
 
-    private function getPaymentMethods() {
+    private function getPaymentMethodTitle($payment_method_type)
+    {
+        switch ($payment_method_type) {
+            default:
+                return '';
+            case \Paynow\Model\PaymentMethods\Type::BLIK:
+                return $this->l('Pay by Blik');
+            case \Paynow\Model\PaymentMethods\Type::CARD:
+                return $this->l('Pay by card');
+            case \Paynow\Model\PaymentMethods\Type::PBL:
+                return $this->l('Pay by online transfer');
+            case \Paynow\Model\PaymentMethods\Type::GOOGLE_PAY:
+                return $this->l('Pay by Google Pay');
+        }
+    }
+
+    private function getPaymentMethods()
+    {
         $total = number_format($this->context->cart->getOrderTotal(true, Cart::BOTH) * 100, 0, '', '');
         $payment_client = new Paynow\Service\Payment($this->api_client);
         $currency = new Currency($this->context->cart->id_currency);
@@ -366,13 +382,13 @@ class Paynow extends PaymentModule
                     if (!isset($list[$payment_method->getType()])) {
                         if (Paynow\Model\PaymentMethods\Type::PBL == $payment_method->getType()) {
                             array_push($payment_options, [
-                                'name' => $this->l('Online transfer'),
+                                'name' => $this->getPaymentMethodTitle($payment_method->getType()),
                                 'image' => $this->getLogo(),
                                 'pbls' => $payment_methods->getOnlyPbls()
                             ]);
                         } else {
                             array_push($payment_options, [
-                                'name' => $this->l($payment_method->getName()),
+                                'name' => $this->getPaymentMethodTitle($payment_method->getType()),
                                 'image' => $payment_method->getImage(),
                                 'id' => $payment_method->getId()
                             ]);
@@ -1021,8 +1037,7 @@ class Paynow extends PaymentModule
         $order_reference,
         $external_id,
         $modified_at = null
-    )
-    {
+    ) {
         $modified_at = !$modified_at ? 'NOW()' : '"' . $modified_at . '"';
 
         try {
