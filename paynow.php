@@ -21,6 +21,7 @@ class Paynow extends PaymentModule
 {
     protected $html = '';
     protected $postErrors = [];
+    protected $callToActionText = '';
 
     /**
      * @var \Paynow\Client
@@ -141,6 +142,7 @@ class Paynow extends PaymentModule
             Configuration::updateValue('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED', 0) &&
             Configuration::updateValue('PAYNOW_REFUNDS_ON_STATUS', Configuration::get('PS_OS_REFUND')) &&
             Configuration::updateValue('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS', 0) &&
+            Configuration::updateValue('PAYNOW_SEPARATE_PAYMENT_METHODS', 0) &&
             Configuration::updateValue('PAYNOW_PROD_API_KEY', '') &&
             Configuration::updateValue('PAYNOW_PROD_API_SIGNATURE_KEY', '') &&
             Configuration::updateValue('PAYNOW_SANDBOX_ENABLED', 0) &&
@@ -158,6 +160,8 @@ class Paynow extends PaymentModule
             Configuration::deleteByName('PAYNOW_REFUNDS_ENABLED') &&
             Configuration::deleteByName('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED') &&
             Configuration::deleteByName('PAYNOW_REFUNDS_ON_STATUS') &&
+            Configuration::deleteByName('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS') &&
+            Configuration::deleteByName('PAYNOW_SEPARATE_PAYMENT_METHODS') &&
             Configuration::deleteByName('PAYNOW_PROD_API_KEY') &&
             Configuration::deleteByName('PAYNOW_PROD_API_SIGNATURE_KEY') &&
             Configuration::deleteByName('PAYNOW_SANDBOX_ENABLED') &&
@@ -266,6 +270,9 @@ class Paynow extends PaymentModule
     public function hookHeader()
     {
         $this->context->controller->addCSS(($this->_path) . 'views/css/front.css', 'all');
+        if (version_compare(_PS_VERSION_, '1.7', '<')) {
+            $this->context->controller->addJs(($this->_path) . 'views/js/front.js', 'all');
+        }
     }
 
     public function hookPaymentOptions($params)
@@ -274,13 +281,84 @@ class Paynow extends PaymentModule
             return;
         }
 
+        $payment_options = [];
+        if (Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS')) {
+            $payment_methods = $this->getPaymentMethods();
+            if (!empty($payment_methods)) {
+                $list = [];
+                foreach ($payment_methods->getAll() as $payment_method) {
+                    if (!isset($list[$payment_method->getType()])) {
+                        if (Paynow\Model\PaymentMethods\Type::PBL == $payment_method->getType()) {
+                            $this->context->smarty->assign([
+                                'paynowPbls' => $payment_methods->getOnlyPbls(),
+                                'action' => $this->context->link->getModuleLink($this->name, 'payment', [], true)
+                            ]);
+                            array_push($payment_options, $this->paymentOption(
+                                $this->getPaymentMethodTitle($payment_method->getType()),
+                                $this->getLogo(),
+                                $this->context->link->getModuleLink($this->name, 'payment', [], true)
+                            )->setForm($this->context->smarty->fetch('module:paynow/views/templates/front/1.7/payment_form.tpl')));
+                        } else {
+                            array_push($payment_options, $this->paymentOption(
+                                $this->getPaymentMethodTitle($payment_method->getType()),
+                                $payment_method->getImage(),
+                                $this->context->link->getModuleLink($this->name, 'payment', ['paymentMethodId' => $payment_method->getId()], true)
+                            ));
+                        }
+                        $list[$payment_method->getType()] = $payment_method->getId();
+                    }
+                }
+            }
+        } else {
+            array_push($payment_options, $this->paymentOption(
+                $this->callToActionText,
+                $this->getLogo(),
+                $this->context->link->getModuleLink($this->name, 'payment', [], true)
+            ));
+        }
+
+        return $payment_options;
+    }
+
+    private function getPaymentMethodTitle($payment_method_type)
+    {
+        switch ($payment_method_type) {
+            default:
+                return '';
+            case \Paynow\Model\PaymentMethods\Type::BLIK:
+                return $this->l('Pay by Blik');
+            case \Paynow\Model\PaymentMethods\Type::CARD:
+                return $this->l('Pay by card');
+            case \Paynow\Model\PaymentMethods\Type::PBL:
+                return $this->l('Pay by online transfer');
+            case \Paynow\Model\PaymentMethods\Type::GOOGLE_PAY:
+                return $this->l('Pay by Google Pay');
+        }
+    }
+
+    private function getPaymentMethods()
+    {
+        $total = number_format($this->context->cart->getOrderTotal(true, Cart::BOTH) * 100, 0, '', '');
+        $payment_client = new Paynow\Service\Payment($this->api_client);
+        $currency = new Currency($this->context->cart->id_currency);
+        try {
+            return $payment_client->getPaymentMethods($currency->iso_code, $total);
+        } catch (\Paynow\Exception\PaynowException $exception) {
+            PaynowLogger::error($exception->getMessage());
+        }
+
+        return null;
+    }
+
+    private function paymentOption($title, $logo, $action, $additional = null)
+    {
         $payment_option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
         $payment_option->setModuleName($this->name)
-            ->setCallToActionText($this->callToActionText)
-            ->setLogo($this->getLogo())
-            ->setAction($this->context->link->getModuleLink($this->name, 'payment', [], true));
-
-        return [$payment_option];
+            ->setCallToActionText($title)
+            ->setLogo($logo)
+            ->setAdditionalInformation($additional)
+            ->setAction($action);
+        return $payment_option;
     }
 
     public function hookPayment($params)
@@ -294,6 +372,35 @@ class Paynow extends PaymentModule
             'logo' => $this->getLogo(),
             'paynow_url' => $this->context->link->getModuleLink('paynow', 'payment')
         ]);
+
+        $payment_options = [];
+        if (Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS')) {
+            $payment_methods = $this->getPaymentMethods();
+            if (!empty($payment_methods)) {
+                $list = [];
+                foreach ($payment_methods->getAll() as $payment_method) {
+                    if (!isset($list[$payment_method->getType()])) {
+                        if (Paynow\Model\PaymentMethods\Type::PBL == $payment_method->getType()) {
+                            array_push($payment_options, [
+                                'name' => $this->getPaymentMethodTitle($payment_method->getType()),
+                                'image' => $this->getLogo(),
+                                'pbls' => $payment_methods->getOnlyPbls()
+                            ]);
+                        } else {
+                            array_push($payment_options, [
+                                'name' => $this->getPaymentMethodTitle($payment_method->getType()),
+                                'image' => $payment_method->getImage(),
+                                'id' => $payment_method->getId()
+                            ]);
+                        }
+                        $list[$payment_method->getType()] = $payment_method->getId();
+                    }
+                }
+                $this->context->smarty->assign([
+                    'payment_options' => $payment_options
+                ]);
+            }
+        }
 
         return $this->display(__FILE__, '/views/templates/hook/payment.tpl');
     }
@@ -507,6 +614,10 @@ class Paynow extends PaymentModule
         Configuration::updateValue(
             'PAYNOW_REFUNDS_WITH_SHIPPING_COSTS',
             Tools::getValue('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS')
+        );
+        Configuration::updateValue(
+            'PAYNOW_SEPARATE_PAYMENT_METHODS',
+            Tools::getValue('PAYNOW_SEPARATE_PAYMENT_METHODS')
         );
         Configuration::updateValue(
             'PAYNOW_PROD_API_KEY',
@@ -824,6 +935,23 @@ class Paynow extends PaymentModule
                 'input' => [
                     [
                         'type' => 'switch',
+                        'label' => $this->l('Show separated payment methods'),
+                        'name' => 'PAYNOW_SEPARATE_PAYMENT_METHODS',
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->l('Enabled')
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->l('Disabled')
+                            ]
+                        ],
+                    ],
+                    [
+                        'type' => 'switch',
                         'label' => $this->l('Enable logs'),
                         'desc' => $this->l('Logs are available in ') . ' ' . $logs_path,
                         'name' => 'PAYNOW_DEBUG_LOGS_ENABLED',
@@ -839,7 +967,7 @@ class Paynow extends PaymentModule
                                 'label' => $this->l('Disabled')
                             ]
                         ],
-                    ]
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->l('Save')
@@ -888,6 +1016,7 @@ class Paynow extends PaymentModule
             'PAYNOW_REFUNDS_ON_STATUS' => Configuration::get('PAYNOW_REFUNDS_ON_STATUS'),
             'PAYNOW_REFUNDS_WITH_SHIPPING_COSTS' => Configuration::get('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS'),
             'PAYNOW_DEBUG_LOGS_ENABLED' => Configuration::get('PAYNOW_DEBUG_LOGS_ENABLED'),
+            'PAYNOW_SEPARATE_PAYMENT_METHODS' => Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS'),
             'PAYNOW_PROD_API_KEY' => Configuration::get('PAYNOW_PROD_API_KEY'),
             'PAYNOW_PROD_API_SIGNATURE_KEY' => Configuration::get('PAYNOW_PROD_API_SIGNATURE_KEY'),
             'PAYNOW_SANDBOX_ENABLED' => Configuration::get('PAYNOW_SANDBOX_ENABLED'),
