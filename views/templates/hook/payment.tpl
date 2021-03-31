@@ -20,14 +20,14 @@
                 <div class="paynow-payment-option-pbls">
                     {foreach from=$method.pbls item=pbl}
                         <div class="col-lg-3 col-xs-4 paynow-payment-option-pbl">
-                            <button name="paymentMethodId" value="{$pbl->getId()}" type="submit" {if ($pbl->getStatus() === "DISABLED")} disabled {/if}>
+                            <button name="paymentMethodId" value="{$pbl->getId()}" type="submit" {if !$pbl->isEnabled()} disabled {/if}>
                                 <img src="{$pbl->getImage()}" alt="{$pbl->getName()}" />
                             </button>
                         </div>
                     {/foreach}
                 </div>
             {else}
-                <button name="paymentMethodId" value="{$method.id}" type="submit" class="payment-option" {if ($method.status === "DISABLED")} disabled {/if}>
+                <button name="paymentMethodId" value="{$method.id}" type="submit" class="payment-option" {if !$method.isEnabled} disabled {/if}>
                     <img src="{$method.image}" alt="{$method.name}" />
                     {$method.name|escape:'htmlall':'UTF-8'}
                 </button>
