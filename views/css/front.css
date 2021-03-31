@@ -46,6 +46,10 @@ p.payment_module .paynow img {
     width: 100%;
 }
 
+.paynow-payment-option-pbl button:disabled img,.paynow-payment-option-pbl.disabled img  {
+    opacity: 0.5;
+}
+
 .paynow-payment-option-pbl input[type=radio] {
     display: none;
 }
@@ -62,6 +66,9 @@ p.payment_module .paynow img {
     justify-content: center;
     align-items: center;
 }
+.paynow-payment-option-pbl.disabled label {
+    cursor: not-allowed;
+}
 
 .paynow-payment-option-pbl input[type=radio]:checked + label {
     border: 1px solid #d2d2d2;
@@ -77,9 +84,13 @@ p.payment_module .paynow img {
     margin: 5px;
 }
 
-.paynow-payment-option-pbl button:hover {
+.paynow-payment-option-pbl button:enabled:hover {
     border: 1px solid #d2d2d2;
     background: #f3f3f3;
+}
+
+.paynow-payment-option-pbl button:disabled:hover {
+    cursor: not-allowed;
 }
 
 .paynow-payment-form {
@@ -97,15 +108,20 @@ button.payment-option {
     font-weight: bold;
 }
 
-.paynow > button:hover {
+.paynow > button:enabled:hover {
     border: 1px solid #d2d2d2;
     background: #f3f3f3;
 }
 
 .paynow > button img, .payment-option img {
-    max-height: 40px;
+    max-height: 40px !important;
     max-width: 80px !important;
     margin-right: 10px;
+    height: auto !important;
+}
+
+.paynow .payment-option:disabled img {
+    opacity: 0.5;
 }
 
 @media (max-width: 768px) {
