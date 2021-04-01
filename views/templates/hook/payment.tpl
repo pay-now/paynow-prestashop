@@ -27,7 +27,7 @@
                     {/foreach}
                 </div>
             {else}
-                <button name="paymentMethodId" value="{$method.id}" type="submit" class="payment-option" {if !$method.isEnabled}disabled{/if}>
+                <button name="paymentMethodId" value="{$method.id}" type="submit" class="payment-option" {if !$method.enabled}disabled{/if}>
                     <img src="{$method.image}" alt="{$method.name}" />
                     {$method.name|escape:'htmlall':'UTF-8'}
                 </button>

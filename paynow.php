@@ -391,7 +391,7 @@ class Paynow extends PaymentModule
                                 'name' => $this->getPaymentMethodTitle($payment_method->getType()),
                                 'image' => $payment_method->getImage(),
                                 'id' => $payment_method->getId(),
-                                'isEnabled' => $payment_method->isEnabled()
+                                'enabled' => $payment_method->isEnabled()
                             ]);
                         }
                         $list[$payment_method->getType()] = $payment_method->getId();

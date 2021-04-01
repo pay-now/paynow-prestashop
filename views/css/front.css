@@ -46,8 +46,9 @@ p.payment_module .paynow img {
     width: 100%;
 }
 
-.paynow-payment-option-pbl button:disabled img,.paynow-payment-option-pbl.disabled img  {
-    opacity: 0.5;
+.paynow-payment-option-pbl button:disabled img, .paynow-payment-option-pbl.disabled img  {
+    opacity: 0.3;
+    filter: grayscale(1);
 }
 
 .paynow-payment-option-pbl input[type=radio] {
@@ -121,7 +122,8 @@ button.payment-option {
 }
 
 .paynow .payment-option:disabled img {
-    opacity: 0.5;
+    opacity: 0.3;
+    filter: grayscale(1);
 }
 
 @media (max-width: 768px) {
