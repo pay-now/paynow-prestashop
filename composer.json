@@ -18,7 +18,10 @@
   },
   "config": {
     "prepend-autoloader": false,
-    "optimize-autoloader": true
+    "optimize-autoloader": true,
+    "platform": {
+      "php": "5.6"
+    }
   },
   "type": "prestashop-module",
   "minimum-stability": "stable"
