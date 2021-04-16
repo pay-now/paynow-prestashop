@@ -1,6 +1,6 @@
 script: skip
 before_deploy:
-  - composer install --no-dev
+  - composer install --no-dev --optimize-autoloader
   - rsync -a --exclude={'*.md','.gitignore',instruction,'.*'} ./* paynow
   - git clone https://github.com/PrestaShopCorp/autoindex
   - cd autoindex
