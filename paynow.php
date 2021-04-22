@@ -138,6 +138,7 @@ class Paynow extends PaymentModule
     private function createModuleSettings()
     {
         return Configuration::updateValue('PAYNOW_DEBUG_LOGS_ENABLED', 0) &&
+            Configuration::updateValue('PAYNOW_USE_CLASSIC_RETURN_URL', 0) &&
             Configuration::updateValue('PAYNOW_REFUNDS_ENABLED', 1) &&
             Configuration::updateValue('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED', 0) &&
             Configuration::updateValue('PAYNOW_REFUNDS_ON_STATUS', Configuration::get('PS_OS_REFUND')) &&
@@ -157,6 +158,7 @@ class Paynow extends PaymentModule
     private function deleteModuleSettings()
     {
         return Configuration::deleteByName('PAYNOW_DEBUG_LOGS_ENABLED') &&
+            Configuration::deleteByName('PAYNOW_USE_CLASSIC_RETURN_URL') &&
             Configuration::deleteByName('PAYNOW_REFUNDS_ENABLED') &&
             Configuration::deleteByName('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED') &&
             Configuration::deleteByName('PAYNOW_REFUNDS_ON_STATUS') &&
@@ -297,7 +299,9 @@ class Paynow extends PaymentModule
                                 $this->getPaymentMethodTitle($payment_method->getType()),
                                 $this->getLogo(),
                                 $this->context->link->getModuleLink($this->name, 'payment', [], true)
-                            )->setForm($this->context->smarty->fetch('module:paynow/views/templates/front/1.7/payment_form.tpl')));
+                            )->setForm($this->context->smarty->fetch(
+                                'module:paynow/views/templates/front/1.7/payment_form.tpl'
+                            )));
                         } else {
                             array_push($payment_options, $this->paymentOption(
                                 $this->getPaymentMethodTitle($payment_method->getType()),
@@ -599,6 +603,10 @@ class Paynow extends PaymentModule
         Configuration::updateValue(
             'PAYNOW_DEBUG_LOGS_ENABLED',
             Tools::getValue('PAYNOW_DEBUG_LOGS_ENABLED')
+        );
+        Configuration::updateValue(
+            'PAYNOW_USE_CLASSIC_RETURN_URL',
+            Tools::getValue('PAYNOW_USE_CLASSIC_RETURN_URL')
         );
         Configuration::updateValue(
             'PAYNOW_REFUNDS_ENABLED',
@@ -953,6 +961,24 @@ class Paynow extends PaymentModule
                     ],
                     [
                         'type' => 'switch',
+                        'label' => $this->l('Use classic return page'),
+                        'desc' => $this->l('Buyer will be redirected to order-confirmation page after payment.'),
+                        'name' => 'PAYNOW_USE_CLASSIC_RETURN_URL',
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->l('Enabled')
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->l('Disabled')
+                            ]
+                        ],
+                    ],
+                    [
+                        'type' => 'switch',
                         'label' => $this->l('Enable logs'),
                         'desc' => $this->l('Logs are available in ') . ' ' . $logs_path,
                         'name' => 'PAYNOW_DEBUG_LOGS_ENABLED',
@@ -1018,6 +1044,7 @@ class Paynow extends PaymentModule
             'PAYNOW_REFUNDS_WITH_SHIPPING_COSTS' => Configuration::get('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS'),
             'PAYNOW_DEBUG_LOGS_ENABLED' => Configuration::get('PAYNOW_DEBUG_LOGS_ENABLED'),
             'PAYNOW_SEPARATE_PAYMENT_METHODS' => Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS'),
+            'PAYNOW_USE_CLASSIC_RETURN_URL' => Configuration::get('PAYNOW_USE_CLASSIC_RETURN_URL'),
             'PAYNOW_PROD_API_KEY' => Configuration::get('PAYNOW_PROD_API_KEY'),
             'PAYNOW_PROD_API_SIGNATURE_KEY' => Configuration::get('PAYNOW_PROD_API_SIGNATURE_KEY'),
             'PAYNOW_SANDBOX_ENABLED' => Configuration::get('PAYNOW_SANDBOX_ENABLED'),

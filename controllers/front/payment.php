@@ -181,14 +181,25 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 'email' => $customer->email,
                 'locale' => $this->context->language->locale ? $this->context->language->locale : $this->context->language->language_code
             ],
-            'continueUrl' => $this->context->link->getModuleLink(
-                'paynow',
-                'return',
-                [
-                    'order_reference' => $order->reference,
-                    'token' => Tools::encrypt($order->reference)
-                ]
-            )
+            'continueUrl' => Configuration::get('PAYNOW_USE_CLASSIC_RETURN_URL') ?
+                $this->context->link->getPageLink(
+                    'order-confirmation',
+                    null,
+                    null,
+                    [
+                        'id_cart' => $order->id_cart,
+                        'id_module' => $this->module->id,
+                        'id_order' => $external_id,
+                        'key' => $customer->secure_key
+                    ]
+                ) : $this->context->link->getModuleLink(
+                    'paynow',
+                    'return',
+                    [
+                        'order_reference' => $order->reference,
+                        'token' => Tools::encrypt($order->reference)
+                    ]
+                )
         ];
 
         if (!empty(Tools::getValue('paymentMethodId'))) {
