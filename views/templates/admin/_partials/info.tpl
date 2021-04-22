@@ -9,5 +9,5 @@
 * @license   MIT License
 *}
 <div class="alert alert-info">
-    {$message}
+    {$message|escape:'htmlall':'UTF-8'}
 </div>
