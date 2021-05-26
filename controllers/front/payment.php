@@ -224,9 +224,9 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         return $request;
     }
 
-    private function getCategoriesNames($product_id)
+    private function getCategoriesNames($id_category_default)
     {
-        $categoryDefault = new Category($product_id, $this->context->language->id);
+        $categoryDefault = new Category($id_category_default, $this->context->language->id);
         $categoriesNames = [$categoryDefault->name];
         foreach ($categoryDefault->getAllParents() as $category) {
             if ($category->id_parent != 0 && !$category->is_root_category) {
