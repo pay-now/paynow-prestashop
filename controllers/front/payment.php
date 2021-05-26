@@ -208,16 +208,14 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         if(Configuration::get('PAYNOW_SEND_ORDER_ITEMS')){
             $products = $this->context->cart->getProducts(true);
             $order_items = [];
-            if (!empty($products)) {
-                foreach ($products as $product) {
-                    $order_items[] = [
-                        'name'     => $product['name'],
-                        'category' => $this->getCategoriesNames($product['id_category_default']),
-                        'quantity' => $product['quantity'],
-                        'price'    => $product['price']
-                    ];
+            foreach ($products as $product) {
+                $order_items[] = [
+                    'name'     => $product['name'],
+                    'category' => $this->getCategoriesNames($product['id_category_default']),
+                    'quantity' => $product['quantity'],
+                    'price'    => $product['price']
+                ];
                 }
-            }
             if (!empty($order_items)) {
                 $request['orderItems'] = $order_items;
             }
