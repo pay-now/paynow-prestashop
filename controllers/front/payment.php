@@ -208,11 +208,11 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         if(Configuration::get('PAYNOW_SEND_ORDER_ITEMS')){
             $products = $this->context->cart->getProducts(true);
             $order_items = [];
-            if ( !empty( $products ) ) {
-                foreach ( $products as $product ) {
+            if (!empty($products)) {
+                foreach ($products as $product) {
                     $order_items[] = [
                         'name'     => $product['name'],
-                        'category' => $this->getCategoryName($product['id_category_default']),
+                        'category' => $this->getCategoriesNames($product['id_category_default']),
                         'quantity' => $product['quantity'],
                         'price'    => $product['price']
                     ];
@@ -226,7 +226,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         return $request;
     }
 
-    private function getCategoryName($product_id)
+    private function getCategoriesNames($product_id)
     {
         $categoryDefault = new Category($product_id, $this->context->language->id);
         $categoriesNames = [$categoryDefault->name];
