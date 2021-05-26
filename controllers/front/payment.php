@@ -205,8 +205,37 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         if (!empty(Tools::getValue('paymentMethodId'))) {
             $request['paymentMethodId'] = (int)Tools::getValue('paymentMethodId');
         }
+        if(Configuration::get('PAYNOW_SEND_ORDER_ITEMS')){
+            $products = $this->context->cart->getProducts(true);
+            $order_items = [];
+            if ( !empty( $products ) ) {
+                foreach ( $products as $product ) {
+                    $order_items[] = [
+                        'name'     => $product['name'],
+                        'category' => $this->getCategoryName($product['id_category_default']),
+                        'quantity' => $product['quantity'],
+                        'price'    => $product['price']
+                    ];
+                }
+            }
+            if (!empty($order_items)) {
+                $request['orderItems'] = $order_items;
+            }
+        }
 
         return $request;
+    }
+
+    private function getCategoryName($product_id)
+    {
+        $categoryDefault = new Category($product_id, $this->context->language->id);
+        $categoriesNames = [$categoryDefault->name];
+        foreach ($categoryDefault->getAllParents() as $category) {
+            if ($category->id_parent != 0 && !$category->is_root_category) {
+                array_unshift($categoriesNames, $category->name);
+            }
+        }
+        return implode(", ", $categoriesNames); 
     }
 
     private function displayError()

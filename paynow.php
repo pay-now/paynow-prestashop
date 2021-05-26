@@ -152,7 +152,8 @@ class Paynow extends PaymentModule
             Configuration::updateValue('PAYNOW_ORDER_INITIAL_STATE', $this->createOrderInitialState()) &&
             Configuration::updateValue('PAYNOW_ORDER_CONFIRMED_STATE', 2) &&
             Configuration::updateValue('PAYNOW_ORDER_REJECTED_STATE', 6) &&
-            Configuration::updateValue('PAYNOW_ORDER_ERROR_STATE', 8);
+            Configuration::updateValue('PAYNOW_ORDER_ERROR_STATE', 8) &&
+            Configuration::updateValue('PAYNOW_SEND_ORDER_ITEMS', 0);
     }
 
     private function deleteModuleSettings()
@@ -172,7 +173,8 @@ class Paynow extends PaymentModule
             Configuration::deleteByName('PAYNOW_ORDER_INITIAL_STATE') &&
             Configuration::deleteByName('PAYNOW_ORDER_CONFIRMED_STATE') &&
             Configuration::deleteByName('PAYNOW_ORDER_REJECTED_STATE') &&
-            Configuration::deleteByName('PAYNOW_ORDER_ERROR_STATE');
+            Configuration::deleteByName('PAYNOW_ORDER_ERROR_STATE') &&
+            Configuration::deleteByName('PAYNOW_SEND_ORDER_ITEMS');
     }
 
     public function createOrderInitialState()
@@ -663,8 +665,11 @@ class Paynow extends PaymentModule
         Configuration::updateValue(
             'PAYNOW_ORDER_ERROR_STATE',
             Tools::getValue('PAYNOW_ORDER_ERROR_STATE')
-        );
-
+        ); 
+        Configuration::updateValue(
+            'PAYNOW_SEND_ORDER_ITEMS',
+            Tools::getValue('PAYNOW_SEND_ORDER_ITEMS')
+        ); 
         if ($this->isConfigured()) {
             $this->html .= $this->displayConfirmation($this->l('Configuration updated'));
             $this->sendShopUrlsConfiguration();
@@ -979,6 +984,24 @@ class Paynow extends PaymentModule
                     ],
                     [
                         'type' => 'switch',
+                        'label' => $this->l('Send order items'),
+                        'desc' => $this->l('Enable sending ordered products information: name, categories, quantity and unit price.'),
+                        'name' => 'PAYNOW_SEND_ORDER_ITEMS',
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->l('Enabled')
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->l('Disabled')
+                            ]
+                        ],
+                    ],
+                    [
+                        'type' => 'switch',
                         'label' => $this->l('Enable logs'),
                         'desc' => $this->l('Logs are available in ') . ' ' . $logs_path,
                         'name' => 'PAYNOW_DEBUG_LOGS_ENABLED',
@@ -1053,7 +1076,8 @@ class Paynow extends PaymentModule
             'PAYNOW_ORDER_INITIAL_STATE' => Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
             'PAYNOW_ORDER_CONFIRMED_STATE' => Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'),
             'PAYNOW_ORDER_REJECTED_STATE' => Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
-            'PAYNOW_ORDER_ERROR_STATE' => Configuration::get('PAYNOW_ORDER_ERROR_STATE')
+            'PAYNOW_ORDER_ERROR_STATE' => Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
+            'PAYNOW_SEND_ORDER_ITEMS' => Configuration::get('PAYNOW_SEND_ORDER_ITEMS')
         ];
     }
 
