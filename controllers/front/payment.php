@@ -205,7 +205,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         if (!empty(Tools::getValue('paymentMethodId'))) {
             $request['paymentMethodId'] = (int)Tools::getValue('paymentMethodId');
         }
-        if(Configuration::get('PAYNOW_SEND_ORDER_ITEMS')){
+        if (Configuration::get('PAYNOW_SEND_ORDER_ITEMS')) {
             $products = $this->context->cart->getProducts(true);
             $order_items = [];
             foreach ($products as $product) {
