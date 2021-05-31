@@ -13,7 +13,7 @@
     "pay-now/paynow-php-sdk": "^2.0",
     "nyholm/psr7": "^1.2",
     "php-http/curl-client": "^2.1",
-    "knplabs/github-api": "^3.1"
+    "knplabs/github-api": "^2.2"
   },
   "require-dev": {
     "prestashop/autoindex": "^1.0",
