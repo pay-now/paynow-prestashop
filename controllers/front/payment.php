@@ -213,9 +213,9 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                     'name'     => $product['name'],
                     'category' => $this->getCategoriesNames($product['id_category_default']),
                     'quantity' => $product['quantity'],
-                    'price'    => $product['price']
+                    'price'    => number_format($product['price'] * 100, 0, '', '')
                 ];
-                }
+            }
             if (!empty($order_items)) {
                 $request['orderItems'] = $order_items;
             }
