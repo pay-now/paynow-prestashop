@@ -32,7 +32,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.3.5';
+        $this->version = '1.3.6';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -153,7 +153,9 @@ class Paynow extends PaymentModule
             Configuration::updateValue('PAYNOW_ORDER_CONFIRMED_STATE', 2) &&
             Configuration::updateValue('PAYNOW_ORDER_REJECTED_STATE', 6) &&
             Configuration::updateValue('PAYNOW_ORDER_ERROR_STATE', 8) &&
-            Configuration::updateValue('PAYNOW_SEND_ORDER_ITEMS', 0);
+            Configuration::updateValue('PAYNOW_SEND_ORDER_ITEMS', 0) &&
+            Configuration::updateValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED', 0) &&
+            Configuration::updateValue('PAYNOW_PAYMENT_VALIDITY_TIME', 86400);
     }
 
     private function deleteModuleSettings()
@@ -174,7 +176,9 @@ class Paynow extends PaymentModule
             Configuration::deleteByName('PAYNOW_ORDER_CONFIRMED_STATE') &&
             Configuration::deleteByName('PAYNOW_ORDER_REJECTED_STATE') &&
             Configuration::deleteByName('PAYNOW_ORDER_ERROR_STATE') &&
-            Configuration::deleteByName('PAYNOW_SEND_ORDER_ITEMS');
+            Configuration::deleteByName('PAYNOW_SEND_ORDER_ITEMS') &&
+            Configuration::deleteByName('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') &&
+            Configuration::deleteByName('PAYNOW_PAYMENT_VALIDITY_TIME');
     }
 
     public function createOrderInitialState()
@@ -597,6 +601,14 @@ class Paynow extends PaymentModule
                     !Tools::getValue('PAYNOW_PROD_API_SIGNATURE_KEY'))) {
                 $this->postErrors[] = $this->l('Integration keys must be set');
             }
+
+            if((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') > 86400 || (int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') < 1) {
+                $this->postErrors[] = $this->l('Payment validity time must be greater than 0 and less than 86400 seconds');
+            }
+
+            if(!Validate::isInt(Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME'))) {
+                $this->postErrors[] = $this->l('Payment validity time must be integer');
+            }
         }
     }
 
@@ -669,7 +681,15 @@ class Paynow extends PaymentModule
         Configuration::updateValue(
             'PAYNOW_SEND_ORDER_ITEMS',
             Tools::getValue('PAYNOW_SEND_ORDER_ITEMS')
-        ); 
+        );
+        Configuration::updateValue(
+            'PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED',
+            Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED')
+        );
+        Configuration::updateValue(
+            'PAYNOW_PAYMENT_VALIDITY_TIME',
+            Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME')
+        );
         if ($this->isConfigured()) {
             $this->html .= $this->displayConfirmation($this->l('Configuration updated'));
             $this->sendShopUrlsConfiguration();
@@ -1018,6 +1038,30 @@ class Paynow extends PaymentModule
                             ]
                         ],
                     ],
+                    [
+                        'type' => 'switch',
+                        'label' => $this->l('Payment validity time'),
+                        'desc' => $this->l('Enable to limit the validity of the payment.'),
+                        'name' => 'PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED',
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->l('Enabled')
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->l('Disabled')
+                            ]
+                        ],
+                    ],
+                    [
+                        'type' => 'text',
+                        'label' => $this->l('Payment validity time'),
+                        'desc' => $this->l('Determines how long it will be possible to pay for the order from the moment the payment link is generated. Value expressed in seconds. Maximum value is 86400 seconds.'),
+                        'name' => 'PAYNOW_PAYMENT_VALIDITY_TIME'
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->l('Save')
@@ -1077,7 +1121,9 @@ class Paynow extends PaymentModule
             'PAYNOW_ORDER_CONFIRMED_STATE' => Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'),
             'PAYNOW_ORDER_REJECTED_STATE' => Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
             'PAYNOW_ORDER_ERROR_STATE' => Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
-            'PAYNOW_SEND_ORDER_ITEMS' => Configuration::get('PAYNOW_SEND_ORDER_ITEMS')
+            'PAYNOW_SEND_ORDER_ITEMS' => Configuration::get('PAYNOW_SEND_ORDER_ITEMS'),
+            'PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED' => Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED'),
+            'PAYNOW_PAYMENT_VALIDITY_TIME' => Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME')
         ];
     }
 

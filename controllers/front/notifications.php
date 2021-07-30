@@ -91,7 +91,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             switch ($notification_status) {
                 case Paynow\Model\Payment\Status::STATUS_PENDING:
                     break;
-                case Paynow\Model\Payment\Status::STATUS_REJECTED:
+                case Paynow\Model\Payment\Status::STATUS_REJECTED || Paynow\Model\Payment\Status::STATUS_EXPIRED:
                     $history->changeIdOrderState(
                         (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
                         $order->id
@@ -145,18 +145,22 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 Paynow\Model\Payment\Status::STATUS_PENDING,
                 Paynow\Model\Payment\Status::STATUS_ERROR,
                 Paynow\Model\Payment\Status::STATUS_CONFIRMED,
-                Paynow\Model\Payment\Status::STATUS_REJECTED
+                Paynow\Model\Payment\Status::STATUS_REJECTED,
+                Paynow\Model\Payment\Status::STATUS_EXPIRED
+
             ],
             Paynow\Model\Payment\Status::STATUS_PENDING => [
                 Paynow\Model\Payment\Status::STATUS_CONFIRMED,
-                Paynow\Model\Payment\Status::STATUS_REJECTED
+                Paynow\Model\Payment\Status::STATUS_REJECTED,
+                Paynow\Model\Payment\Status::STATUS_EXPIRED
             ],
             Paynow\Model\Payment\Status::STATUS_REJECTED => [Paynow\Model\Payment\Status::STATUS_CONFIRMED],
             Paynow\Model\Payment\Status::STATUS_CONFIRMED => [],
             Paynow\Model\Payment\Status::STATUS_ERROR => [
                 Paynow\Model\Payment\Status::STATUS_CONFIRMED,
                 Paynow\Model\Payment\Status::STATUS_REJECTED
-            ]
+            ],
+            Paynow\Model\Payment\Status::STATUS_EXPIRED => [],
         ];
         $previous_status_exists = isset($payment_status_flow[$previous_status]);
         $is_change_possible = in_array($next_status, $payment_status_flow[$previous_status]);
