@@ -91,7 +91,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             switch ($notification_status) {
                 case Paynow\Model\Payment\Status::STATUS_PENDING:
                     break;
-                case Paynow\Model\Payment\Status::STATUS_REJECTED || Paynow\Model\Payment\Status::STATUS_EXPIRED:
+                case Paynow\Model\Payment\Status::STATUS_REJECTED:
                     $history->changeIdOrderState(
                         (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
                         $order->id
@@ -109,6 +109,13 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 case Paynow\Model\Payment\Status::STATUS_ERROR:
                     $history->changeIdOrderState(
                         (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
+                        $order->id
+                    );
+                    $history->addWithemail(true);
+                    break;
+                case Paynow\Model\Payment\Status::STATUS_EXPIRED:
+                    $history->changeIdOrderState(
+                        (int)Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
                         $order->id
                     );
                     $history->addWithemail(true);

@@ -102,7 +102,8 @@ class Paynow extends PaymentModule
             $this->registerHook('actionOrderStatusPostUpdate') &&
             $this->registerHook('actionOrderSlipAdd') &&
             $this->registerHook('displayAdminOrderTop') &&
-            $this->registerHook('displayAdminAfterHeader');
+            $this->registerHook('displayAdminAfterHeader') &&
+            $this->registerHook('actionAdminControllerSetMedia');
 
         if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
             $registerStatus &= $this->registerHook('payment') &&
@@ -123,7 +124,8 @@ class Paynow extends PaymentModule
             $this->unregisterHook('displayOrderDetail') &&
             $this->unregisterHook('actionOrderSlipAdd') &&
             $this->unregisterHook('displayAdminOrderTop') &&
-            $this->unregisterHook('displayAdminAfterHeader');
+            $this->unregisterHook('displayAdminAfterHeader') &&
+            $this->unregisterHook('actionAdminControllerSetMedia');
 
         if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
             $registerStatus &= $this->unregisterHook('displayPaymentEU') &&
@@ -568,6 +570,13 @@ class Paynow extends PaymentModule
         return null;
     }
 
+    public function hookActionAdminControllerSetMedia($params)
+    {
+
+        $this->context->controller->addJquery();
+        $this->context->controller->addJS(($this->_path) . '/views/js/admin.js', 'all');
+    }
+
     public function canOrderPaymentBeRetried($id_order)
     {
         $last_payment_status = $this->getLastPaymentStatusByOrderId($id_order);
@@ -602,11 +611,11 @@ class Paynow extends PaymentModule
                 $this->postErrors[] = $this->l('Integration keys must be set');
             }
 
-            if((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') > 86400 || (int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') < 1) {
+            if((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 1 && ((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') > 86400 || (int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') < 1)) {
                 $this->postErrors[] = $this->l('Payment validity time must be greater than 0 and less than 86400 seconds');
             }
 
-            if(!Validate::isInt(Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME'))) {
+            if((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 1 && !Validate::isInt(Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME'))) {
                 $this->postErrors[] = $this->l('Payment validity time must be integer');
             }
         }
