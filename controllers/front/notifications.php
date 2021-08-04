@@ -89,8 +89,6 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             }
 
             switch ($notification_status) {
-                case Paynow\Model\Payment\Status::STATUS_PENDING:
-                    break;
                 case Paynow\Model\Payment\Status::STATUS_REJECTED:
                     $history->changeIdOrderState(
                         (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
