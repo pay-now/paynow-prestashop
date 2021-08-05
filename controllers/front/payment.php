@@ -221,6 +221,10 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             }
         }
 
+        if (Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED')) {
+            $request['validityTime'] = Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME');
+        }
+
         return $request;
     }
 
