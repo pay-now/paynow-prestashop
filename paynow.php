@@ -611,8 +611,8 @@ class Paynow extends PaymentModule
                 $this->postErrors[] = $this->l('Integration keys must be set');
             }
 
-            if((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 1 && ((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') > 86400 || (int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') < 1)) {
-                $this->postErrors[] = $this->l('Payment validity time must be greater than 0 and less than 86400 seconds');
+            if((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 1 && ((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') > 86400 || (int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') < 60)) {
+                $this->postErrors[] = $this->l('Payment validity time must be greater than 60 and less than 86400 seconds');
             }
 
             if((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 1 && !Validate::isInt(Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME'))) {
@@ -1068,7 +1068,7 @@ class Paynow extends PaymentModule
                     [
                         'type' => 'text',
                         'label' => $this->l('Payment validity time'),
-                        'desc' => $this->l('Determines how long it will be possible to pay for the order from the moment the payment link is generated. Value expressed in seconds. Maximum value is 86400 seconds.'),
+                        'desc' => $this->l('Determines how long it will be possible to pay for the order from the moment the payment link is generated. Value expressed in seconds. The value must be between 60 and 86400 seconds.'),
                         'name' => 'PAYNOW_PAYMENT_VALIDITY_TIME'
                     ],
                 ],
