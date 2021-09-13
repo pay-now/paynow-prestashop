@@ -73,14 +73,12 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         $url = parse_url($_SERVER['REQUEST_URI']);
         $query = isset($url['query']) ? $url['query'] : '';
         parse_str($query, $queryArray);
-        $queryArray['fc'] = 'module';
-        $queryArray['module'] = $this->module->name;
-        $queryArray['controller'] = 'return';
         unset($queryArray['paymentId']);
         unset($queryArray['paymentStatus']);
-        $newUrl =  '?' . http_build_query($queryArray);
+        $newUrl =  $url['path'] . '?' . http_build_query($queryArray);
+        $host = Tools::getHttpHost(true);
 
-        Tools::redirect($newUrl, __PS_BASE_URI__);
+        Tools::redirectLink($host.$newUrl);
     }
 
     private function displayOrderConfirmation()
