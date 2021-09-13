@@ -70,15 +70,10 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
 
     private function redirectToReturnPageWithoutPaymentIdAndStatusQuery()
     {
-        $url = parse_url($_SERVER['REQUEST_URI']);
-        $query = isset($url['query']) ? $url['query'] : '';
-        parse_str($query, $queryArray);
-        unset($queryArray['paymentId']);
-        unset($queryArray['paymentStatus']);
-        $newUrl =  $url['path'] . '?' . http_build_query($queryArray);
-        $host = Tools::getHttpHost(true);
+        $params = ['order_reference' => Tools::getValue('order_reference'), 'token' => Tools::getValue('token')];
+        $url = $this->context->link->getModuleLink($this->module->name, 'return', $params);
 
-        Tools::redirectLink($host.$newUrl);
+        Tools::redirectLink($url);
     }
 
     private function displayOrderConfirmation()
