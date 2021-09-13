@@ -42,7 +42,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 header('HTTP/1.1 400 Bad Request', true, 400);
                 exit;
             }
-            $this->updateOrderState($payment, $notification_data);
+            $this->module->updateOrderState($payment, $notification_data['status'], $notification_data['paymentId'], $notification_data['modifiedAt']);
         } catch (Exception $exception) {
             PaynowLogger::error(
                 'Error occurred during processing notification {paymentId={}, status={}, message={}}',
@@ -72,116 +72,5 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         return $headers;
     }
 
-    private function updateOrderState($payment, $notification_data)
-    {
-        $order = new Order($payment['id_order']);
-        if ($order && $order->module == $this->module->name) {
-            $history = new OrderHistory();
-            $history->id_order = $order->id;
 
-            $notification_status = $notification_data['status'];
-            $payment_status = $payment['status'];
-
-            if (!$this->isCorrectStatus($payment_status, $notification_status)) {
-                throw new Exception(
-                    'Status transition is incorrect ' . $payment_status . ' - ' . $notification_status
-                );
-            }
-
-            switch ($notification_status) {
-                case Paynow\Model\Payment\Status::STATUS_REJECTED:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
-                    break;
-                case Paynow\Model\Payment\Status::STATUS_CONFIRMED:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
-                    $this->addPaymentIdToOrderPayments($order, $payment['id_payment']);
-                    break;
-                case Paynow\Model\Payment\Status::STATUS_ERROR:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
-                    break;
-                case Paynow\Model\Payment\Status::STATUS_EXPIRED:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
-                    break;
-            }
-
-            $this->module->storePaymentState(
-                $notification_data['paymentId'],
-                $notification_status,
-                $payment['id_order'],
-                $payment['id_cart'],
-                $payment['order_reference'],
-                $payment['external_id'],
-                (new DateTime($notification_data['modifiedAt']))->format('Y-m-d H:i:s')
-            );
-
-            PaynowLogger::info(
-                'Changed order status {orderReference={}, paymentId={}, status={}}',
-                [
-                    $payment['order_reference'],
-                    $notification_data['paymentId'],
-                    $notification_data['status']
-                ]
-            );
-        }
-    }
-
-
-    private function isCorrectStatus($previous_status, $next_status)
-    {
-        $payment_status_flow = [
-            Paynow\Model\Payment\Status::STATUS_NEW => [
-                Paynow\Model\Payment\Status::STATUS_NEW,
-                Paynow\Model\Payment\Status::STATUS_PENDING,
-                Paynow\Model\Payment\Status::STATUS_ERROR,
-                Paynow\Model\Payment\Status::STATUS_CONFIRMED,
-                Paynow\Model\Payment\Status::STATUS_REJECTED,
-                Paynow\Model\Payment\Status::STATUS_EXPIRED
-
-            ],
-            Paynow\Model\Payment\Status::STATUS_PENDING => [
-                Paynow\Model\Payment\Status::STATUS_CONFIRMED,
-                Paynow\Model\Payment\Status::STATUS_REJECTED,
-                Paynow\Model\Payment\Status::STATUS_EXPIRED
-            ],
-            Paynow\Model\Payment\Status::STATUS_REJECTED => [Paynow\Model\Payment\Status::STATUS_CONFIRMED],
-            Paynow\Model\Payment\Status::STATUS_CONFIRMED => [],
-            Paynow\Model\Payment\Status::STATUS_ERROR => [
-                Paynow\Model\Payment\Status::STATUS_CONFIRMED,
-                Paynow\Model\Payment\Status::STATUS_REJECTED
-            ],
-            Paynow\Model\Payment\Status::STATUS_EXPIRED => [],
-        ];
-        $previous_status_exists = isset($payment_status_flow[$previous_status]);
-        $is_change_possible = in_array($next_status, $payment_status_flow[$previous_status]);
-        return $previous_status_exists && $is_change_possible;
-    }
-
-    private function addPaymentIdToOrderPayments($order, $id_payment)
-    {
-        if ($id_payment === null) {
-            return;
-        }
-
-        $payments = $order->getOrderPaymentCollection()->getResults();
-        if (count($payments) > 0) {
-            $payments[0]->transaction_id = $id_payment;
-            $payments[0]->update();
-        }
-    }
 }
