@@ -16,6 +16,8 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
 {
     private $order;
 
+    private $payment;
+
     public function initContent()
     {
         $this->display_column_left = false;
@@ -28,14 +30,19 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             $this->redirectToOrderHistory();
         }
 
-        $payment = $this->module->getLastPaymentDataByOrderReference($order_reference);
-        if (!$payment) {
+        $this->payment = $this->module->getLastPaymentDataByOrderReference($order_reference);
+        if (!$this->payment) {
             $this->redirectToOrderHistory();
         }
 
-        $this->order = new Order($payment['id_order']);
+        $this->order = new Order($this->payment['id_order']);
+
         if (!Validate::isLoadedObject($this->order)) {
             $this->redirectToOrderHistory();
+        }
+
+        if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')) {
+            $this->getPaymentStatus();
         }
 
         $currentState = $this->order->getCurrentStateFull($this->context->language->id);
@@ -61,6 +68,14 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         );
     }
 
+    private function redirectToReturnPageWithoutPaymentIdAndStatusQuery()
+    {
+        $params = ['order_reference' => Tools::getValue('order_reference'), 'token' => Tools::getValue('token')];
+        $url = $this->context->link->getModuleLink($this->module->name, 'return', $params);
+
+        Tools::redirectLink($url);
+    }
+
     private function displayOrderConfirmation()
     {
         return Hook::exec('displayOrderConfirmation', $this->hookParams());
@@ -77,5 +92,18 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             'currency' => $currency->sign,
             'total_to_pay' => $this->order->getOrdersTotalPaid()
         ];
+    }
+
+    private function getPaymentStatus()
+    {
+        try {
+            $payment_client = new Paynow\Service\Payment($this->module->api_client);
+            $paymentId = Tools::getValue('paymentId');
+            $status = $payment_client->status($paymentId)->getStatus();
+            $this->module->updateOrderState($this->payment, $status, $paymentId);
+        } catch (Exception $exception) {
+            PaynowLogger::error($exception->getMessage());
+        }
+        $this->redirectToReturnPageWithoutPaymentIdAndStatusQuery();
     }
 }
