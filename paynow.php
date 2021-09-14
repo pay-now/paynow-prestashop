@@ -73,18 +73,10 @@ class Paynow extends PaymentModule
 
     public function uninstall()
     {
-        if (!$this->deleteInitialOrderState() || !$this->unregisterHooks() || !$this->deleteModuleSettings() || !parent::uninstall()) {
+        if (!$this->unregisterHooks() || !$this->deleteModuleSettings() || !parent::uninstall()) {
             return false;
         }
         return true;
-    }
-
-    private function deleteInitialOrderState()
-    {
-        $id_order_state = Configuration::get('PAYNOW_ORDER_INITIAL_STATE');
-        $orderState = new OrderState($id_order_state);
-
-        return $orderState->delete();
     }
 
     private function createDbTables()
@@ -182,7 +174,6 @@ class Paynow extends PaymentModule
             Configuration::deleteByName('PAYNOW_SANDBOX_ENABLED') &&
             Configuration::deleteByName('PAYNOW_SANDBOX_API_KEY') &&
             Configuration::deleteByName('PAYNOW_SANDBOX_API_SIGNATURE_KEY') &&
-            Configuration::deleteByName('PAYNOW_ORDER_INITIAL_STATE') &&
             Configuration::deleteByName('PAYNOW_ORDER_CONFIRMED_STATE') &&
             Configuration::deleteByName('PAYNOW_ORDER_REJECTED_STATE') &&
             Configuration::deleteByName('PAYNOW_ORDER_ERROR_STATE') &&
