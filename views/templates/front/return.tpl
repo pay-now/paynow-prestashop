@@ -17,6 +17,13 @@
         {l s='Your order number:' mod='paynow'} {$order_reference|escape:'htmlall':'UTF-8'} <br />
         {l s='Current order status:' mod='paynow'} {$order_status|escape:'htmlall':'UTF-8'}
     </p>
+    {if $show_retry_button}
+        <p>
+            <a href="{$retry_url|escape:'htmlall':'UTF-8'}" title="{l s='Retry payment with paynow.pl' mod='paynow'}" class="btn btn-primary">
+                {l s='Retry payment with paynow.pl' mod='paynow'}
+            </a>
+        </p>
+    {/if}
     {if $show_details_button}
         <p class="cart_navigation" style="margin-top: 15px">
           <a class="button btn btn-default button-medium pull-left" href="{$details_url|escape:'htmlall':'UTF-8'}">
