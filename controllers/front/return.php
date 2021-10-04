@@ -52,7 +52,12 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             'order_status' => $currentState['name'],
             'order_reference' => $this->order->reference,
             'show_details_button' => $token == Tools::encrypt($order_reference),
-            'HOOK_ORDER_CONFIRMATION' => $this->displayOrderConfirmation()
+            'show_retry_button' => $this->module->canOrderPaymentBeRetried($this->order->id),
+            'HOOK_ORDER_CONFIRMATION' => $this->displayOrderConfirmation(),
+            'retry_url' => $this->context->link->getModuleLink('paynow', 'payment', [
+                'id_order' => $this->order->id,
+                'order_reference' => $order_reference
+            ])
         ]);
 
         $this->renderTemplate('return.tpl');
