@@ -29,31 +29,18 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
 
         try {
             new Notification($this->module->getSignatureKey(), $payload, $headers);
-            $payment = $this->module->getLastPaymentStatus($notification_data['paymentId']);
-            if (!$payment && $notification_data['status'] !== Paynow\Model\Payment\Status::STATUS_NEW) {
+            $payment = $this->module->getLastPaymentDataByOrderReference($notification_data['externalId']);
+            if (!$payment) {
                 PaynowLogger::warning(
-                    'Order for payment not exists {paymentId={}, status={}}',
+                    'Payment for order not exists {paymentId={}, status={}, externalId={}}',
                     [
                         $notification_data['paymentId'],
-                        $notification_data['status']
+                        $notification_data['status'],
+                        $notification_data['externalId']
                     ]
                 );
                 header('HTTP/1.1 400 Bad Request', true, 400);
                 exit;
-            } else {
-                $payment =  $this->module->getLastAbandonedPaymentDataByOrderReference($notification_data['externalId']);
-
-                if(empty($payment)){
-                    PaynowLogger::warning(
-                        'No order for given reference has abandoned payment {paymentId={}, orderReference={}}',
-                        [
-                            $notification_data['paymentId'],
-                            $notification_data['externalId']
-                        ]
-                    );
-                    header('HTTP/1.1 400 Bad Request', true, 400);
-                    exit;
-                }
             }
             $this->module->updateOrderState($payment, $notification_data['status'], $notification_data['paymentId'], $notification_data['modifiedAt']);
         } catch (Exception $exception) {
