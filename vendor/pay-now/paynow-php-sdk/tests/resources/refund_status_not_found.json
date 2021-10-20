@@ -1,9 +1,0 @@
-{
-  "statusCode": 404,
-  "errors": [
-    {
-      "errorType": "NOT_FOUND",
-      "message": "Could not find status for refund {refundId=R3FU-UND-D8K-WZD}"
-    }
-  ]
-}

@@ -1,9 +1,0 @@
-{
-  "statusCode": 400,
-  "errors": [
-    {
-      "errorType": "VALIDATION_ERROR",
-      "message": "currency: invalid field value (EUR)"
-    }
-  ]
-}
