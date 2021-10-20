@@ -1,0 +1,64 @@
+[
+  {
+    "type": "BLIK",
+    "paymentMethods": [
+      {
+        "id": 2007,
+        "name": "BLIK",
+        "description": "Płacę z Blikiem",
+        "image": "https://static.sandbox.paynow.pl/payment-method-icons/2007.png",
+        "status": "ENABLED"
+      }
+    ]
+  },
+  {
+    "type": "CARD",
+    "paymentMethods": [
+      {
+        "id": 2002,
+        "name": "Karta płatnicza",
+        "description": "Płatność kartą",
+        "image": "https://static.sandbox.paynow.pl/payment-method-icons/2002.png",
+        "status": "ENABLED"
+      }
+    ]
+  },
+  {
+    "type": "GOOGLE_PAY",
+    "paymentMethods": [
+      {
+        "id": 2002,
+        "name": "Google Pay",
+        "description": "Google Pay",
+        "image": "https://static.sandbox.paynow.pl/payment-method-icons/2002.png",
+        "status": "ENABLED"
+      }
+    ]
+  },
+  {
+    "type": "PBL",
+    "paymentMethods": [
+      {
+        "id": 1000,
+        "name": "mTransfer",
+        "description": "Zapłać przez mTransfer",
+        "image": "https://static.sandbox.paynow.pl/payment-method-icons/1000.png",
+        "status": "ENABLED"
+      },
+      {
+        "id": 2031,
+        "name": "Płacę z IPKO",
+        "description": "Zapłać przez iPKO",
+        "image": "https://static.sandbox.paynow.pl/payment-method-icons/2031.png",
+        "status": "DISABLED"
+      },
+      {
+        "id": 2032,
+        "name": "Płać z ING",
+        "description": "Zapłać przez ING",
+        "image": "https://static.sandbox.paynow.pl/payment-method-icons/2032.png",
+        "status": "ENABLED"
+      }
+    ]
+  }
+]

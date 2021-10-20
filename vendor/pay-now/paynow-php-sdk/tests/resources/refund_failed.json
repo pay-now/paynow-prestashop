@@ -1,0 +1,9 @@
+{
+  "statusCode": 400,
+  "errors": [
+    {
+      "errorType": "INSUFFICIENT_BALANCE_FUNDS",
+      "message": "Insufficient funds on balance"
+    }
+  ]
+}

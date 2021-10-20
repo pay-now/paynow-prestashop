@@ -1,0 +1,11 @@
+# Ignore the /vendor/ directory
+/vendor/
+
+# composer.lock file should be ignored
+composer.lock
+
+# ignore Mac OS X file
+.DS_Store
+
+# ignore PhpStorm .idea folder
+.idea

@@ -1196,6 +1196,15 @@ class Paynow extends PaymentModule
             WHERE order_reference="' . pSQL($order_reference) . '" ORDER BY created_at DESC');
     }
 
+    public function getLastAbandonedPaymentDataByOrderReference($order_reference)
+    {
+        return Db::getInstance()->getRow('
+            SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
+            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
+            WHERE order_reference="' . pSQL($order_reference) . '" 
+            AND status = "'.Paynow\Model\Payment\Status::STATUS_ABANDONED.'" ORDER BY created_at DESC');
+    }
+
     public function getOrderUrl($order)
     {
         if (Cart::isGuestCartByCartId($order->id_cart)) {
@@ -1237,6 +1246,15 @@ class Paynow extends PaymentModule
             }
 
             switch ($newStatus) {
+                case Paynow\Model\Payment\Status::STATUS_NEW:
+                case Paynow\Model\Payment\Status::STATUS_EXPIRED:
+                case Paynow\Model\Payment\Status::STATUS_ABANDONED:
+                    $history->changeIdOrderState(
+                        (int)Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
+                        $order->id
+                    );
+                    $history->addWithemail(true);
+                    break;
                 case Paynow\Model\Payment\Status::STATUS_REJECTED:
                     $history->changeIdOrderState(
                         (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
@@ -1255,13 +1273,6 @@ class Paynow extends PaymentModule
                 case Paynow\Model\Payment\Status::STATUS_ERROR:
                     $history->changeIdOrderState(
                         (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
-                    break;
-                case Paynow\Model\Payment\Status::STATUS_EXPIRED:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
                         $order->id
                     );
                     $history->addWithemail(true);
@@ -1304,15 +1315,23 @@ class Paynow extends PaymentModule
             Paynow\Model\Payment\Status::STATUS_PENDING => [
                 Paynow\Model\Payment\Status::STATUS_CONFIRMED,
                 Paynow\Model\Payment\Status::STATUS_REJECTED,
-                Paynow\Model\Payment\Status::STATUS_EXPIRED
+                Paynow\Model\Payment\Status::STATUS_EXPIRED,
+                Paynow\Model\Payment\Status::STATUS_ABANDONED
             ],
-            Paynow\Model\Payment\Status::STATUS_REJECTED => [Paynow\Model\Payment\Status::STATUS_CONFIRMED],
+            Paynow\Model\Payment\Status::STATUS_REJECTED => [
+                Paynow\Model\Payment\Status::STATUS_CONFIRMED,
+                Paynow\Model\Payment\Status::STATUS_ABANDONED
+            ],
             Paynow\Model\Payment\Status::STATUS_CONFIRMED => [],
             Paynow\Model\Payment\Status::STATUS_ERROR => [
                 Paynow\Model\Payment\Status::STATUS_CONFIRMED,
-                Paynow\Model\Payment\Status::STATUS_REJECTED
+                Paynow\Model\Payment\Status::STATUS_REJECTED,
+                Paynow\Model\Payment\Status::STATUS_ABANDONED
             ],
             Paynow\Model\Payment\Status::STATUS_EXPIRED => [],
+            Paynow\Model\Payment\Status::STATUS_ABANDONED => [
+                Paynow\Model\Payment\Status::STATUS_NEW
+            ]
         ];
         $previous_status_exists = isset($payment_status_flow[$previous_status]);
         $is_change_possible = in_array($next_status, $payment_status_flow[$previous_status]);
