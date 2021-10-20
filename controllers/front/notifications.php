@@ -45,7 +45,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
 
                 if(empty($payment)){
                     PaynowLogger::warning(
-                        'No order with abandoned payment exists {paymentId={}, externalId={}}',
+                        'No order for given reference has abandoned payment {paymentId={}, orderReference={}}',
                         [
                             $notification_data['paymentId'],
                             $notification_data['externalId']
