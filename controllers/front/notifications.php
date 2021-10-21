@@ -29,8 +29,14 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
 
         try {
             new Notification($this->module->getSignatureKey(), $payload, $headers);
-            $payment = $this->module->getLastPaymentDataByOrderReference($notification_data['externalId']);
-            if (!$payment) {
+            $payments = $this->module->getAllPaymentsDataByOrderReference($notification_data['externalId']);
+
+            $filteredPayments = array_filter($payments, function ($payment) use ($notification_data, $payments) {
+                return $payment['id_payment'] === $notification_data['paymentId'] ||
+                    ($payment['status'] === Paynow\Model\Payment\Status::STATUS_ABANDONED && $notification_data['status'] === Paynow\Model\Payment\Status::STATUS_NEW);
+            } );
+
+            if (empty($filteredPayments)) {
                 PaynowLogger::warning(
                     'Payment for order not exists {paymentId={}, status={}, externalId={}}',
                     [
@@ -42,7 +48,8 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 header('HTTP/1.1 400 Bad Request', true, 400);
                 exit;
             }
-            $this->module->updateOrderState($payment, $notification_data['status'], $notification_data['paymentId'], $notification_data['modifiedAt']);
+
+            $this->module->updateOrderState($filteredPayments[0], $notification_data['status'], $notification_data['paymentId'], $notification_data['modifiedAt']);
         } catch (Exception $exception) {
             PaynowLogger::error(
                 'Error occurred during processing notification {paymentId={}, status={}, message={}}',

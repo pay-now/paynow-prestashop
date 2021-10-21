@@ -1172,6 +1172,28 @@ class Paynow extends PaymentModule
         return false;
     }
 
+    public function updatePaymentState(
+        $id_payment,
+        $status,
+        $modified_at = null
+    ) {
+        $modified_at = !$modified_at ? 'NOW()' : '"' . $modified_at . '"';
+
+        try {
+            $sql = '
+                UPDATE ' . _DB_PREFIX_ . 'paynow_payments 
+                SET status = "' . pSQL($status) . '", modified_at = ' . $modified_at . '  
+                WHERE id_payment = "' . pSQL($id_payment) . '"';
+            if (Db::getInstance()->execute($sql)) {
+                return (int)Db::getInstance()->Insert_ID();
+            }
+        } catch (PrestaShopDatabaseException $exception) {
+            PaynowLogger::error($exception->getMessage() . '{orderReference={}}', [$id_payment]);
+        }
+
+        return false;
+    }
+
     public function getLastPaymentStatus($id_payment)
     {
         return Db::getInstance()->getRow('
@@ -1191,6 +1213,14 @@ class Paynow extends PaymentModule
     public function getLastPaymentDataByOrderReference($order_reference)
     {
         return Db::getInstance()->getRow('
+            SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
+            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
+            WHERE order_reference="' . pSQL($order_reference) . '" ORDER BY created_at DESC');
+    }
+
+    public function getAllPaymentsDataByOrderReference($order_reference)
+    {
+        return Db::getInstance()->executeS('
             SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
             FROM  ' . _DB_PREFIX_ . 'paynow_payments 
             WHERE order_reference="' . pSQL($order_reference) . '" ORDER BY created_at DESC');
@@ -1270,15 +1300,23 @@ class Paynow extends PaymentModule
                     break;
             }
             $modifiedAt = $modifiedAt ? (new DateTime($modifiedAt))->format('Y-m-d H:i:s') : $modifiedAt;
-            $this->storePaymentState(
-                $paymentId,
-                $newStatus,
-                $payment['id_order'],
-                $payment['id_cart'],
-                $payment['order_reference'],
-                $payment['external_id'],
-                $modifiedAt
-            );
+            if($newStatus === Paynow\Model\Payment\Status::STATUS_NEW){
+                $this->storePaymentState(
+                    $paymentId,
+                    $newStatus,
+                    $payment['id_order'],
+                    $payment['id_cart'],
+                    $payment['order_reference'],
+                    $payment['external_id'],
+                    $modifiedAt
+                );
+            } else {
+                $this->updatePaymentState(
+                    $paymentId,
+                    $newStatus,
+                    $modifiedAt
+                );
+            }
 
             PaynowLogger::info(
                 'Changed order status {orderReference={}, paymentId={}, status={}}',
