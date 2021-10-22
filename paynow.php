@@ -32,7 +32,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.3.8';
+        $this->version = '1.3.9';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -157,7 +157,9 @@ class Paynow extends PaymentModule
             Configuration::updateValue('PAYNOW_ORDER_ERROR_STATE', 8) &&
             Configuration::updateValue('PAYNOW_SEND_ORDER_ITEMS', 0) &&
             Configuration::updateValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED', 0) &&
-            Configuration::updateValue('PAYNOW_PAYMENT_VALIDITY_TIME', 86400);
+            Configuration::updateValue('PAYNOW_PAYMENT_VALIDITY_TIME', 86400) &&
+            Configuration::updateValue('PAYNOW_ORDER_ABANDONED_STATE', Configuration::get('PAYNOW_ORDER_INITIAL_STATE')) &&
+            Configuration::updateValue('PAYNOW_ORDER_EXPIRED_STATE', Configuration::get('PAYNOW_ORDER_INITIAL_STATE'));
     }
 
     private function deleteModuleSettings()
@@ -179,7 +181,10 @@ class Paynow extends PaymentModule
             Configuration::deleteByName('PAYNOW_ORDER_ERROR_STATE') &&
             Configuration::deleteByName('PAYNOW_SEND_ORDER_ITEMS') &&
             Configuration::deleteByName('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') &&
-            Configuration::deleteByName('PAYNOW_PAYMENT_VALIDITY_TIME');
+            Configuration::deleteByName('PAYNOW_PAYMENT_VALIDITY_TIME') &&
+            Configuration::deleteByName('PAYNOW_ORDER_ABANDONED_STATE') &&
+            Configuration::deleteByName('PAYNOW_ORDER_EXPIRED_STATE');
+        ;
     }
 
     public function createOrderInitialState()
@@ -698,6 +703,14 @@ class Paynow extends PaymentModule
             'PAYNOW_PAYMENT_VALIDITY_TIME',
             Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME')
         );
+        Configuration::updateValue(
+            'PAYNOW_ORDER_ABANDONED_STATE',
+            Tools::getValue('PAYNOW_ORDER_ABANDONED_STATE')
+        );
+        Configuration::updateValue(
+            'PAYNOW_ORDER_EXPIRED_STATE',
+            Tools::getValue('PAYNOW_ORDER_EXPIRED_STATE')
+        );
         if ($this->isConfigured()) {
             $this->html .= $this->displayConfirmation($this->l('Configuration updated'));
             $this->sendShopUrlsConfiguration();
@@ -874,6 +887,26 @@ class Paynow extends PaymentModule
                         'type' => 'select',
                         'label' => $this->l('Error occurred during the payment process and the payment could not be completed'),
                         'name' => 'PAYNOW_ORDER_ERROR_STATE',
+                        'options' => [
+                            'query' => $order_states,
+                            'id' => 'id_order_state',
+                            'name' => 'name'
+                        ]
+                    ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Payment has been abandoned by the buyer'),
+                        'name' => 'PAYNOW_ORDER_ABANDONED_STATE',
+                        'options' => [
+                            'query' => $order_states,
+                            'id' => 'id_order_state',
+                            'name' => 'name'
+                        ]
+                    ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Payment has been expired'),
+                        'name' => 'PAYNOW_ORDER_EXPIRED_STATE',
                         'options' => [
                             'query' => $order_states,
                             'id' => 'id_order_state',
@@ -1131,7 +1164,9 @@ class Paynow extends PaymentModule
             'PAYNOW_ORDER_ERROR_STATE' => Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
             'PAYNOW_SEND_ORDER_ITEMS' => Configuration::get('PAYNOW_SEND_ORDER_ITEMS'),
             'PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED' => Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED'),
-            'PAYNOW_PAYMENT_VALIDITY_TIME' => Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME')
+            'PAYNOW_PAYMENT_VALIDITY_TIME' => Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME'),
+            'PAYNOW_ORDER_ABANDONED_STATE' => Configuration::get('PAYNOW_ORDER_ABANDONED_STATE'),
+            'PAYNOW_ORDER_EXPIRED_STATE' => Configuration::get('PAYNOW_ORDER_EXPIRED_STATE'),
         ];
     }
 
@@ -1268,8 +1303,6 @@ class Paynow extends PaymentModule
 
             switch ($newStatus) {
                 case Paynow\Model\Payment\Status::STATUS_NEW:
-                case Paynow\Model\Payment\Status::STATUS_EXPIRED:
-                case Paynow\Model\Payment\Status::STATUS_ABANDONED:
                     $history->changeIdOrderState(
                         (int)Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
                         $order->id
@@ -1294,6 +1327,20 @@ class Paynow extends PaymentModule
                 case Paynow\Model\Payment\Status::STATUS_ERROR:
                     $history->changeIdOrderState(
                         (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
+                        $order->id
+                    );
+                    $history->addWithemail(true);
+                    break;
+                case Paynow\Model\Payment\Status::STATUS_ABANDONED:
+                    $history->changeIdOrderState(
+                        (int)Configuration::get('PAYNOW_ORDER_ABANDONED_STATE'),
+                        $order->id
+                    );
+                    $history->addWithemail(true);
+                    break;
+                case Paynow\Model\Payment\Status::STATUS_EXPIRED:
+                    $history->changeIdOrderState(
+                        (int)Configuration::get('PAYNOW_ORDER_EXPIRED_STATE'),
                         $order->id
                     );
                     $history->addWithemail(true);
