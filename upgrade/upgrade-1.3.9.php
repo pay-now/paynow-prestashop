@@ -16,18 +16,13 @@ if (!defined('_PS_VERSION_')) {
 
 function upgrade_module_1_3_9()
 {
-    try {
         $sql = "
-                DELETE t1 FROM presta_paynow.ps_paynow_payments t1
-                JOIN presta_paynow.ps_paynow_payments t2
+                DELETE t1 FROM " . _DB_PREFIX_ . "paynow_payments t1
+                JOIN " . _DB_PREFIX_ . "paynow_payments t2
                 ON t2.id_payment = t1.id_payment
                 AND t2.modified_at > t1.modified_at ";
 
         return Db::getInstance()->execute($sql) &&
             Configuration::updateValue('PAYNOW_ORDER_ABANDONED_STATE', Configuration::get('PAYNOW_ORDER_INITIAL_STATE')) &&
             Configuration::updateValue('PAYNOW_ORDER_EXPIRED_STATE', Configuration::get('PAYNOW_ORDER_INITIAL_STATE'));
-
-    } catch (PrestaShopDatabaseException $exception) {
-        PaynowLogger::error($exception->getMessage());
-    }
 }
