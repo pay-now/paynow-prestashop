@@ -11,6 +11,8 @@
  */
 
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
+require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
+
 
 class PaynowNotificationsModuleFrontController extends PaynowFrontController
 {
@@ -29,23 +31,31 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
 
         try {
             new Notification($this->module->getSignatureKey(), $payload, $headers);
-            $payment = $this->module->getLastPaymentStatus($notification_data['paymentId']);
+            $payments = $this->module->getAllPaymentsDataByOrderReference($notification_data['externalId']);
 
-            if (!$payment) {
+            $filteredPayments = array_filter($payments, function ($payment) use ($notification_data, $payments) {
+                return $payment['id_payment'] === $notification_data['paymentId'] ||
+                     $notification_data['status'] === Paynow\Model\Payment\Status::STATUS_NEW;
+            });
+
+            if (empty($filteredPayments)) {
                 PaynowLogger::warning(
-                    'Order for payment not exists {paymentId={}, status={}}',
+                    'Payment for order not exists {paymentId={}, status={}, externalId={}}',
                     [
                         $notification_data['paymentId'],
-                        $notification_data['status']
+                        $notification_data['status'],
+                        $notification_data['externalId']
                     ]
                 );
                 header('HTTP/1.1 400 Bad Request', true, 400);
                 exit;
             }
-            $this->module->updateOrderState($payment, $notification_data['status'], $notification_data['paymentId'], $notification_data['modifiedAt']);
+
+            $orderStateProcessor = new OrderStateProcessor();
+            $orderStateProcessor->updateState($filteredPayments[0], $notification_data['status'], $notification_data['paymentId'], $notification_data['modifiedAt']);
         } catch (Exception $exception) {
             PaynowLogger::error(
-                'Error occurred during processing notification {paymentId={}, status={}, message={}}',
+                'An error occurred during processing notification {paymentId={}, status={}, message={}}',
                 [
                     $notification_data['paymentId'],
                     $notification_data['status'],

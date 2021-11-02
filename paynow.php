@@ -32,7 +32,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.3.8';
+        $this->version = '1.4.0';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -47,7 +47,7 @@ class Paynow extends PaymentModule
         $this->displayName = $this->l('Pay by paynow.pl');
         $this->description = $this->l('Accepts payments by paynow.pl');
         $this->confirm_uninstall = $this->l('Are you sure you want to uninstall? You will lose all your settings!');
-        $this->callToActionText = $this->l('Pay by paynow.pl');
+        $this->callToActionText = $this->l('BLIK, bank transfers and card payments');
 
         if (!$this->isConfigured()) {
             $this->warning = $this->l('API Keys must be configured before using this module.');
@@ -153,11 +153,13 @@ class Paynow extends PaymentModule
             Configuration::updateValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY', '') &&
             Configuration::updateValue('PAYNOW_ORDER_INITIAL_STATE', $this->createOrderInitialState()) &&
             Configuration::updateValue('PAYNOW_ORDER_CONFIRMED_STATE', 2) &&
-            Configuration::updateValue('PAYNOW_ORDER_REJECTED_STATE', 6) &&
+            Configuration::updateValue('PAYNOW_ORDER_REJECTED_STATE', Configuration::get('PAYNOW_ORDER_INITIAL_STATE')) &&
             Configuration::updateValue('PAYNOW_ORDER_ERROR_STATE', 8) &&
             Configuration::updateValue('PAYNOW_SEND_ORDER_ITEMS', 0) &&
             Configuration::updateValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED', 0) &&
-            Configuration::updateValue('PAYNOW_PAYMENT_VALIDITY_TIME', 86400);
+            Configuration::updateValue('PAYNOW_PAYMENT_VALIDITY_TIME', 86400) &&
+            Configuration::updateValue('PAYNOW_ORDER_ABANDONED_STATE', Configuration::get('PAYNOW_ORDER_INITIAL_STATE')) &&
+            Configuration::updateValue('PAYNOW_ORDER_EXPIRED_STATE', Configuration::get('PAYNOW_ORDER_INITIAL_STATE'));
     }
 
     private function deleteModuleSettings()
@@ -179,7 +181,10 @@ class Paynow extends PaymentModule
             Configuration::deleteByName('PAYNOW_ORDER_ERROR_STATE') &&
             Configuration::deleteByName('PAYNOW_SEND_ORDER_ITEMS') &&
             Configuration::deleteByName('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') &&
-            Configuration::deleteByName('PAYNOW_PAYMENT_VALIDITY_TIME');
+            Configuration::deleteByName('PAYNOW_PAYMENT_VALIDITY_TIME') &&
+            Configuration::deleteByName('PAYNOW_ORDER_ABANDONED_STATE') &&
+            Configuration::deleteByName('PAYNOW_ORDER_EXPIRED_STATE');
+        ;
     }
 
     public function createOrderInitialState()
@@ -698,6 +703,14 @@ class Paynow extends PaymentModule
             'PAYNOW_PAYMENT_VALIDITY_TIME',
             Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME')
         );
+        Configuration::updateValue(
+            'PAYNOW_ORDER_ABANDONED_STATE',
+            Tools::getValue('PAYNOW_ORDER_ABANDONED_STATE')
+        );
+        Configuration::updateValue(
+            'PAYNOW_ORDER_EXPIRED_STATE',
+            Tools::getValue('PAYNOW_ORDER_EXPIRED_STATE')
+        );
         if ($this->isConfigured()) {
             $this->html .= $this->displayConfirmation($this->l('Configuration updated'));
             $this->sendShopUrlsConfiguration();
@@ -874,6 +887,26 @@ class Paynow extends PaymentModule
                         'type' => 'select',
                         'label' => $this->l('Error occurred during the payment process and the payment could not be completed'),
                         'name' => 'PAYNOW_ORDER_ERROR_STATE',
+                        'options' => [
+                            'query' => $order_states,
+                            'id' => 'id_order_state',
+                            'name' => 'name'
+                        ]
+                    ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Payment has been abandoned by the buyer'),
+                        'name' => 'PAYNOW_ORDER_ABANDONED_STATE',
+                        'options' => [
+                            'query' => $order_states,
+                            'id' => 'id_order_state',
+                            'name' => 'name'
+                        ]
+                    ],
+                    [
+                        'type' => 'select',
+                        'label' => $this->l('Payment has been expired'),
+                        'name' => 'PAYNOW_ORDER_EXPIRED_STATE',
                         'options' => [
                             'query' => $order_states,
                             'id' => 'id_order_state',
@@ -1131,7 +1164,9 @@ class Paynow extends PaymentModule
             'PAYNOW_ORDER_ERROR_STATE' => Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
             'PAYNOW_SEND_ORDER_ITEMS' => Configuration::get('PAYNOW_SEND_ORDER_ITEMS'),
             'PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED' => Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED'),
-            'PAYNOW_PAYMENT_VALIDITY_TIME' => Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME')
+            'PAYNOW_PAYMENT_VALIDITY_TIME' => Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME'),
+            'PAYNOW_ORDER_ABANDONED_STATE' => Configuration::get('PAYNOW_ORDER_ABANDONED_STATE'),
+            'PAYNOW_ORDER_EXPIRED_STATE' => Configuration::get('PAYNOW_ORDER_EXPIRED_STATE'),
         ];
     }
 
@@ -1172,6 +1207,28 @@ class Paynow extends PaymentModule
         return false;
     }
 
+    public function updatePaymentState(
+        $id_payment,
+        $status,
+        $modified_at = null
+    ) {
+        $modified_at = !$modified_at ? 'NOW()' : '"' . $modified_at . '"';
+
+        try {
+            $sql = '
+                UPDATE ' . _DB_PREFIX_ . 'paynow_payments 
+                SET status = "' . pSQL($status) . '", modified_at = ' . $modified_at . '  
+                WHERE id_payment = "' . pSQL($id_payment) . '"';
+            if (Db::getInstance()->execute($sql)) {
+                return (int)Db::getInstance()->Insert_ID();
+            }
+        } catch (PrestaShopDatabaseException $exception) {
+            PaynowLogger::error($exception->getMessage() . '{orderReference={}}', [$id_payment]);
+        }
+
+        return false;
+    }
+
     public function getLastPaymentStatus($id_payment)
     {
         return Db::getInstance()->getRow('
@@ -1191,6 +1248,14 @@ class Paynow extends PaymentModule
     public function getLastPaymentDataByOrderReference($order_reference)
     {
         return Db::getInstance()->getRow('
+            SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
+            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
+            WHERE order_reference="' . pSQL($order_reference) . '" ORDER BY created_at DESC');
+    }
+
+    public function getAllPaymentsDataByOrderReference($order_reference)
+    {
+        return Db::getInstance()->executeS('
             SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
             FROM  ' . _DB_PREFIX_ . 'paynow_payments 
             WHERE order_reference="' . pSQL($order_reference) . '" ORDER BY created_at DESC');
@@ -1219,116 +1284,5 @@ class Paynow extends PaymentModule
                 'id_order' => $order->id
             ]
         );
-    }
-
-    public function updateOrderState($payment, $newStatus, $paymentId, $modifiedAt = null )
-    {
-        $order = new Order($payment['id_order']);
-        if ($order && $order->module == $this->name) {
-            $history = new OrderHistory();
-            $history->id_order = $order->id;
-
-            $payment_status = $payment['status'];
-
-            if (!$this->isCorrectStatus($payment_status, $newStatus)) {
-                throw new Exception(
-                    'Status transition is incorrect ' . $payment_status . ' - ' . $newStatus
-                );
-            }
-
-            switch ($newStatus) {
-                case Paynow\Model\Payment\Status::STATUS_REJECTED:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
-                    break;
-                case Paynow\Model\Payment\Status::STATUS_CONFIRMED:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
-                    $this->addPaymentIdToOrderPayments($order, $payment['id_payment']);
-                    break;
-                case Paynow\Model\Payment\Status::STATUS_ERROR:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
-                    break;
-                case Paynow\Model\Payment\Status::STATUS_EXPIRED:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
-                    break;
-            }
-            $modifiedAt = $modifiedAt ? (new DateTime($modifiedAt))->format('Y-m-d H:i:s') : $modifiedAt;
-            $this->storePaymentState(
-                $paymentId,
-                $newStatus,
-                $payment['id_order'],
-                $payment['id_cart'],
-                $payment['order_reference'],
-                $payment['external_id'],
-                $modifiedAt
-            );
-
-            PaynowLogger::info(
-                'Changed order status {orderReference={}, paymentId={}, status={}}',
-                [
-                    $payment['order_reference'],
-                    $paymentId,
-                    $newStatus
-                ]
-            );
-        }
-    }
-
-    private function isCorrectStatus($previous_status, $next_status)
-    {
-        $payment_status_flow = [
-            Paynow\Model\Payment\Status::STATUS_NEW => [
-                Paynow\Model\Payment\Status::STATUS_NEW,
-                Paynow\Model\Payment\Status::STATUS_PENDING,
-                Paynow\Model\Payment\Status::STATUS_ERROR,
-                Paynow\Model\Payment\Status::STATUS_CONFIRMED,
-                Paynow\Model\Payment\Status::STATUS_REJECTED,
-                Paynow\Model\Payment\Status::STATUS_EXPIRED
-
-            ],
-            Paynow\Model\Payment\Status::STATUS_PENDING => [
-                Paynow\Model\Payment\Status::STATUS_CONFIRMED,
-                Paynow\Model\Payment\Status::STATUS_REJECTED,
-                Paynow\Model\Payment\Status::STATUS_EXPIRED
-            ],
-            Paynow\Model\Payment\Status::STATUS_REJECTED => [Paynow\Model\Payment\Status::STATUS_CONFIRMED],
-            Paynow\Model\Payment\Status::STATUS_CONFIRMED => [],
-            Paynow\Model\Payment\Status::STATUS_ERROR => [
-                Paynow\Model\Payment\Status::STATUS_CONFIRMED,
-                Paynow\Model\Payment\Status::STATUS_REJECTED
-            ],
-            Paynow\Model\Payment\Status::STATUS_EXPIRED => [],
-        ];
-        $previous_status_exists = isset($payment_status_flow[$previous_status]);
-        $is_change_possible = in_array($next_status, $payment_status_flow[$previous_status]);
-        return $previous_status_exists && $is_change_possible;
-    }
-
-    private function addPaymentIdToOrderPayments($order, $id_payment)
-    {
-        if ($id_payment === null) {
-            return;
-        }
-
-        $payments = $order->getOrderPaymentCollection()->getResults();
-        if (count($payments) > 0) {
-            $payments[0]->transaction_id = $id_payment;
-            $payments[0]->update();
-        }
     }
 }
