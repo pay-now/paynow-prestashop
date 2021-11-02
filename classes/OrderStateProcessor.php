@@ -26,7 +26,7 @@ class OrderStateProcessor
         $this->module = Module::getInstanceByName(Tools::getValue('module'));
     }
 
-    public function updateOrderState($payment, $newStatus, $paymentId, $modifiedAt = null )
+    public function updateState($payment, $newStatus, $paymentId, $modifiedAt = null )
     {
         $order = new Order($payment['id_order']);
         if ($order && $order->module == $this->module->name) {

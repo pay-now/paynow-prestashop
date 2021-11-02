@@ -107,7 +107,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             $paymentId = Tools::getValue('paymentId');
             $status = $payment_client->status($paymentId)->getStatus();
             $orderStateProcessor = new OrderStateProcessor();
-            $orderStateProcessor->updateOrderState($this->payment, $status, $paymentId);
+            $orderStateProcessor->updateState($this->payment, $status, $paymentId);
         } catch (Exception $exception) {
             PaynowLogger::error($exception->getMessage());
         }

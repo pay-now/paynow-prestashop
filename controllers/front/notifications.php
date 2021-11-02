@@ -52,7 +52,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             }
 
             $orderStateProcessor = new OrderStateProcessor();
-            $orderStateProcessor->updateOrderState($filteredPayments[0], $notification_data['status'], $notification_data['paymentId'], $notification_data['modifiedAt']);
+            $orderStateProcessor->updateState($filteredPayments[0], $notification_data['status'], $notification_data['paymentId'], $notification_data['modifiedAt']);
         } catch (Exception $exception) {
             PaynowLogger::error(
                 'Error occurred during processing notification {paymentId={}, status={}, message={}}',
