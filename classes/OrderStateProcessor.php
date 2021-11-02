@@ -136,13 +136,15 @@ class OrderStateProcessor
             ],
             Paynow\Model\Payment\Status::STATUS_REJECTED => [
                 Paynow\Model\Payment\Status::STATUS_CONFIRMED,
-                Paynow\Model\Payment\Status::STATUS_ABANDONED
+                Paynow\Model\Payment\Status::STATUS_ABANDONED,
+                Paynow\Model\Payment\Status::STATUS_NEW
             ],
             Paynow\Model\Payment\Status::STATUS_CONFIRMED => [],
             Paynow\Model\Payment\Status::STATUS_ERROR => [
                 Paynow\Model\Payment\Status::STATUS_CONFIRMED,
                 Paynow\Model\Payment\Status::STATUS_REJECTED,
-                Paynow\Model\Payment\Status::STATUS_ABANDONED
+                Paynow\Model\Payment\Status::STATUS_ABANDONED,
+                Paynow\Model\Payment\Status::STATUS_NEW
             ],
             Paynow\Model\Payment\Status::STATUS_EXPIRED => [],
             Paynow\Model\Payment\Status::STATUS_ABANDONED => [
