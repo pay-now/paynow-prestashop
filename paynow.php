@@ -153,7 +153,7 @@ class Paynow extends PaymentModule
             Configuration::updateValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY', '') &&
             Configuration::updateValue('PAYNOW_ORDER_INITIAL_STATE', $this->createOrderInitialState()) &&
             Configuration::updateValue('PAYNOW_ORDER_CONFIRMED_STATE', 2) &&
-            Configuration::updateValue('PAYNOW_ORDER_REJECTED_STATE', 6) &&
+            Configuration::updateValue('PAYNOW_ORDER_REJECTED_STATE', Configuration::get('PAYNOW_ORDER_INITIAL_STATE')) &&
             Configuration::updateValue('PAYNOW_ORDER_ERROR_STATE', 8) &&
             Configuration::updateValue('PAYNOW_SEND_ORDER_ITEMS', 0) &&
             Configuration::updateValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED', 0) &&
