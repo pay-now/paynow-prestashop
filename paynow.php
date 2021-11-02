@@ -47,7 +47,7 @@ class Paynow extends PaymentModule
         $this->displayName = $this->l('Pay by paynow.pl');
         $this->description = $this->l('Accepts payments by paynow.pl');
         $this->confirm_uninstall = $this->l('Are you sure you want to uninstall? You will lose all your settings!');
-        $this->callToActionText = $this->l('Pay by paynow.pl');
+        $this->callToActionText = $this->l('BLIK, bank transfers and card payments');
 
         if (!$this->isConfigured()) {
             $this->warning = $this->l('API Keys must be configured before using this module.');
