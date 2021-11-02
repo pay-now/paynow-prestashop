@@ -35,7 +35,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
 
             $filteredPayments = array_filter($payments, function ($payment) use ($notification_data, $payments) {
                 return $payment['id_payment'] === $notification_data['paymentId'] ||
-                    ($payment['status'] === Paynow\Model\Payment\Status::STATUS_ABANDONED && $notification_data['status'] === Paynow\Model\Payment\Status::STATUS_NEW);
+                     $notification_data['status'] === Paynow\Model\Payment\Status::STATUS_NEW;
             });
 
             if (empty($filteredPayments)) {
