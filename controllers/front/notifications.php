@@ -11,6 +11,8 @@
  */
 
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
+require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
+
 
 class PaynowNotificationsModuleFrontController extends PaynowFrontController
 {
@@ -49,7 +51,8 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 exit;
             }
 
-            $this->module->updateOrderState($filteredPayments[0], $notification_data['status'], $notification_data['paymentId'], $notification_data['modifiedAt']);
+            $orderStateProcessor = new OrderStateProcessor();
+            $orderStateProcessor->updateOrderState($filteredPayments[0], $notification_data['status'], $notification_data['paymentId'], $notification_data['modifiedAt']);
         } catch (Exception $exception) {
             PaynowLogger::error(
                 'Error occurred during processing notification {paymentId={}, status={}, message={}}',

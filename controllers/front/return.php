@@ -11,6 +11,7 @@
  */
 
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
+require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
 
 class PaynowReturnModuleFrontController extends PaynowFrontController
 {
@@ -105,7 +106,8 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             $payment_client = new Paynow\Service\Payment($this->module->api_client);
             $paymentId = Tools::getValue('paymentId');
             $status = $payment_client->status($paymentId)->getStatus();
-            $this->module->updateOrderState($this->payment, $status, $paymentId);
+            $orderStateProcessor = new OrderStateProcessor();
+            $orderStateProcessor->updateOrderState($this->payment, $status, $paymentId);
         } catch (Exception $exception) {
             PaynowLogger::error($exception->getMessage());
         }
