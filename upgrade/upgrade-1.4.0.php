@@ -14,7 +14,7 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
-function upgrade_module_1_3_9()
+function upgrade_module_1_4_0()
 {
         $sql = "
                 DELETE t1 FROM " . _DB_PREFIX_ . "paynow_payments t1
