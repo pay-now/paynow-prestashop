@@ -34,6 +34,7 @@ $_MODULE['<{paynow}prestashop>paynow_9c177322910ae897716f7e2b34aca357'] = 'Płat
 $_MODULE['<{paynow}prestashop>paynow_cd10dcbd7081dbda3934081dba30ab75'] = 'Płatność nie została zatwierdzona przez kupującego';
 $_MODULE['<{paynow}prestashop>paynow_48887c71d2911f040e3804e491a8b5f3'] = 'Wystąpił błąd podczas płatności. Płatność nie została ukończona';
 $_MODULE['<{paynow}prestashop>paynow_98e9b6c8cf34382f367422a0c20f6f06'] = 'Płatność została porzucona przez kupującego';
+$_MODULE['<{paynow}prestashop>paynow_7cb465560e0572ad9d3bf7657ced8bd8'] = 'Czas ważności płatności wygasł';
 $_MODULE['<{paynow}prestashop>paynow_53beb26d8bca00f56fbd295fdee83459'] = 'Zwrot środków';
 $_MODULE['<{paynow}prestashop>paynow_38696c91c1214c41db13673ff994a459'] = 'Moduł umożliwia dokonywanie automatycznego zwrotu środków z salda dla płatności zrealizowanych przez paynow.pl. Aby skorzystać z tej opcji musisz wybrać dzienną częstotliwość wypłat w panelu paynow. Aby to zrobić wejdź w `Ustawienia -> Harmonogram wypłat` a następnie wybierz ustawienie dla odpowiedniego sklepu.';
 $_MODULE['<{paynow}prestashop>paynow_73cf812b72fd5ae7abc1a528fc280edd'] = 'Włącz zwroty';

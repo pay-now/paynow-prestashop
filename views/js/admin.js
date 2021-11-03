@@ -10,19 +10,18 @@
  **/
 $(document).ready(function () {
     var paymentValidityTimeSwitchOn = $('#PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED_on');
-    var paymentValidityTimeSwitchOnLabel = $('label[for="PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED_on"]');
-    var paymentValidityTimeSwitchOffLabel = $('label[for="PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED_off"]');
+    var paymentValidityTimeSwitchOff = $('#PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED_off');
     var paymentValidityTimeInput = $('input[name="PAYNOW_PAYMENT_VALIDITY_TIME"]');
 
     if (!paymentValidityTimeSwitchOn.is(':checked')) {
         paymentValidityTimeInput.prop('disabled', true);
     }
 
-    paymentValidityTimeSwitchOnLabel.on("click", function(){
+    paymentValidityTimeSwitchOn.on("change", function(){
         paymentValidityTimeInput.prop('disabled', false);
     });
 
-    paymentValidityTimeSwitchOffLabel.on("click", function(){
+    paymentValidityTimeSwitchOff.on("change", function(){
         paymentValidityTimeInput.prop('disabled', true);
-    })
+    });
 });
