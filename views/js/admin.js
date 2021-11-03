@@ -18,10 +18,10 @@ $(document).ready(function () {
     }
 
     paymentValidityTimeSwitchOn.on("change", function(){
-        paymentValidityTimeInput.prop('disabled', true);
+        paymentValidityTimeInput.prop('disabled', false);
     });
 
     paymentValidityTimeSwitchOff.on("change", function(){
-        paymentValidityTimeInput.prop('disabled', false);
-    })
+        paymentValidityTimeInput.prop('disabled', true);
+    });
 });
