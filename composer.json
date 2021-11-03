@@ -21,6 +21,9 @@
     "squizlabs/php_codesniffer": "^3.5"
   },
   "config": {
+    "platform": {
+      "php": "7.1"
+    },
     "prepend-autoloader": false,
     "optimize-autoloader": true
   },
