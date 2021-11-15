@@ -16,17 +16,16 @@ if (!defined('_PS_VERSION_')) {
 
 include_once(dirname(__FILE__) . '/vendor/autoload.php');
 include_once(dirname(__FILE__) . '/classes/PaynowLogger.php');
+include_once(dirname(__FILE__) . '/classes/PaymentMethodsHelper.php');
+include_once(dirname(__FILE__) . '/classes/PaymentOptions.php');
+include_once(dirname(__FILE__) . '/classes/RefundProcessor.php');
+include_once(dirname(__FILE__) . '/classes/GDPRHelper.php');
 
 class Paynow extends PaymentModule
 {
     protected $html = '';
     protected $postErrors = [];
-    protected $callToActionText = '';
-
-    /**
-     * @var \Paynow\Client
-     */
-    public $api_client;
+    private $call_to_action_text = '';
 
     public function __construct()
     {
@@ -47,12 +46,12 @@ class Paynow extends PaymentModule
         $this->displayName = $this->l('Pay by paynow.pl');
         $this->description = $this->l('Accepts payments by paynow.pl');
         $this->confirm_uninstall = $this->l('Are you sure you want to uninstall? You will lose all your settings!');
-        $this->callToActionText = $this->l('BLIK, bank transfers and card payments');
+        $this->call_to_action_text = $this->l('BLIK, bank transfers and card payments');
 
         if (!$this->isConfigured()) {
             $this->warning = $this->l('API Keys must be configured before using this module.');
         } else {
-            $this->initializeApiClient();
+            $this->getPaynowClient();
         }
 
         if (!count(Currency::checkPaymentCurrencies($this->id))) {
@@ -184,7 +183,6 @@ class Paynow extends PaymentModule
             Configuration::deleteByName('PAYNOW_PAYMENT_VALIDITY_TIME') &&
             Configuration::deleteByName('PAYNOW_ORDER_ABANDONED_STATE') &&
             Configuration::deleteByName('PAYNOW_ORDER_EXPIRED_STATE');
-        ;
     }
 
     public function createOrderInitialState()
@@ -223,9 +221,17 @@ class Paynow extends PaymentModule
         return $order_state->id;
     }
 
-    private function initializeApiClient()
+    public function getCallToActionText(): string
     {
-        $this->api_client = new \Paynow\Client(
+        return $this->call_to_action_text;
+    }
+
+    /**
+     * @return \Paynow\Client
+     */
+    public function getPaynowClient()
+    {
+        return new \Paynow\Client(
             $this->getApiKey(),
             $this->getSignatureKey(),
             $this->isSandboxEnabled() ? \Paynow\Environment::SANDBOX : \Paynow\Environment::PRODUCTION,
@@ -252,21 +258,21 @@ class Paynow extends PaymentModule
         return (int)Configuration::get('PAYNOW_SANDBOX_ENABLED') === 1;
     }
 
-    private function isActive()
+    private function isActive(): bool
     {
         if (!$this->active || !$this->isConfigured()) {
-            return;
+            return false;
         }
 
         return true;
     }
 
-    private function isConfigured()
+    private function isConfigured(): bool
     {
-        return $this->getApiKey() && $this->getSignatureKey();
+        return !empty($this->getApiKey()) && !empty($this->getSignatureKey());
     }
 
-    public function checkCurrency($cart)
+    public function checkCurrency($cart): bool
     {
         $currency_order = new Currency($cart->id_currency);
         $currencies_module = $this->getCurrency($cart->id_currency);
@@ -284,59 +290,10 @@ class Paynow extends PaymentModule
     public function hookHeader()
     {
         $this->context->controller->addCSS(($this->_path) . 'views/css/front.css', 'all');
-        if (version_compare(_PS_VERSION_, '1.7', '<')) {
-            $this->context->controller->addJs(($this->_path) . 'views/js/front.js', 'all');
-        }
+        $this->context->controller->addJs(($this->_path) . 'views/js/front.js', 'all');
     }
 
-    public function hookPaymentOptions($params)
-    {
-        if (!$this->isActive() || !$this->checkCurrency($params['cart'])) {
-            return;
-        }
-
-        $payment_options = [];
-        if (Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS')) {
-            $payment_methods = $this->getPaymentMethods();
-            if (!empty($payment_methods)) {
-                $list = [];
-                foreach ($payment_methods->getAll() as $payment_method) {
-                    if (!isset($list[$payment_method->getType()])) {
-                        if (Paynow\Model\PaymentMethods\Type::PBL == $payment_method->getType()) {
-                            $this->context->smarty->assign([
-                                'paynowPbls' => $payment_methods->getOnlyPbls(),
-                                'action' => $this->context->link->getModuleLink($this->name, 'payment', [], true)
-                            ]);
-                            array_push($payment_options, $this->paymentOption(
-                                $this->getPaymentMethodTitle($payment_method->getType()),
-                                $this->getLogo(),
-                                $this->context->link->getModuleLink($this->name, 'payment', [], true)
-                            )->setForm($this->context->smarty->fetch(
-                                'module:paynow/views/templates/front/1.7/payment_form.tpl'
-                            )));
-                        } else {
-                            array_push($payment_options, $this->paymentOption(
-                                $this->getPaymentMethodTitle($payment_method->getType()),
-                                $payment_method->getImage(),
-                                $this->context->link->getModuleLink($this->name, 'payment', ['paymentMethodId' => $payment_method->getId()], true)
-                            ));
-                        }
-                        $list[$payment_method->getType()] = $payment_method->getId();
-                    }
-                }
-            }
-        } else {
-            array_push($payment_options, $this->paymentOption(
-                $this->callToActionText,
-                $this->getLogo(),
-                $this->context->link->getModuleLink($this->name, 'payment', [], true)
-            ));
-        }
-
-        return $payment_options;
-    }
-
-    private function getPaymentMethodTitle($payment_method_type)
+    public function getPaymentMethodTitle($payment_method_type): string
     {
         switch ($payment_method_type) {
             default:
@@ -352,29 +309,41 @@ class Paynow extends PaymentModule
         }
     }
 
+    /**
+     * @return \Paynow\Response\PaymentMethods\PaymentMethods|null
+     * @throws Exception
+     */
     private function getPaymentMethods()
     {
         $total = number_format($this->context->cart->getOrderTotal(true, Cart::BOTH) * 100, 0, '', '');
-        $payment_client = new Paynow\Service\Payment($this->api_client);
         $currency = new Currency($this->context->cart->id_currency);
-        try {
-            return $payment_client->getPaymentMethods($currency->iso_code, $total);
-        } catch (\Paynow\Exception\PaynowException $exception) {
-            PaynowLogger::error($exception->getMessage());
-        }
-
-        return null;
+        $payment_methods_helper = new PaymentMethodsHelper($this->getPaynowClient());
+        return $payment_methods_helper->getAvailable($currency->iso_code, $total);
     }
 
-    private function paymentOption($title, $logo, $action, $additional = null)
+    private function getGDPRNotices()
     {
-        $payment_option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-        $payment_option->setModuleName($this->name)
-            ->setCallToActionText($title)
-            ->setLogo($logo)
-            ->setAdditionalInformation($additional)
-            ->setAction($action);
-        return $payment_option;
+        $locale  = isset($this->context->language->locale) ? $this->context->language->locale : $this->context->language->language_code;
+        $cacheId = 'paynow-gdpr-' . $locale;
+        if (!Cache::isStored($cacheId)) {
+            $gdpr_helper = new GDPRHelper($this->getPaynowClient());
+
+            $gdpr_notices = $gdpr_helper->getNotices($locale);
+            Cache::store($cacheId, $gdpr_notices);
+            return $gdpr_notices;
+        } else {
+            return Cache::retrieve($cacheId);
+        }
+    }
+
+    public function hookPaymentOptions($params)
+    {
+        if (!$this->isActive() || !$this->checkCurrency($params['cart'])) {
+            return;
+        }
+
+        $payment_options = new PaymentOptions($this->context, $this, $this->getPaymentMethods(), $this->getGDPRNotices());
+        return $payment_options->execute();
     }
 
     public function hookPayment($params)
@@ -383,10 +352,13 @@ class Paynow extends PaymentModule
             return;
         }
 
+        $gdpr_notices = $this->getGDPRNotices();
+
         $this->context->smarty->assign([
-            'cta_text' => $this->callToActionText,
+            'cta_text' => $this->getCallToActionText(),
             'logo' => $this->getLogo(),
-            'paynow_url' => $this->context->link->getModuleLink('paynow', 'payment')
+            'paynow_url' => $this->context->link->getModuleLink('paynow', 'payment'),
+            'data_processing_notices' => $gdpr_notices ? $gdpr_notices->getAll() : null
         ]);
 
         $payment_options = [];
@@ -400,6 +372,8 @@ class Paynow extends PaymentModule
                             array_push($payment_options, [
                                 'name' => $this->getPaymentMethodTitle($payment_method->getType()),
                                 'image' => $this->getLogo(),
+                                'type' => $payment_method->getType(),
+                                'authorization' => $payment_method->getAuthorizationType(),
                                 'pbls' => $payment_methods->getOnlyPbls()
                             ]);
                         } else {
@@ -407,7 +381,9 @@ class Paynow extends PaymentModule
                                 'name' => $this->getPaymentMethodTitle($payment_method->getType()),
                                 'image' => $payment_method->getImage(),
                                 'id' => $payment_method->getId(),
-                                'enabled' => $payment_method->isEnabled()
+                                'enabled' => $payment_method->isEnabled(),
+                                'type' => $payment_method->getType(),
+                                'authorization' => $payment_method->getAuthorizationType(),
                             ]);
                         }
                         $list[$payment_method->getType()] = $payment_method->getId();
@@ -425,7 +401,7 @@ class Paynow extends PaymentModule
     public function hookDisplayPaymentEU()
     {
         return [
-            'cta_text' => $this->callToActionText,
+            'cta_text' => $this->getCallToActionText(),
             'logo' => $this->getLogo(),
             'action' => $this->context->link->getModuleLink('paynow', 'payment')
         ];
@@ -456,6 +432,9 @@ class Paynow extends PaymentModule
      * Handle status change to make a refund
      *
      * @param $params
+     *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public function hookActionOrderStatusPostUpdate($params)
     {
@@ -469,7 +448,8 @@ class Paynow extends PaymentModule
                     $amount_to_refund -= $order->total_shipping_tax_incl;
                 }
                 $payments = $order->getOrderPaymentCollection()->getResults();
-                $this->processRefund($order->reference, $payments, $amount_to_refund);
+                $refundProcessor = new RefundProcessor($this->getPaynowClient(), $this->displayName);
+                $refundProcessor->process($order->reference, $payments, $amount_to_refund);
             }
         }
     }
@@ -490,55 +470,8 @@ class Paynow extends PaymentModule
                     ->getFirst();
                 $payments = $order->getOrderPaymentCollection()->getResults();
                 $amount_from_slip = $orderSlip->amount + $orderSlip->shipping_cost_amount;
-                $this->processRefund($order->reference, $payments, $amount_from_slip);
-            }
-        }
-    }
-
-    private function processRefund($order_reference, array $payments, $amount)
-    {
-        if (!empty($payments)) {
-            foreach ($payments as $payment) {
-                if ($this->displayName != $payment->payment_method || $payment->amount < $amount) {
-                    continue;
-                }
-
-                $refund_amount = number_format($amount * 100, 0, '', '');
-                try {
-                    PaynowLogger::info(
-                        'Found transaction to make a refund {orderReference={}, paymentId={}, amount={}}',
-                        [
-                            $order_reference,
-                            $payment->transaction_id,
-                            $refund_amount
-                        ]
-                    );
-                    $refund_client = new Paynow\Service\Refund($this->api_client);
-                    $refund = $refund_client->create(
-                        $payment->transaction_id,
-                        uniqid($payment->order_reference, true),
-                        $refund_amount
-                    );
-                    PaynowLogger::info(
-                        'Refund has been created successfully {orderReference={}, refundId={}}',
-                        [
-                            $payment->order_reference,
-                            $refund->getRefundId()
-                        ]
-                    );
-                } catch (Paynow\Exception\PaynowException $exception) {
-                    foreach ($exception->getErrors() as $error) {
-                        PaynowLogger::error(
-                            $exception->getMessage() . ' {orderReference={}, paymentId={}, type={}, message={}}',
-                            [
-                                $payment->order_reference,
-                                $payment->transaction_id,
-                                $error->getType(),
-                                $error->getMessage()
-                            ]
-                        );
-                    }
-                }
+                $refund_processor = new RefundProcessor($this->getPaynowClient(), $this->displayName);
+                $refund_processor->process($order->reference, $payments, $amount_from_slip);
             }
         }
     }
@@ -568,7 +501,7 @@ class Paynow extends PaymentModule
                 return $this->fetchTemplate('/views/templates/admin/_partials/upgrade.tpl');
             }
         } catch (Exception $exception) {
-            PaynowLogger::error($exception->getMessage());
+            PaynowLogger::warning($exception->getMessage());
         }
 
         return null;
@@ -576,7 +509,6 @@ class Paynow extends PaymentModule
 
     public function hookActionAdminControllerSetMedia($params)
     {
-
         $this->context->controller->addJquery();
         $this->context->controller->addJS(($this->_path) . '/views/js/admin.js', 'all');
     }
@@ -615,11 +547,11 @@ class Paynow extends PaymentModule
                 $this->postErrors[] = $this->l('Integration keys must be set');
             }
 
-            if((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 1 && ((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') > 86400 || (int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') < 60)) {
+            if ((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 1 && ((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') > 86400 || (int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') < 60)) {
                 $this->postErrors[] = $this->l('Payment validity time must be greater than 60 and less than 86400 seconds');
             }
 
-            if((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 1 && !Validate::isInt(Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME'))) {
+            if ((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 1 && !Validate::isInt(Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME'))) {
                 $this->postErrors[] = $this->l('Payment validity time must be integer');
             }
         }
@@ -690,7 +622,7 @@ class Paynow extends PaymentModule
         Configuration::updateValue(
             'PAYNOW_ORDER_ERROR_STATE',
             Tools::getValue('PAYNOW_ORDER_ERROR_STATE')
-        ); 
+        );
         Configuration::updateValue(
             'PAYNOW_SEND_ORDER_ITEMS',
             Tools::getValue('PAYNOW_SEND_ORDER_ITEMS')
@@ -719,8 +651,7 @@ class Paynow extends PaymentModule
 
     private function sendShopUrlsConfiguration()
     {
-        $this->initializeApiClient();
-        $shop_configuration = new Paynow\Service\ShopConfiguration($this->api_client);
+        $shop_configuration = new Paynow\Service\ShopConfiguration($this->getPaynowClient());
         try {
             $shop_configuration->changeUrls(
                 $this->context->link->getModuleLink('paynow', 'return'),

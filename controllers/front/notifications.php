@@ -81,6 +81,4 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         }
         return $headers;
     }
-
-
 }

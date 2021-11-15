@@ -8,7 +8,6 @@
 * @copyright mElements S.A.
 * @license   MIT License
 */
-
 .payment_module.paynow {
     clear: both;
 }
@@ -30,10 +29,6 @@ p.payment_module .paynow {
     padding: 33px 40px 34px 17px;
     letter-spacing: -1px;
     position: relative;
-}
-
-.paynow-payment-option-pbls {
-    display: none;
 }
 
 p.payment_module .paynow img {
@@ -66,7 +61,9 @@ p.payment_module .paynow img {
     display: flex !important;
     justify-content: center;
     align-items: center;
+    margin-bottom: .5rem;
 }
+
 .paynow-payment-option-pbl.disabled label {
     cursor: not-allowed;
 }
@@ -107,6 +104,21 @@ button.payment-option {
     font-size: 17px;
     line-height: 23px;
     font-weight: bold;
+    position: relative;
+}
+
+p.payment_module.paynow button:after {
+    display: block;
+    content: "\f054";
+    position: absolute;
+    right: 15px;
+    margin-top: -11px;
+    top: 50%;
+    font-family: "FontAwesome";
+    font-size: 25px;
+    height: 22px;
+    width: 14px;
+    color: #777777;
 }
 
 .paynow > button:enabled:hover {
@@ -115,15 +127,68 @@ button.payment-option {
 }
 
 .paynow > button img, .payment-option img {
-    max-height: 40px !important;
+    max-height: 1.5rem !important;
     max-width: 80px !important;
-    margin-right: 10px;
     height: auto !important;
+    margin-right: 10px;
+    margin-left: 10px;
 }
 
 .paynow .payment-option:disabled img {
     opacity: 0.3;
     filter: grayscale(1);
+}
+
+.paynow-payment-option-blik {
+    padding: 1rem;
+}
+
+.paynow-payment-option-blik .paynow-data-processing-info {
+    margin-top: 1rem;
+}
+
+.paynow-payment-option-blik .paynow-data-processing-info ul {
+    margin: 0 1.7rem;
+}
+
+.paynow-payment-option-blik label {
+    display: inline-block;
+    text-align: left;
+}
+
+.paynow-payment-option-blik input[type=text] {
+    letter-spacing: 3px;
+}
+
+.paynow-data-processing-info {
+    color: #797979;
+    text-align: justify;
+}
+
+.payment-form .paynow-data-processing-info {
+    font-size: 0.7rem;
+}
+
+.paynow-data-processing-info ul {
+    list-style-type: lower-alpha;
+    margin: 0 1rem;
+}
+
+.paynow-confirm-blik {
+    text-align: center;
+    background: #fff;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.paynow-confirm-blik img {
+    max-width: 35%;
+}
+
+.paynow-confirm-blik .headline {
+    font-size: 1.3125rem;
+    color: #232323;
+    font-weight: 400;
 }
 
 @media (max-width: 768px) {

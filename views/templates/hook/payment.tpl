@@ -13,24 +13,21 @@
     {foreach from=$payment_options item=method}
         <p class="payment_module paynow{if !empty($method.pbls)} with-pbls{/if}">
             {if !empty($method.pbls)}
-                <button name="paymentMethodId" type="button" class="payment-option-pbls payment-option">
+                <button name="paymentMethodId" type="button" class="payment-option-pbls payment-option"
+                        data-toggle="collapse" data-target="#paynow-option-{$method.type}" aria-expanded="false" aria-controls="paynow-option-{$method.type}">
                     <img src="{$method.image|escape:'htmlall':'UTF-8'}" alt="{$method.name|escape:'htmlall':'UTF-8'}">
                     {$method.name|escape:'htmlall':'UTF-8'}
                 </button>
-                <div class="paynow-payment-option-pbls">
-                    {foreach from=$method.pbls item=pbl}
-                        <div class="col-lg-3 col-xs-4 paynow-payment-option-pbl">
-                            <button name="paymentMethodId" value="{$pbl->getId()}" type="submit" {if !$pbl->isEnabled()}disabled{/if}>
-                                <img src="{$pbl->getImage()}" alt="{$pbl->getName()}" />
-                            </button>
-                        </div>
-                    {/foreach}
-                </div>
+                {include file="./_partials/payment_pbls.tpl"}
             {else}
-                <button name="paymentMethodId" value="{$method.id}" type="submit" class="payment-option" {if !$method.enabled}disabled{/if}>
+                <button name="paymentMethodId" value="{$method.id}" type="{if $method.authorization == 'CODE'}button{else}submit{/if}" class="payment-option paynow-option-{$method.type}" {if !$method.enabled}disabled{/if}
+                        data-toggle="collapse" data-target="#paynow-option-{$method.type}" aria-expanded="false" aria-controls="paynow-option-{$method.type}"{if $method.authorization == 'CODE' && $method.type == 'BLIK'} onclick="enableBlikValidation()"{/if}>
                     <img src="{$method.image}" alt="{$method.name}" />
                     {$method.name|escape:'htmlall':'UTF-8'}
                 </button>
+                {if $method.authorization == 'CODE'}
+                    {include file="./_partials/blik_payment_form.tpl"}
+                {/if}
             {/if}
         </p>
     {/foreach}

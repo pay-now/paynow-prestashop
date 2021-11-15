@@ -26,13 +26,10 @@ class OrderStateProcessor
         $this->module = Module::getInstanceByName(Tools::getValue('module'));
     }
 
-    public function updateState($payment, $newStatus, $paymentId, $modifiedAt = null )
+    public function updateState($payment, $newStatus, $paymentId, $modifiedAt = null)
     {
         $order = new Order($payment['id_order']);
         if ($order && $order->module == $this->module->name) {
-            $history = new OrderHistory();
-            $history->id_order = $order->id;
-
             $payment_status = $payment['status'];
 
             if (!$this->isCorrectStatus($payment_status, $newStatus)) {
@@ -43,51 +40,27 @@ class OrderStateProcessor
 
             switch ($newStatus) {
                 case Paynow\Model\Payment\Status::STATUS_NEW:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
+                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_INITIAL_STATE'));
                     break;
                 case Paynow\Model\Payment\Status::STATUS_REJECTED:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
+                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'));
                     break;
                 case Paynow\Model\Payment\Status::STATUS_CONFIRMED:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
+                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'));
                     $this->addPaymentIdToOrderPayments($order, $payment['id_payment']);
                     break;
                 case Paynow\Model\Payment\Status::STATUS_ERROR:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
+                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'));
                     break;
                 case Paynow\Model\Payment\Status::STATUS_ABANDONED:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_ABANDONED_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
+                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_ABANDONED_STATE'));
                     break;
                 case Paynow\Model\Payment\Status::STATUS_EXPIRED:
-                    $history->changeIdOrderState(
-                        (int)Configuration::get('PAYNOW_ORDER_EXPIRED_STATE'),
-                        $order->id
-                    );
-                    $history->addWithemail(true);
+                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_EXPIRED_STATE'));
                     break;
             }
             $modifiedAt = $modifiedAt ? (new DateTime($modifiedAt))->format('Y-m-d H:i:s') : $modifiedAt;
-            if($newStatus === Paynow\Model\Payment\Status::STATUS_NEW){
+            if ($newStatus === Paynow\Model\Payment\Status::STATUS_NEW) {
                 $this->module->storePaymentState(
                     $paymentId,
                     $newStatus,
@@ -113,6 +86,19 @@ class OrderStateProcessor
                     $newStatus
                 ]
             );
+        }
+    }
+
+    private function changeState($order, $new_order_state_id)
+    {
+        $history = new OrderHistory();
+        $history->id_order = $order->id;
+        if ($order->current_state != $new_order_state_id) {
+            $history->changeIdOrderState(
+                $new_order_state_id,
+                $order->id
+            );
+            $history->addWithemail(true);
         }
     }
 
@@ -168,6 +154,4 @@ class OrderStateProcessor
             $payments[0]->update();
         }
     }
-
-
 }

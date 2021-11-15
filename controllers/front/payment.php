@@ -11,6 +11,7 @@
  */
 
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
+require_once(dirname(__FILE__) . '/../../classes/LinkHelper.php');
 
 class PaynowPaymentModuleFrontController extends PaynowFrontController
 {
@@ -123,7 +124,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     private function sendPaymentRequest()
     {
         try {
-            $payment_client = new Paynow\Service\Payment($this->module->api_client);
+            $payment_client = new Paynow\Service\Payment($this->module->getPaynowClient());
             $idempotency_key = uniqid($this->order->reference . '_');
             $external_id = $this->order->reference;
             $request = $this->preparePaymentRequest($this->order, $external_id);
@@ -137,12 +138,27 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 $external_id
             );
             PaynowLogger::info(
-                'Payment has been successfully created {orderReference={}, paymentId={}}',
+                'Payment has been successfully created {orderReference={}, paymentId={}, url={}}',
                 [
                     $this->order->reference,
-                    $payment->getPaymentId()
+                    $payment->getPaymentId(),
+                    $payment->getRedirectUrl()
                 ]
             );
+
+            if (!$payment->getRedirectUrl()) {
+                $redirect_data = [
+                    'order_reference' => $external_id,
+                    'paymentId' => $payment->getPaymentId(),
+                    'paymentStatus' => $payment->getStatus(),
+                    'token' => Tools::encrypt($external_id)
+                ];
+                if (!empty(Tools::getValue('blikCode'))) {
+                    Tools::redirect($this->context->link->getModuleLink('paynow', 'confirmBlik', $redirect_data));
+                }
+                Tools::redirect(LinkHelper::getContinueUrl($this->order, $this->module->id, $this->order->secure_key, $redirect_data));
+            }
+
             Tools::redirect($payment->getRedirectUrl());
         } catch (Paynow\Exception\PaynowException $exception) {
             PaynowLogger::error(
@@ -181,30 +197,21 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 'email' => $customer->email,
                 'locale' => $this->context->language->locale ? $this->context->language->locale : $this->context->language->language_code
             ],
-            'continueUrl' => Configuration::get('PAYNOW_USE_CLASSIC_RETURN_URL') ?
-                $this->context->link->getPageLink(
-                    'order-confirmation',
-                    null,
-                    null,
-                    [
-                        'id_cart' => $order->id_cart,
-                        'id_module' => $this->module->id,
-                        'id_order' => $external_id,
-                        'key' => $customer->secure_key
-                    ]
-                ) : $this->context->link->getModuleLink(
-                    'paynow',
-                    'return',
-                    [
-                        'order_reference' => $order->reference,
-                        'token' => Tools::encrypt($order->reference)
-                    ]
-                )
+            'continueUrl' => LinkHelper::getContinueUrl($order, $this->module->id, $customer->secure_key)
         ];
 
         if (!empty(Tools::getValue('paymentMethodId'))) {
             $request['paymentMethodId'] = (int)Tools::getValue('paymentMethodId');
         }
+
+        if (Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED')) {
+            $request['validityTime'] = Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME');
+        }
+
+        if (!empty(Tools::getValue('blikCode'))) {
+            $request['authorizationCode'] = (int)Tools::getValue('blikCode');
+        }
+
         if (Configuration::get('PAYNOW_SEND_ORDER_ITEMS')) {
             $products = $this->context->cart->getProducts(true);
             $order_items = [];
@@ -221,10 +228,6 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             }
         }
 
-        if (Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED')) {
-            $request['validityTime'] = Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME');
-        }
-
         return $request;
     }
 
@@ -237,7 +240,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 array_unshift($categoriesNames, $category->name);
             }
         }
-        return implode(", ", $categoriesNames); 
+        return implode(", ", $categoriesNames);
     }
 
     private function displayError()
@@ -253,7 +256,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 ]
             ),
             'order_reference' => $this->order->reference,
-            'cta_text' => $this->callToActionText
+            'cta_text' => $this->module->getCa
         ]);
 
         $this->renderTemplate('error.tpl');

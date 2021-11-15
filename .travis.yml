@@ -21,4 +21,3 @@ deploy:
     repo: pay-now/paynow-prestashop
     branch: master
     tags: true
-

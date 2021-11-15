@@ -1,0 +1,71 @@
+<?php
+/**
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the MIT License (MIT)
+ * that is bundled with this package in the file LICENSE.md.
+ *
+ * @author mElements S.A.
+ * @copyright mElements S.A.
+ * @license MIT License
+ */
+
+require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
+require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
+
+class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
+{
+    public function initContent()
+    {
+        $this->display_column_left = false;
+        parent::initContent();
+
+        $order_reference = Tools::getValue('order_reference');
+        //TODO: validate token
+        $token = Tools::getValue('token');
+
+        if (!$order_reference) {
+            $this->redirectToOrderHistory();
+        }
+
+        $this->payment = $this->module->getLastPaymentDataByOrderReference($order_reference);
+        if (!$this->payment) {
+            $this->redirectToOrderHistory();
+        }
+
+        $this->order = new Order($this->payment['id_order']);
+
+        if (!Validate::isLoadedObject($this->order)) {
+            $this->redirectToOrderHistory();
+        }
+
+        if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')) {
+            $paymentId = Tools::getValue('paymentId');
+            $payment_status = $this->getPaymentStatus($paymentId);
+            $this->updateOrderState($paymentId, $payment_status);
+        }
+
+        $current_state = $this->order->getCurrentStateFull($this->context->language->id);
+
+        if (version_compare(_PS_VERSION_, '1.7', 'gt')) {
+            $this->registerJavascript(
+                'paynow-confirm-blik',
+                'modules/'.$this->module->name.'/views/js/confirm-blik.js',
+                array(
+                    'position' => 'bottom',
+                    'priority' => 100
+                )
+            );
+        } else {
+            $this->addJS('modules/'.$this->module->name.'/views/js/confirm-blik.js');
+        }
+
+        $this->context->smarty->assign([
+            'module_dir' => $this->module->getPathUri(),
+            'order_status' => $current_state['name'],
+            'order_reference' => $this->order->reference
+        ]);
+
+        $this->renderTemplate('confirm_blik.tpl');
+    }
+}
