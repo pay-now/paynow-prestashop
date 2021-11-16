@@ -189,7 +189,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                     [
                         'id_cart' => $order->id_cart,
                         'id_module' => $this->module->id,
-                        'id_order' => $external_id,
+                        'id_order' => $order->id,
                         'key' => $customer->secure_key
                     ]
                 ) : $this->context->link->getModuleLink(
