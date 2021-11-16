@@ -126,7 +126,14 @@ p.payment_module.paynow button:after {
     background: #f3f3f3;
 }
 
-.paynow > button img, .payment-option img {
+.paynow > button img {
+    max-height: 40px !important;
+    max-width: 80px !important;
+    margin-right: 10px;
+    height: auto !important;
+}
+
+.payment-option img {
     max-height: 1.5rem !important;
     max-width: 80px !important;
     height: auto !important;
@@ -139,16 +146,16 @@ p.payment_module.paynow button:after {
     filter: grayscale(1);
 }
 
+.order-data {
+    margin: 1.5rem 0;
+}
+
 .paynow-payment-option-blik {
     padding: 1rem;
 }
 
 .paynow-payment-option-blik .paynow-data-processing-info {
     margin-top: 1rem;
-}
-
-.paynow-payment-option-blik .paynow-data-processing-info ul {
-    margin: 0 1.7rem;
 }
 
 .paynow-payment-option-blik label {

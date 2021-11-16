@@ -32,7 +32,7 @@
         </p>
     {/foreach}
 {else}
-    <p class="payment_module">
+    <p class="payment_module paynow">
         <button name="paymentMethodId" type="submit" class="payment-option">
             <img src="{$logo|escape:'htmlall':'UTF-8'}" alt="{$cta_text|escape:'htmlall':'UTF-8'}">
             {$cta_text|escape:'htmlall':'UTF-8'}

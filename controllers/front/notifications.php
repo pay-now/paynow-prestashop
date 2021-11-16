@@ -31,7 +31,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
 
         try {
             new Notification($this->module->getSignatureKey(), $payload, $headers);
-            $payments = $this->module->getAllPaymentsDataByOrderReference($notification_data['externalId']);
+            $payments = $this->getAllPaymentsDataByOrderReference($notification_data['externalId']);
 
             $filteredPayments = array_filter($payments, function ($payment) use ($notification_data, $payments) {
                 return $payment['id_payment'] === $notification_data['paymentId'] ||
@@ -80,5 +80,13 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             }
         }
         return $headers;
+    }
+
+    private function getAllPaymentsDataByOrderReference($order_reference)
+    {
+        return Db::getInstance()->executeS('
+            SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
+            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
+            WHERE order_reference="' . pSQL($order_reference) . '" ORDER BY created_at DESC');
     }
 }

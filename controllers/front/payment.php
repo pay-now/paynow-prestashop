@@ -11,7 +11,6 @@
  */
 
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
-require_once(dirname(__FILE__) . '/../../classes/LinkHelper.php');
 
 class PaynowPaymentModuleFrontController extends PaynowFrontController
 {
@@ -129,22 +128,27 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             $external_id = $this->order->reference;
             $request = $this->preparePaymentRequest($this->order, $external_id);
             $payment = $payment_client->authorize($request, $idempotency_key);
+
             $this->module->storePaymentState(
                 $payment->getPaymentId(),
-                $payment->getStatus(),
+                Paynow\Model\Payment\Status::STATUS_NEW,
                 $this->order->id,
                 $this->order->id_cart,
                 $this->order->reference,
                 $external_id
             );
             PaynowLogger::info(
-                'Payment has been successfully created {orderReference={}, paymentId={}, url={}}',
+                'Payment has been successfully created {orderReference={}, paymentId={}, status={}}',
                 [
                     $this->order->reference,
                     $payment->getPaymentId(),
-                    $payment->getRedirectUrl()
+                    $payment->getStatus()
                 ]
             );
+
+            if (!in_array($payment->getStatus(), [Paynow\Model\Payment\Status::STATUS_NEW, Paynow\Model\Payment\Status::STATUS_PENDING])) {
+                Tools::redirect(LinkHelper::getReturnUrl($this->order));
+            }
 
             if (!$payment->getRedirectUrl()) {
                 $redirect_data = [
@@ -162,14 +166,14 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             Tools::redirect($payment->getRedirectUrl());
         } catch (Paynow\Exception\PaynowException $exception) {
             PaynowLogger::error(
-                $exception->getMessage() . '{orderReference={}}',
+                $exception->getMessage() . ' {orderReference={}}',
                 [
                     $this->order->reference
                 ]
             );
             foreach ($exception->getErrors() as $error) {
                 PaynowLogger::error(
-                    $exception->getMessage() . '{orderReference={}, error={}, message={}}',
+                    $exception->getMessage() . ' {orderReference={}, error={}, message={}}',
                     [
                         $this->order->reference,
                         $error->getType(),
@@ -177,11 +181,11 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                     ]
                 );
             }
-            $this->displayError();
+            $this->displayError($exception->getErrors());
         }
     }
 
-    private function preparePaymentRequest($order, $external_id)
+    private function preparePaymentRequest($order, $external_id): array
     {
         $currency = Currency::getCurrency($order->id_currency);
         $customer = new Customer((int)$order->id_customer);
@@ -243,20 +247,19 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         return implode(", ", $categoriesNames);
     }
 
-    private function displayError()
+    private function displayError($errors)
     {
+        var_dump($errors);
         $this->context->smarty->assign([
             'total_to_pay' => Tools::displayPrice($this->order->total_paid, (int)$this->order->id_currency),
-            'button_action' => $this->context->link->getModuleLink(
-                'paynow',
-                'payment',
+            'button_action' => LinkHelper::getPaymentUrl(
                 [
                     'id_order' => $this->order->id,
                     'order_reference' => $this->order->reference
                 ]
             ),
             'order_reference' => $this->order->reference,
-            'cta_text' => $this->module->getCa
+            'cta_text' => $this->module->getCallToActionText()
         ]);
 
         $this->renderTemplate('error.tpl');

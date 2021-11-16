@@ -39,7 +39,7 @@ class PaymentOptions
         $this->data_processing_notices = $data_processing_notices;
     }
 
-    public function execute()
+    public function generate(): array
     {
         $payment_options = [];
 
@@ -47,8 +47,8 @@ class PaymentOptions
             if (! empty($this->payment_methods)) {
                 $list = [];
                 $this->context->smarty->assign([
-                    'action' => $this->context->link->getModuleLink($this->module->name, 'payment', [], true),
-                    'data_processing_notices' => $this->data_processing_notices ? $this->data_processing_notices->getAll() : null
+                    'action' => LinkHelper::getPaymentUrl(),
+                    'data_processing_notices' => $this->data_processing_notices
                 ]);
 
                 /** @var PaymentMethod $payment_method */
@@ -61,30 +61,24 @@ class PaymentOptions
                             array_push($payment_options, $this->getPaymentOption(
                                 $this->module->getPaymentMethodTitle($payment_method->getType()),
                                 $this->module->getLogo(),
-                                $this->context->link->getModuleLink($this->module->name, 'payment', [], true),
+                                LinkHelper::getPaymentUrl(),
                                 'module:paynow/views/templates/front/1.7/payment_form.tpl'
                             ));
                         } else {
                             if (Paynow\Model\PaymentMethods\Type::BLIK == $payment_method->getType()) {
                                 $this->context->smarty->assign([
-                                    'action_blik' => $this->context->link->getModuleLink(
-                                        $this->module->name,
-                                        'payment',
-                                        ['paymentMethodId' => $payment_method->getId()],
-                                        true
-                                    )
+                                    'action_blik' => LinkHelper::getPaymentUrl([
+                                        'paymentMethodId' => $payment_method->getId()
+                                    ]),
                                 ]);
                             }
 
                             array_push($payment_options, $this->getPaymentOption(
                                 $this->module->getPaymentMethodTitle($payment_method->getType()),
                                 $payment_method->getImage(),
-                                $this->context->link->getModuleLink(
-                                    $this->module->name,
-                                    'payment',
-                                    ['paymentMethodId' => $payment_method->getId()],
-                                    true
-                                ),
+                                LinkHelper::getPaymentUrl([
+                                    'paymentMethodId' => $payment_method->getId()
+                                ]),
                                 $this->isWhiteLabelEnabled($payment_method->getType(), $payment_method) ? 'module:paynow/views/templates/front/1.7/blik_payment_form.tpl' : null
                             ));
                         }
@@ -96,7 +90,7 @@ class PaymentOptions
             array_push($payment_options, $this->getPaymentOption(
                 $this->module->getCallToActionText(),
                 $this->module->getLogo(),
-                $this->context->link->getModuleLink($this->module->name, 'payment', [], true)
+                LinkHelper::getPaymentUrl()
             ));
         }
 

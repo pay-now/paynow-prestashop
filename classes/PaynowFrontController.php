@@ -43,11 +43,14 @@ class PaynowFrontController extends ModuleFrontController
 
     protected function getPaymentStatus($paymentId)
     {
+        PaynowLogger::info('Retrieving payment status {paymentId={}}', [$paymentId]);
         try {
             $payment_client = new Paynow\Service\Payment($this->module->getPaynowClient());
-            return $payment_client->status($paymentId)->getStatus();
+            $status =  $payment_client->status($paymentId)->getStatus();
+            PaynowLogger::info('Retrieved payment status {paymentId={}, status={}}', [$paymentId, $status]);
+            return $status;
         } catch (PaynowException $exception) {
-            PaynowLogger::error($exception->getMessage());
+            PaynowLogger::error($exception->getMessage() . ' {paymentId={}}', [$paymentId]);
         }
 
         return false;
@@ -59,7 +62,7 @@ class PaynowFrontController extends ModuleFrontController
             $orderStateProcessor = new OrderStateProcessor();
             $orderStateProcessor->updateState($this->payment, $payment_status, $paymentId);
         } catch (Exception $e) {
-            PaynowLogger::error($e->getMessage());
+            PaynowLogger::error($e->getMessage() . ' {paymentId={}}', [$paymentId]);
         }
     }
 }

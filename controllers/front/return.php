@@ -12,7 +12,6 @@
 
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
-require_once(dirname(__FILE__) . '/../../classes/LinkHelper.php');
 
 class PaynowReturnModuleFrontController extends PaynowFrontController
 {
@@ -50,15 +49,15 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         $currentState = $this->order->getCurrentStateFull($this->context->language->id);
         $this->context->smarty->assign([
             'logo' => $this->module->getLogo(),
-            'details_url' => $this->module->getOrderUrl($this->order),
+            'details_url' => LinkHelper::getOrderUrl($this->order),
             'order_status' => $currentState['name'],
             'order_reference' => $this->order->reference,
             'show_details_button' => $token == Tools::encrypt($order_reference),
             'show_retry_button' => $this->module->canOrderPaymentBeRetried($this->order->id),
             'HOOK_ORDER_CONFIRMATION' => $this->displayOrderConfirmation(),
-            'retry_url' => $this->context->link->getModuleLink('paynow', 'payment', [
-                'id_order' => $this->order->id,
-                'order_reference' => $order_reference
+            'retry_url' => LinkHelper::getPaymentUrl([
+                'id_order'        => $this->order->id,
+                'order_reference' => $this->order->reference
             ])
         ]);
 

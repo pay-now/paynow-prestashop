@@ -3,11 +3,14 @@
     <div class="paynow-data-processing-info">
         {foreach from=$data_processing_notices item=notice}
             <div class="paynow-data-processing-info-less">
-                {$notice->getTitle() nofilter} <a href="#" data-toggle="collapse" data-target="#paynow_disclaimer_{$unique_id}" class="js-show-details">{l s='Read more' mod='paynow'}<i class="material-icons">expand_more</i></a>
+                {$notice.title nofilter}
+                {if $notice.content}<br><a href="#" data-toggle="collapse" data-target="#paynow_disclaimer_{$unique_id}" class="js-show-details">{l s='Read more' mod='paynow'}<i class="material-icons">expand_more</i></a>{/if}
             </div>
-            <div class="paynow-data-processing-info-more collapse" id="paynow_disclaimer_{$unique_id}">
-                {$notice->getContent() nofilter}
-            </div>
+            {if $notice.content}
+                <div class="paynow-data-processing-info-more collapse" id="paynow_disclaimer_{$unique_id}">
+                    {$notice.content nofilter}
+                </div>
+            {/if}
         {/foreach}
     </div>
 {/if}

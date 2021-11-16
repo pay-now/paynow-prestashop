@@ -14,9 +14,11 @@
   <div class="paynow-return">
     <img src="{$logo|escape:'htmlall':'UTF-8'}" alt="{l s='Pay by online transfer or BLIK' mod='paynow'}" class="float-sm-right">
     <h2>{l s='Thank you for your order!' mod='paynow'}</h2>
-    <div class="table-responsive-row clearfix">
+    <div class="order-data clearfix">
       <p>
-        {l s='Your order number:' mod='paynow'} {$order_reference|escape:'htmlall':'UTF-8'} <br />
+        {l s='Your order number:' mod='paynow'} {$order_reference|escape:'htmlall':'UTF-8'}
+      </p>
+      <p>
         {l s='Current order status:' mod='paynow'} {$order_status|escape:'htmlall':'UTF-8'}
       </p>
       {if $show_retry_button}

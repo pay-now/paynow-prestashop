@@ -20,6 +20,7 @@ include_once(dirname(__FILE__) . '/classes/PaymentMethodsHelper.php');
 include_once(dirname(__FILE__) . '/classes/PaymentOptions.php');
 include_once(dirname(__FILE__) . '/classes/RefundProcessor.php');
 include_once(dirname(__FILE__) . '/classes/GDPRHelper.php');
+include_once(dirname(__FILE__) . '/classes/LinkHelper.php');
 
 class Paynow extends PaymentModule
 {
@@ -31,7 +32,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.4.1';
+        $this->version = '1.4.2';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -313,7 +314,7 @@ class Paynow extends PaymentModule
      * @return \Paynow\Response\PaymentMethods\PaymentMethods|null
      * @throws Exception
      */
-    private function getPaymentMethods()
+    private function getPaymentMethods(): ?\Paynow\Response\PaymentMethods\PaymentMethods
     {
         $total = number_format($this->context->cart->getOrderTotal(true, Cart::BOTH) * 100, 0, '', '');
         $currency = new Currency($this->context->cart->id_currency);
@@ -323,17 +324,9 @@ class Paynow extends PaymentModule
 
     private function getGDPRNotices()
     {
-        $locale  = isset($this->context->language->locale) ? $this->context->language->locale : $this->context->language->language_code;
-        $cacheId = 'paynow-gdpr-' . $locale;
-        if (!Cache::isStored($cacheId)) {
-            $gdpr_helper = new GDPRHelper($this->getPaynowClient());
-
-            $gdpr_notices = $gdpr_helper->getNotices($locale);
-            Cache::store($cacheId, $gdpr_notices);
-            return $gdpr_notices;
-        } else {
-            return Cache::retrieve($cacheId);
-        }
+        $locale  = $this->context->language->locale ?? $this->context->language->language_code;
+        $gdpr_helper  = new GDPRHelper($this->getPaynowClient());
+        return $gdpr_helper->getNotices($locale);
     }
 
     public function hookPaymentOptions($params)
@@ -343,7 +336,7 @@ class Paynow extends PaymentModule
         }
 
         $payment_options = new PaymentOptions($this->context, $this, $this->getPaymentMethods(), $this->getGDPRNotices());
-        return $payment_options->execute();
+        return $payment_options->generate();
     }
 
     public function hookPayment($params)
@@ -353,12 +346,11 @@ class Paynow extends PaymentModule
         }
 
         $gdpr_notices = $this->getGDPRNotices();
-
         $this->context->smarty->assign([
             'cta_text' => $this->getCallToActionText(),
             'logo' => $this->getLogo(),
-            'paynow_url' => $this->context->link->getModuleLink('paynow', 'payment'),
-            'data_processing_notices' => $gdpr_notices ? $gdpr_notices->getAll() : null
+            'paynow_url' => LinkHelper::getPaymentUrl(),
+            'data_processing_notices' => $gdpr_notices ?? null
         ]);
 
         $payment_options = [];
@@ -403,7 +395,7 @@ class Paynow extends PaymentModule
         return [
             'cta_text' => $this->getCallToActionText(),
             'logo' => $this->getLogo(),
-            'action' => $this->context->link->getModuleLink('paynow', 'payment')
+            'action' => LinkHelper::getPaymentUrl()
         ];
     }
 
@@ -420,38 +412,12 @@ class Paynow extends PaymentModule
         }
 
         $this->context->smarty->assign([
-            'paynow_url' => $this->context->link->getModuleLink('paynow', 'payment', [
+            'paynow_url' => LinkHelper::getPaymentUrl([
                 'id_order' => $id_order,
                 'order_reference' => $params['order']->reference
             ])
         ]);
         return $this->display(__FILE__, '/views/templates/hook/order_details.tpl');
-    }
-
-    /**
-     * Handle status change to make a refund
-     *
-     * @param $params
-     *
-     * @throws PrestaShopDatabaseException
-     * @throws PrestaShopException
-     */
-    public function hookActionOrderStatusPostUpdate($params)
-    {
-        if (Configuration::get('PAYNOW_REFUNDS_ENABLED') && Configuration::get('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED') && $this->context->controller instanceof AdminController) {
-            $order = new Order($params['id_order']);
-            $newOrderStatus = $params['newOrderStatus'];
-
-            if ((int)Configuration::get('PAYNOW_REFUNDS_ON_STATUS') === $newOrderStatus->id) {
-                $amount_to_refund = $order->total_paid;
-                if (!Configuration::get('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS')) {
-                    $amount_to_refund -= $order->total_shipping_tax_incl;
-                }
-                $payments = $order->getOrderPaymentCollection()->getResults();
-                $refundProcessor = new RefundProcessor($this->getPaynowClient(), $this->displayName);
-                $refundProcessor->process($order->reference, $payments, $amount_to_refund);
-            }
-        }
     }
 
     /**
@@ -513,7 +479,7 @@ class Paynow extends PaymentModule
         $this->context->controller->addJS(($this->_path) . '/views/js/admin.js', 'all');
     }
 
-    public function canOrderPaymentBeRetried($id_order)
+    public function canOrderPaymentBeRetried($id_order): bool
     {
         $last_payment_status = $this->getLastPaymentStatusByOrderId($id_order);
         $order = new Order($id_order);
@@ -654,10 +620,9 @@ class Paynow extends PaymentModule
         $shop_configuration = new Paynow\Service\ShopConfiguration($this->getPaynowClient());
         try {
             $shop_configuration->changeUrls(
-                $this->context->link->getModuleLink('paynow', 'return'),
-                $this->context->link->getModuleLink('paynow', 'notifications')
+                ContextCore::getContext()->link->getModuleLink($this->name, 'return'),
+                LinkHelper::getNotificationUrl()
             );
-            return true;
         } catch (Paynow\Exception\PaynowException $exception) {
             PaynowLogger::error('Could not properly configure shop urls {message={}}', [$exception->getMessage()]);
             if ($exception->getCode() == 401) {
@@ -677,7 +642,6 @@ class Paynow extends PaymentModule
                     }
                 }
             }
-            return false;
         }
     }
 
@@ -1113,6 +1077,7 @@ class Paynow extends PaymentModule
         $modified_at = !$modified_at ? 'NOW()' : '"' . $modified_at . '"';
 
         try {
+            //TODO: Replace with ObjectModel->save()
             $sql = '
                 INSERT INTO ' . _DB_PREFIX_ . 'paynow_payments 
                     (id_order, id_cart, id_payment, order_reference, external_id, status, created_at, modified_at) 
@@ -1132,7 +1097,7 @@ class Paynow extends PaymentModule
                 return (int)Db::getInstance()->Insert_ID();
             }
         } catch (PrestaShopDatabaseException $exception) {
-            PaynowLogger::error($exception->getMessage() . '{orderReference={}}', [$order_reference]);
+            PaynowLogger::error($exception->getMessage() . ' {orderReference={}}', [$order_reference]);
         }
 
         return false;
@@ -1154,18 +1119,10 @@ class Paynow extends PaymentModule
                 return (int)Db::getInstance()->Insert_ID();
             }
         } catch (PrestaShopDatabaseException $exception) {
-            PaynowLogger::error($exception->getMessage() . '{orderReference={}}', [$id_payment]);
+            PaynowLogger::error($exception->getMessage() . ' {orderReference={}}', [$id_payment]);
         }
 
         return false;
-    }
-
-    public function getLastPaymentStatus($id_payment)
-    {
-        return Db::getInstance()->getRow('
-            SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
-            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
-            WHERE id_payment="' . pSQL($id_payment) . '" ORDER BY created_at DESC');
     }
 
     public function getLastPaymentStatusByOrderId($id_order)
@@ -1182,38 +1139,5 @@ class Paynow extends PaymentModule
             SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
             FROM  ' . _DB_PREFIX_ . 'paynow_payments 
             WHERE order_reference="' . pSQL($order_reference) . '" ORDER BY created_at DESC');
-    }
-
-    public function getAllPaymentsDataByOrderReference($order_reference)
-    {
-        return Db::getInstance()->executeS('
-            SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
-            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
-            WHERE order_reference="' . pSQL($order_reference) . '" ORDER BY created_at DESC');
-    }
-
-    public function getOrderUrl($order)
-    {
-        if (Cart::isGuestCartByCartId($order->id_cart)) {
-            $customer = new Customer((int)$order->id_customer);
-            return $this->context->link->getPageLink(
-                'guest-tracking',
-                null,
-                $this->context->language->id,
-                [
-                    'order_reference' => $order->reference,
-                    'email' => $customer->email
-                ]
-            );
-        }
-
-        return $this->context->link->getPageLink(
-            'order-detail',
-            null,
-            $this->context->language->id,
-            [
-                'id_order' => $order->id
-            ]
-        );
     }
 }
