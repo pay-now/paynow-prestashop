@@ -13,7 +13,6 @@
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
 
-
 class PaynowNotificationsModuleFrontController extends PaynowFrontController
 {
     public function process()
@@ -31,10 +30,10 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
 
         try {
             new Notification($this->module->getSignatureKey(), $payload, $headers);
-            $payments = $this->getAllPaymentsDataByOrderReference($notification_data['externalId']);
+            $payments = PaynowPaymentData::findAllByExternalId($notification_data['externalId'])->getResults();
 
             $filteredPayments = array_filter($payments, function ($payment) use ($notification_data, $payments) {
-                return $payment['id_payment'] === $notification_data['paymentId'] ||
+                return $payment->id_payment === $notification_data['paymentId'] ||
                      $notification_data['status'] === Paynow\Model\Payment\Status::STATUS_NEW;
             });
 
@@ -51,8 +50,12 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 exit;
             }
 
-            $orderStateProcessor = new OrderStateProcessor();
-            $orderStateProcessor->updateState($filteredPayments[0], $notification_data['status'], $notification_data['paymentId'], $notification_data['modifiedAt']);
+            (new OrderStateProcessor())->updateState(
+                $filteredPayments[0],
+                $notification_data['status'],
+                $notification_data['paymentId'],
+                $notification_data['modifiedAt']
+            );
         } catch (Exception $exception) {
             PaynowLogger::error(
                 'An error occurred during processing notification {paymentId={}, status={}, message={}}',

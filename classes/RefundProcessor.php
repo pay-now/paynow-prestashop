@@ -41,8 +41,7 @@ class RefundProcessor
                             $refund_amount
                         ]
                     );
-                    $refund = new Paynow\Service\Refund($this->client);
-                    $response = $refund->create(
+                    $response = (new Paynow\Service\Refund($this->client))->create(
                         $payment->transaction_id,
                         uniqid($payment->order_reference, true),
                         $refund_amount

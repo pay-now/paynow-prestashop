@@ -26,19 +26,19 @@ class OrderStateProcessor
         $this->module = Module::getInstanceByName(Tools::getValue('module'));
     }
 
-    public function updateState($payment, $newStatus, $paymentId, $modifiedAt = null)
+    public function updateState($payment, $new_status, $id_payment, $modifiedAt = null)
     {
         $order = new Order($payment['id_order']);
         if ($order && $order->module == $this->module->name) {
             $payment_status = $payment['status'];
 
-            if (!$this->isCorrectStatus($payment_status, $newStatus)) {
+            if (!$this->isCorrectStatus($payment_status, $new_status)) {
                 throw new Exception(
-                    'Status transition is incorrect ' . $payment_status . ' - ' . $newStatus
+                    'Status transition is incorrect ' . $payment_status . ' - ' . $new_status
                 );
             }
 
-            switch ($newStatus) {
+            switch ($new_status) {
                 case Paynow\Model\Payment\Status::STATUS_NEW:
                     $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_INITIAL_STATE'));
                     break;
@@ -59,31 +59,30 @@ class OrderStateProcessor
                     $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_EXPIRED_STATE'));
                     break;
             }
-            $modifiedAt = $modifiedAt ? (new DateTime($modifiedAt))->format('Y-m-d H:i:s') : $modifiedAt;
-            if ($newStatus === Paynow\Model\Payment\Status::STATUS_NEW) {
-                $this->module->storePaymentState(
-                    $paymentId,
-                    $newStatus,
-                    $payment['id_order'],
-                    $payment['id_cart'],
-                    $payment['order_reference'],
-                    $payment['external_id'],
-                    $modifiedAt
-                );
-            } else {
-                $this->module->updatePaymentState(
-                    $paymentId,
-                    $newStatus,
-                    $modifiedAt
-                );
+
+            try {
+                if ($new_status === Paynow\Model\Payment\Status::STATUS_NEW) {
+                    PaynowPaymentData::create(
+                        $id_payment,
+                        $new_status,
+                        $payment['id_order'],
+                        $payment['id_cart'],
+                        $payment['order_reference'],
+                        $payment['external_id']
+                    );
+                } else {
+                    PaynowPaymentData::updateStatus($id_payment, $new_status);
+                }
+            } catch (PrestaShopDatabaseException $exception) {
+                PaynowLogger::error($exception->getMessage() . ' {orderReference={}}', [$payment['order_reference']]);
             }
 
             PaynowLogger::info(
                 'Changed order status {orderReference={}, paymentId={}, status={}}',
                 [
                     $payment['order_reference'],
-                    $paymentId,
-                    $newStatus
+                    $id_payment,
+                    $new_status
                 ]
             );
         }

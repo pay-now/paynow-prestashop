@@ -10,7 +10,15 @@
  * @license   MIT License
  */
 
+use Paynow\Exception\ConfigurationException;
+
+if (! defined('_PS_VERSION_')) {
+    exit;
+}
+
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
+require_once(dirname(__FILE__) . '/../../classes/PaymentProcessor.php');
+require_once(dirname(__FILE__) . '/../../classes/PaymentDataBuilder.php');
 
 class PaynowPaymentModuleFrontController extends PaynowFrontController
 {
@@ -21,17 +29,17 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         $this->display_column_left = false;
         parent::initContent();
 
-        $this->isPaymentRetry() ? $this->retryPayment() : $this->processPayment();
+        $this->isPaymentRetry() ? $this->processRetryPayment() : $this->processNewPayment();
     }
 
     private function isPaymentRetry()
     {
         return Tools::getValue('id_order') !== false &&
             Tools::getValue('order_reference') !== false &&
-            $this->module->canOrderPaymentBeRetried((int)Tools::getValue('id_order'));
+            $this->module->canOrderPaymentBeRetried(new Order((int)Tools::getValue('id_order')));
     }
 
-    private function retryPayment()
+    private function processRetryPayment()
     {
         $id_order = (int)Tools::getValue('id_order');
         $order_reference = Tools::getValue('order_reference');
@@ -53,15 +61,15 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     public function postProcess()
     {
         if (!Module::isEnabled($this->module->name)) {
-            die($this->module->l('This payment method is not available.', 'payment'));
+            die($this->module->l('This payment method is not available.'));
         }
 
         if (!$this->module->active) {
-            die($this->module->l('Paynow module isn\'t active.', 'payment'));
+            die($this->module->l('Paynow module isn\'t active.'));
         }
 
         if ($this->isPaymentRetry()) {
-            $this->retryPayment();
+            $this->processRetryPayment();
         } else {
             $this->cartValidation();
         }
@@ -96,7 +104,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         }
     }
 
-    private function processPayment()
+    private function processNewPayment()
     {
         $cart = $this->context->cart;
         $currency = $this->context->currency;
@@ -120,16 +128,20 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         $this->sendPaymentRequest();
     }
 
+    /**
+     * @throws ConfigurationException
+     */
     private function sendPaymentRequest()
     {
-        try {
-            $payment_client = new Paynow\Service\Payment($this->module->getPaynowClient());
-            $idempotency_key = uniqid($this->order->reference . '_');
-            $external_id = $this->order->reference;
-            $request = $this->preparePaymentRequest($this->order, $external_id);
-            $payment = $payment_client->authorize($request, $idempotency_key);
+        $idempotency_key      = uniqid($this->order->reference . '_');
+        $external_id          = $this->order->reference;
+        $payment_data_builder = new PaymentDataBuilder($this->module);
+        $payment_request_data = $payment_data_builder->fromOrder($this->order);
+        $payment_processor    = new PaymentProcessor($this->module->getPaynowClient());
+        $payment              = $payment_processor->process($payment_request_data, $idempotency_key);
 
-            $this->module->storePaymentState(
+        if (! empty($payment)) {
+            PaynowPaymentData::create(
                 $payment->getPaymentId(),
                 Paynow\Model\Payment\Status::STATUS_NEW,
                 $this->order->id,
@@ -146,8 +158,11 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 ]
             );
 
-            if (!in_array($payment->getStatus(), [Paynow\Model\Payment\Status::STATUS_NEW, Paynow\Model\Payment\Status::STATUS_PENDING])) {
-                Tools::redirect(LinkHelper::getReturnUrl($this->order));
+            if (!in_array($payment->getStatus(), [
+                Paynow\Model\Payment\Status::STATUS_NEW,
+                Paynow\Model\Payment\Status::STATUS_PENDING
+            ])) {
+                Tools::redirect(LinkHelper::getReturnUrl($this->order->reference, Tools::encrypt($this->order->reference)));
             }
 
             if (!$payment->getRedirectUrl()) {
@@ -164,92 +179,13 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             }
 
             Tools::redirect($payment->getRedirectUrl());
-        } catch (Paynow\Exception\PaynowException $exception) {
-            PaynowLogger::error(
-                $exception->getMessage() . ' {orderReference={}}',
-                [
-                    $this->order->reference
-                ]
-            );
-            foreach ($exception->getErrors() as $error) {
-                PaynowLogger::error(
-                    $exception->getMessage() . ' {orderReference={}, error={}, message={}}',
-                    [
-                        $this->order->reference,
-                        $error->getType(),
-                        $error->getMessage()
-                    ]
-                );
-            }
-            $this->displayError($exception->getErrors());
+        } else {
+            $this->displayError();
         }
     }
 
-    private function preparePaymentRequest($order, $external_id): array
+    private function displayError()
     {
-        $currency = Currency::getCurrency($order->id_currency);
-        $customer = new Customer((int)$order->id_customer);
-
-        $request = [
-            'amount' => number_format($order->total_paid * 100, 0, '', ''),
-            'currency' => $currency['iso_code'],
-            'externalId' => $external_id,
-            'description' => $this->module->l('Order No: ', 'payment') . $order->reference,
-            'buyer' => [
-                'firstName' => $customer->firstname,
-                'lastName' => $customer->lastname,
-                'email' => $customer->email,
-                'locale' => $this->context->language->locale ? $this->context->language->locale : $this->context->language->language_code
-            ],
-            'continueUrl' => LinkHelper::getContinueUrl($order, $this->module->id, $customer->secure_key)
-        ];
-
-        if (!empty(Tools::getValue('paymentMethodId'))) {
-            $request['paymentMethodId'] = (int)Tools::getValue('paymentMethodId');
-        }
-
-        if (Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED')) {
-            $request['validityTime'] = Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME');
-        }
-
-        if (!empty(Tools::getValue('blikCode'))) {
-            $request['authorizationCode'] = (int)Tools::getValue('blikCode');
-        }
-
-        if (Configuration::get('PAYNOW_SEND_ORDER_ITEMS')) {
-            $products = $this->context->cart->getProducts(true);
-            $order_items = [];
-            foreach ($products as $product) {
-                $order_items[] = [
-                    'name'     => $product['name'],
-                    'category' => $this->getCategoriesNames($product['id_category_default']),
-                    'quantity' => $product['quantity'],
-                    'price'    => number_format($product['price'] * 100, 0, '', '')
-                ];
-            }
-            if (!empty($order_items)) {
-                $request['orderItems'] = $order_items;
-            }
-        }
-
-        return $request;
-    }
-
-    private function getCategoriesNames($id_category_default)
-    {
-        $categoryDefault = new Category($id_category_default, $this->context->language->id);
-        $categoriesNames = [$categoryDefault->name];
-        foreach ($categoryDefault->getAllParents() as $category) {
-            if ($category->id_parent != 0 && !$category->is_root_category) {
-                array_unshift($categoriesNames, $category->name);
-            }
-        }
-        return implode(", ", $categoriesNames);
-    }
-
-    private function displayError($errors)
-    {
-        var_dump($errors);
         $this->context->smarty->assign([
             'total_to_pay' => Tools::displayPrice($this->order->total_paid, (int)$this->order->id_currency),
             'button_action' => LinkHelper::getPaymentUrl(

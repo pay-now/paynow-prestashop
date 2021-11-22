@@ -1,11 +1,24 @@
 <?php
+/**
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the MIT License (MIT)
+ * that is bundled with this package in the file LICENSE.md.
+ *
+ * @author mElements S.A.
+ * @copyright mElements S.A.
+ * @license   MIT License
+ */
 
-use Paynow\Client;
-use Paynow\Response\PaymentMethods\PaymentMethods;
-
-if (!defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
+
+use Paynow\Client;
+use Paynow\Exception\ConfigurationException;
+use Paynow\Exception\PaynowException;
+use Paynow\Response\PaymentMethods\PaymentMethods;
+use Paynow\Service\Payment;
 
 /**
  * Class PaymentMethodsHelper
@@ -13,16 +26,18 @@ if (!defined('_PS_VERSION_')) {
 class PaymentMethodsHelper
 {
     /**
-     * @var Client
+     * @var Payment
      */
-    private $client;
+    private $payment_client;
 
     /**
      * @param Client $client
+     *
+     * @throws ConfigurationException
      */
     public function __construct(Client $client)
     {
-        $this->client = $client;
+        $this->payment_client = new Paynow\Service\Payment($client);
     }
 
     /**
@@ -31,12 +46,11 @@ class PaymentMethodsHelper
      *
      * @return PaymentMethods|null
      */
-    public function getAvailable($currency_iso_code, $total)
+    public function getAvailable($currency_iso_code, $total): ?PaymentMethods
     {
         try {
-            $payment_methods_client = new Paynow\Service\Payment($this->client);
-            return $payment_methods_client->getPaymentMethods($currency_iso_code, $total);
-        } catch (\Paynow\Exception\PaynowException $exception) {
+            return $this->payment_client->getPaymentMethods($currency_iso_code, $total);
+        } catch (PaynowException $exception) {
             PaynowLogger::error($exception->getMessage());
         }
 

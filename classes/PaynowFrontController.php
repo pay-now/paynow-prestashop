@@ -10,7 +10,7 @@
  * @license   MIT License
  */
 
-if (!defined('_PS_VERSION_')) {
+if ( ! defined('_PS_VERSION_')) {
     exit;
 }
 
@@ -45,9 +45,9 @@ class PaynowFrontController extends ModuleFrontController
     {
         PaynowLogger::info('Retrieving payment status {paymentId={}}', [$paymentId]);
         try {
-            $payment_client = new Paynow\Service\Payment($this->module->getPaynowClient());
-            $status =  $payment_client->status($paymentId)->getStatus();
+            $status = (new Paynow\Service\Payment($this->module->getPaynowClient()))->status($paymentId)->getStatus();
             PaynowLogger::info('Retrieved payment status {paymentId={}, status={}}', [$paymentId, $status]);
+
             return $status;
         } catch (PaynowException $exception) {
             PaynowLogger::error($exception->getMessage() . ' {paymentId={}}', [$paymentId]);
@@ -59,8 +59,7 @@ class PaynowFrontController extends ModuleFrontController
     protected function updateOrderState($paymentId, $payment_status)
     {
         try {
-            $orderStateProcessor = new OrderStateProcessor();
-            $orderStateProcessor->updateState($this->payment, $payment_status, $paymentId);
+            (new OrderStateProcessor())->updateState($this->payment, $payment_status, $paymentId);
         } catch (Exception $e) {
             PaynowLogger::error($e->getMessage() . ' {paymentId={}}', [$paymentId]);
         }

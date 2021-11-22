@@ -12,6 +12,8 @@
 
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
+require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
+require_once(dirname(__FILE__) . '/../../models/PaynowPaymentData.php');
 
 class PaynowReturnModuleFrontController extends PaynowFrontController
 {
@@ -27,7 +29,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             $this->redirectToOrderHistory();
         }
 
-        $this->payment = $this->module->getLastPaymentDataByOrderReference($order_reference);
+        $this->payment = (array)PaynowPaymentData::findLastByOrderReference($order_reference);
 
         if (!$this->payment) {
             $this->redirectToOrderHistory();
@@ -53,7 +55,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             'order_status' => $currentState['name'],
             'order_reference' => $this->order->reference,
             'show_details_button' => $token == Tools::encrypt($order_reference),
-            'show_retry_button' => $this->module->canOrderPaymentBeRetried($this->order->id),
+            'show_retry_button' => $this->module->canOrderPaymentBeRetried($this->order),
             'HOOK_ORDER_CONFIRMATION' => $this->displayOrderConfirmation(),
             'retry_url' => LinkHelper::getPaymentUrl([
                 'id_order'        => $this->order->id,
@@ -66,7 +68,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
 
     private function redirectToReturnPageWithoutPaymentIdAndStatusQuery()
     {
-        Tools::redirectLink(LinkHelper::getContinueUrl($this->order, $this->module->id, $this->order->secure_key));
+        Tools::redirectLink(LinkHelper::getContinueUrl($this->order->id_cart, $this->order->id, $this->module->id, $this->order->secure_key, $this->order->reference));
     }
 
     private function displayOrderConfirmation()

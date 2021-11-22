@@ -17,7 +17,6 @@ class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
 {
     public function initContent()
     {
-        $this->display_column_left = false;
         parent::initContent();
 
         $order_reference = Tools::getValue('order_reference');
@@ -28,7 +27,7 @@ class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
             $this->redirectToOrderHistory();
         }
 
-        $this->payment = $this->module->getLastPaymentDataByOrderReference($order_reference);
+        $this->payment = PaynowPaymentData::findLastByOrderReference($order_reference);
         if (!$this->payment) {
             $this->redirectToOrderHistory();
         }
