@@ -10,7 +10,7 @@
   ],
   "require": {
     "php": ">=7.1",
-    "pay-now/paynow-php-sdk": "dev-feature/add-white-label-support",
+    "pay-now/paynow-php-sdk": "^2.2",
     "nyholm/psr7": "^1.2",
     "php-http/curl-client": "^2.1",
     "knplabs/github-api": "^2.2"

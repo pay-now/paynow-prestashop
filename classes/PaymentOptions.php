@@ -67,9 +67,13 @@ class PaymentOptions
                         } else {
                             if (Paynow\Model\PaymentMethods\Type::BLIK == $payment_method->getType()) {
                                 $this->context->smarty->assign([
-                                    'action_blik' => LinkHelper::getPaymentUrl([
-                                        'paymentMethodId' => $payment_method->getId()
-                                    ]),
+                                    'action_blik' => Context::getContext()->link->getModuleLink(
+                                        'paynow',
+                                        'payment',
+                                        [
+                                            'paymentMethodId' => $payment_method->getId()
+                                        ]
+                                    ),
                                 ]);
                             }
 
