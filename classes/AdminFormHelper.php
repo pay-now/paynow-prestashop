@@ -30,7 +30,7 @@ class AdminFormHelper
         $helper->submit_action = 'submit' . $this->module->name;
         $helper->default_form_language = (new Language((int)Configuration::get('PS_LANG_DEFAULT')))->id;
         $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG', 0);
-        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false, [
+        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false, [], [
                 'configure' => $this->module->name,
                 'tab_module' => $this->module->tab,
                 'module_name' => $this->module->name
@@ -382,7 +382,7 @@ class AdminFormHelper
         return $form;
     }
     
-    private function getConfigFieldsValues()
+    private function getConfigFieldsValues(): array
     {
         return [
             'PAYNOW_REFUNDS_ENABLED' => Configuration::get('PAYNOW_REFUNDS_ENABLED'),
