@@ -23,13 +23,20 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         parent::initContent();
 
         $order_reference = Tools::getValue('order_reference');
+        $id_cart = Tools::getValue('id_cart');
         $token = Tools::getValue('token');
 
-        if (!$order_reference || !$token) {
+        if ((! $order_reference || ! $id_cart) && ! $token) {
             $this->redirectToOrderHistory();
         }
 
-        $this->payment = (array)PaynowPaymentData::findLastByOrderReference($order_reference);
+        if ($order_reference) {
+            $this->payment = (array)PaynowPaymentData::findLastByOrderReference($order_reference);
+        }
+
+        if ($id_cart) {
+            $this->payment = (array)PaynowPaymentData::findLastByCartId($id_cart);
+        }
 
         if (!$this->payment) {
             $this->redirectToOrderHistory();
@@ -44,7 +51,15 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')) {
             $payment_id = Tools::getValue('paymentId');
             $payment_status = $this->getPaymentStatus($payment_id);
-            $this->updateOrderState($payment_id, $payment_status);
+            $this->updateOrderState(
+                $this->payment->id_order,
+                $this->payment->id_payment,
+                $this->payment->id_cart,
+                $this->payment->order_reference,
+                $this->payment->external_id,
+                $this->payment->status,
+                $payment_status
+            );
             $this->redirectToReturnPageWithoutPaymentIdAndStatusQuery();
         }
 
@@ -68,7 +83,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
 
     private function redirectToReturnPageWithoutPaymentIdAndStatusQuery()
     {
-        Tools::redirectLink(LinkHelper::getContinueUrl($this->order->id_cart, $this->order->id, $this->module->id, $this->order->secure_key, $this->order->reference));
+        Tools::redirectLink(LinkHelper::getContinueUrl($this->order->id_cart, $this->module->id, $this->order->secure_key, $this->order->id, $this->order->reference));
     }
 
     private function displayOrderConfirmation()

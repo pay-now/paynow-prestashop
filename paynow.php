@@ -686,7 +686,7 @@ class Paynow extends PaymentModule
         }
 
         $this->displayBackOfficeAccountInformation();
-        $this->renderForm();
+        $this->html .= (new AdminFormHelper($this, $this->context, $this->getTranslationsArray()))->generate();
 
         return $this->html;
     }
@@ -694,11 +694,6 @@ class Paynow extends PaymentModule
     private function displayBackOfficeAccountInformation()
     {
         $this->html .= $this->fetchTemplate('/views/templates/admin/_partials/account.tpl');
-    }
-
-    private function renderForm()
-    {
-        $this->html .= (new AdminFormHelper($this, $this->context, $this->getTranslationsArray()))->generate();
     }
 
     public function fetchTemplate($view)
@@ -722,7 +717,8 @@ class Paynow extends PaymentModule
             'Awaiting payment confirmation'                                                                                                                                                     => $this->l('Awaiting payment confirmation'),
             'Payment has been authorized by the buyer'                                                                                                                                          => $this->l('Payment has been authorized by the buyer'),
             'Payment has not been authorized by the buyer'                                                                                                                                      => $this->l('Payment has not been authorized by the buyer'),
-            'Error occurred during the payment process and the payment could not be completed'                                                                                                  => $this->l('Error occurred during the payment process and the payment could not be completed'),
+            'An error occurred during the payment process and the payment could not be completed'                                                                                               => $this->l('An error occurred during the payment process and the payment could not be completed'),
+            'An error occurred during the payment process'                                                                                                                                      => $this->l('An error occurred during the payment process.'),
             'Payment has been abandoned by the buyer'                                                                                                                                           => $this->l('Payment has been abandoned by the buyer'),
             'Payment has been expired'                                                                                                                                                          => $this->l('Payment has been expired'),
             'Refunds'                                                                                                                                                                           => $this->l('Refunds'),
@@ -743,7 +739,12 @@ class Paynow extends PaymentModule
             'Payment validity time'                                                                                                                                                             => $this->l('Payment validity time'),
             'Determines how long it will be possible to pay for the order from the moment the payment link is generated. The value expressed in seconds. Must be between 60 and 86400 seconds.' => $this->l('Determines how long it will be possible to pay for the order from the moment the payment link is generated. Value expressed in seconds. The value must be between 60 and 86400 seconds.'),
             'Order No: '                                                                                                                                                                        => $this->l('Order No: '),
-            'Order to cart: '                                                                                                                                                                   => $this->l('Order to cart: ')
+            'Order to cart: '                                                                                                                                                                   => $this->l('Order to cart: '),
+            'Confirm the payment using the app on your phone.'                                                                                                                                  => $this->l('Confirm the payment using the app on your phone.'),
+            'Wrong BLIK code'                                                                                                                                                                   => $this->l('Wrong BLIK code'),
+            'BLIK code has expired'                                                                                                                                                             => $this->l('BLIK code has expired'),
+            'BLIK code already used'                                                                                                                                                            => $this->l('BLIK code already used'),
+            'You have to accept terms and conditions'                                                                                                                                           => $this->l('You have to accept terms and conditions')
         ];
     }
 }

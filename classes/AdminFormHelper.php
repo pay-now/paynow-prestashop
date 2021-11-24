@@ -154,7 +154,7 @@ class AdminFormHelper
                     ],
                     [
                         'type' => 'select',
-                        'label' => $this->translations['Error occurred during the payment process and the payment could not be completed'],
+                        'label' => $this->translations['An error occurred during the payment process and the payment could not be completed'],
                         'name' => 'PAYNOW_ORDER_ERROR_STATE',
                         'options' => [
                             'query' => $order_states,

@@ -26,11 +26,18 @@ class OrderStateProcessor
         $this->module = Module::getInstanceByName(Tools::getValue('module'));
     }
 
-    public function updateState($payment, $new_status, $id_payment, $modifiedAt = null)
-    {
-        $order = new Order($payment['id_order']);
+    public function updateState(
+        $id_order,
+        $id_payment,
+        $id_cart,
+        $order_reference,
+        $external_id,
+        $old_status,
+        $new_status
+    ) {
+        $order = new Order($id_order);
         if ($order && $order->module == $this->module->name) {
-            $payment_status = $payment['status'];
+            $payment_status = $old_status;
 
             if (!$this->isCorrectStatus($payment_status, $new_status)) {
                 throw new Exception(
@@ -47,7 +54,7 @@ class OrderStateProcessor
                     break;
                 case Paynow\Model\Payment\Status::STATUS_CONFIRMED:
                     $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'));
-                    $this->addPaymentIdToOrderPayments($order, $payment['id_payment']);
+                    $this->addPaymentIdToOrderPayments($order, $id_payment);
                     break;
                 case Paynow\Model\Payment\Status::STATUS_ERROR:
                     $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'));
@@ -65,22 +72,22 @@ class OrderStateProcessor
                     PaynowPaymentData::create(
                         $id_payment,
                         $new_status,
-                        $payment['id_order'],
-                        $payment['id_cart'],
-                        $payment['order_reference'],
-                        $payment['external_id']
+                        $id_order,
+                        $id_cart,
+                        $order_reference,
+                        $external_id
                     );
                 } else {
                     PaynowPaymentData::updateStatus($id_payment, $new_status);
                 }
             } catch (PrestaShopDatabaseException $exception) {
-                PaynowLogger::error($exception->getMessage() . ' {orderReference={}}', [$payment['order_reference']]);
+                PaynowLogger::error($exception->getMessage() . ' {orderReference={}}', [$order_reference]);
             }
 
             PaynowLogger::info(
                 'Changed order status {orderReference={}, paymentId={}, status={}}',
                 [
-                    $payment['order_reference'],
+                    $order_reference,
                     $id_payment,
                     $new_status
                 ]

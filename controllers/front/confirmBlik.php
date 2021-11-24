@@ -12,6 +12,7 @@
 
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
+include_once(dirname(__FILE__) . '/../../models/PaynowPaymentData.php');
 
 class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
 {
@@ -32,17 +33,22 @@ class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
             $this->redirectToOrderHistory();
         }
 
-        $this->order = new Order($this->payment['id_order']);
+        $this->order = new Order($this->payment->id_order);
 
         if (!Validate::isLoadedObject($this->order)) {
             $this->redirectToOrderHistory();
         }
 
-        if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')) {
-            $paymentId = Tools::getValue('paymentId');
-            $payment_status = $this->getPaymentStatus($paymentId);
-            $this->updateOrderState($paymentId, $payment_status);
-        }
+        $payment_status = $this->getPaymentStatus($this->payment->id_payment);
+        $this->updateOrderState(
+            $this->payment->id_order,
+            $this->payment->id_payment,
+            $this->payment->id_cart,
+            $this->payment->order_reference,
+            $this->payment->external_id,
+            $this->payment->status,
+            $payment_status
+        );
 
         $current_state = $this->order->getCurrentStateFull($this->context->language->id);
 

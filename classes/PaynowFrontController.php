@@ -10,7 +10,7 @@
  * @license   MIT License
  */
 
-if ( ! defined('_PS_VERSION_')) {
+if (! defined('_PS_VERSION_')) {
     exit;
 }
 
@@ -56,12 +56,27 @@ class PaynowFrontController extends ModuleFrontController
         return false;
     }
 
-    protected function updateOrderState($paymentId, $payment_status)
-    {
+    protected function updateOrderState(
+        $id_order,
+        $id_payment,
+        $id_cart,
+        $order_reference,
+        $external_id,
+        $old_status,
+        $new_status
+    ) {
         try {
-            (new OrderStateProcessor())->updateState($this->payment, $payment_status, $paymentId);
+            (new OrderStateProcessor())->updateState(
+                $id_order,
+                $id_payment,
+                $id_cart,
+                $order_reference,
+                $external_id,
+                $old_status,
+                $new_status
+            );
         } catch (Exception $e) {
-            PaynowLogger::error($e->getMessage() . ' {paymentId={}}', [$paymentId]);
+            PaynowLogger::error($e->getMessage() . ' {paymentId={}}', [$id_payment]);
         }
     }
 }

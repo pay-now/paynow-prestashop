@@ -18,12 +18,21 @@ class PaymentDataBuilder
 {
     private $context;
 
+    /**
+     * @var Paynow
+     */
     private $module;
+
+    /**
+     * @var array
+     */
+    private $translations;
 
     public function __construct($module)
     {
         $this->context = Context::getContext();
         $this->module = $module;
+        $this->translations = $this->module->getTranslationsArray();
     }
 
     /**
@@ -39,7 +48,9 @@ class PaymentDataBuilder
             $this->context->cart->id_customer,
             $this->context->cart->getOrderTotal(),
             $this->context->cart->id,
-            $this->module->getTranslationsArray['Order to cart: '] . $this->context->cart->id
+            $this->translations['Order to cart: '] . $this->context->cart->id,
+            null,
+            uniqid($this->context->cart->id . '_')
         );
     }
 
@@ -56,8 +67,10 @@ class PaymentDataBuilder
             $order->id_currency,
             $order->id_customer,
             $order->total_paid,
-            $order->reference,
-            $this->module->getTranslationsArray['Order No: '] . $order->reference
+            $order->id_cart,
+            $this->translations['Order No: '] . $order->reference,
+            $order->id,
+            $order->reference
         );
     }
 
@@ -72,8 +85,15 @@ class PaymentDataBuilder
      *
      * @return array
      */
-    private function build($id_currency, $id_customer, $total_to_paid, $external_id, $description): array
-    {
+    private function build(
+        $id_currency,
+        $id_customer,
+        $total_to_paid,
+        $id_cart,
+        $description,
+        $id_order = null,
+        $external_id = null
+    ): array {
         $currency = Currency::getCurrency($id_currency);
         $customer = new Customer((int)$id_customer);
 
@@ -88,7 +108,13 @@ class PaymentDataBuilder
                 'email'     => $customer->email,
                 'locale'    => $this->context->language->locale ?? $this->context->language->language_code
             ],
-            'continueUrl' => LinkHelper::getContinueUrl($external_id, $external_id, $this->module->id, $customer->secure_key, $external_id)
+            'continueUrl' => LinkHelper::getContinueUrl(
+                $id_cart,
+                $this->module->id,
+                $customer->secure_key,
+                $id_order,
+                $external_id
+            )
         ];
 
         if (! empty(Tools::getValue('paymentMethodId'))) {
@@ -100,7 +126,7 @@ class PaymentDataBuilder
         }
 
         if (! empty(Tools::getValue('blikCode'))) {
-            $request['authorizationCode'] = (int)Tools::getValue('blikCode');
+            $request['authorizationCode'] = (int)preg_replace('/\s+/', '', Tools::getValue('blikCode'));
         }
 
         if (Configuration::get('PAYNOW_SEND_ORDER_ITEMS')) {

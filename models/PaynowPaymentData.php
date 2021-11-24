@@ -1,9 +1,5 @@
 <?php
 
-if (! defined('_PS_VERSION_')) {
-    exit;
-}
-
 class PaynowPaymentData extends ObjectModel
 {
     const TABLE = 'paynow_payments';
@@ -53,7 +49,6 @@ class PaynowPaymentData extends ObjectModel
         $external_id
     ) {
         $now      = (new DateTime())->format('Y-m-d H:i:s');
-
         $model                  = new PaynowPaymentData();
         $model->id_order        = $id_order;
         $model->id_cart         = $id_cart;
@@ -110,6 +105,22 @@ class PaynowPaymentData extends ObjectModel
 
         return $queryBuilder
             ->where('order_reference', '=', $order_reference)
+            ->orderBy('created_at', 'desc')
+            ->getFirst();
+    }
+
+    /**
+     * @param $id_cart
+     *
+     * @return false|ObjectModel
+     * @throws PrestaShopException
+     */
+    public static function findLastByCartId($id_cart)
+    {
+        $queryBuilder = new PrestaShopCollection(self::class);
+
+        return $queryBuilder
+            ->where('id_cart', '=', $id_cart)
             ->orderBy('created_at', 'desc')
             ->getFirst();
     }

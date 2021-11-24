@@ -16,23 +16,29 @@ if (!defined('_PS_VERSION_')) {
 
 class LinkHelper
 {
-    public static function getContinueUrl($id_cart, $id_order, $id_module, $secure_key, $order_reference = null)
+    public static function getContinueUrl($id_cart, $id_module, $secure_key,  $id_order = null,  $order_reference = null)
     {
         if (Configuration::get('PAYNOW_USE_CLASSIC_RETURN_URL')) {
+            $params =                 [
+                'id_cart'   => $id_cart,
+                'id_module' => $id_module,
+                'key'       => $secure_key
+            ];
+
+            if ($id_order) {
+                $params['id_order'] = $id_order;
+            }
+
+            if ($order_reference) {
+                $params['order_reference'] = $id_order;
+            }
+
             return Context::getContext()->link->getPageLink(
-                'order-confirmation',
-                null,
-                null,
-                [
-                    'id_cart'   => $id_cart,
-                    'id_module' => $id_module,
-                    'id_order'  => $id_order,
-                    'key'       => $secure_key
-                ]
+                'order-confirmation'
             );
         }
 
-        return LinkHelper::getReturnUrl($order_reference, Tools::encrypt($order_reference));
+        return LinkHelper::getReturnUrl($id_cart, Tools::encrypt($order_reference), $order_reference);
     }
 
     public static function getPaymentUrl($url_params = null)
@@ -49,15 +55,24 @@ class LinkHelper
         return Context::getContext()->link->getModuleLink('paynow', 'notifications');
     }
 
-    public static function getReturnUrl($order_reference, $token)
+    public static function getReturnUrl($id_cart, $token, $order_reference = null)
     {
+        $params = [
+            'token' => $token
+        ];
+
+        if ($order_reference) {
+            $params['order_reference'] = $order_reference;
+        }
+
+        if ($id_cart) {
+            $params['id_cart'] = $id_cart;
+        }
+
         return Context::getContext()->link->getModuleLink(
             'paynow',
             'return',
-            [
-                'order_reference' => $order_reference,
-                'token'           => $token
-            ]
+            $params
         );
     }
 
@@ -84,5 +99,10 @@ class LinkHelper
                 'id_order' => $order->id
             ]
         );
+    }
+
+    public static function getBlikConfirmUrl($url_params): string
+    {
+        return Context::getContext()->link->getModuleLink('paynow', 'confirmBlik', $url_params);
     }
 }

@@ -45,27 +45,6 @@ class PaymentProcessor
      */
     public function process($payment_request_data, $idempotency_key): ?Authorize
     {
-        try {
-            return $this->payment_client->authorize($payment_request_data, $idempotency_key);
-        } catch (PaynowException $exception) {
-            PaynowLogger::error(
-                $exception->getMessage() . ' {orderReference={}}',
-                [
-                    $payment_request_data['externalId']
-                ]
-            );
-            foreach ($exception->getErrors() as $error) {
-                PaynowLogger::error(
-                    $exception->getMessage() . ' {orderReference={}, error={}, message={}}',
-                    [
-                        $payment_request_data['externalId'],
-                        $error->getType(),
-                        $error->getMessage()
-                    ]
-                );
-            }
-        }
-
-        return null;
+        return $this->payment_client->authorize($payment_request_data, $idempotency_key);
     }
 }

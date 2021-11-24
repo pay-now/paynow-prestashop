@@ -69,11 +69,14 @@ class PaymentOptions
                                 $this->context->smarty->assign([
                                     'action_blik' => Context::getContext()->link->getModuleLink(
                                         'paynow',
-                                        'payment',
+                                        'chargeBlik',
                                         [
                                             'paymentMethodId' => $payment_method->getId()
                                         ]
                                     ),
+                                    'action_token' => $this->context->customer->secure_key,
+                                    'error_message' => $this->module->getTranslationsArray()['An error occurred during the payment process'],
+                                    'terms_message' => $this->module->getTranslationsArray()['You have to accept terms and conditions']
                                 ]);
                             }
 

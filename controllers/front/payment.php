@@ -10,15 +10,16 @@
  * @license   MIT License
  */
 
-use Paynow\Exception\ConfigurationException;
-
 if (! defined('_PS_VERSION_')) {
     exit;
 }
 
+use Paynow\Exception\ConfigurationException;
+
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 require_once(dirname(__FILE__) . '/../../classes/PaymentProcessor.php');
 require_once(dirname(__FILE__) . '/../../classes/PaymentDataBuilder.php');
+include_once(dirname(__FILE__) . '/../../models/PaynowPaymentData.php');
 
 class PaynowPaymentModuleFrontController extends PaynowFrontController
 {
@@ -108,7 +109,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     {
         $cart = $this->context->cart;
         $currency = $this->context->currency;
-        $total = (float)$cart->getOrderTotal(true, Cart::BOTH);
+        $total = (float)$cart->getOrderTotal();
 
         $this->cartValidation();
         $customer = new Customer($cart->id_customer);
@@ -134,11 +135,9 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     private function sendPaymentRequest()
     {
         $idempotency_key      = uniqid($this->order->reference . '_');
-        $external_id          = $this->order->reference;
-        $payment_data_builder = new PaymentDataBuilder($this->module);
-        $payment_request_data = $payment_data_builder->fromOrder($this->order);
-        $payment_processor    = new PaymentProcessor($this->module->getPaynowClient());
-        $payment              = $payment_processor->process($payment_request_data, $idempotency_key);
+        $payment_request_data = (new PaymentDataBuilder($this->module))->fromOrder($this->order);
+        $payment              = (new PaymentProcessor($this->module->getPaynowClient()))
+            ->process($payment_request_data, $idempotency_key);
 
         if (! empty($payment)) {
             PaynowPaymentData::create(
@@ -147,7 +146,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 $this->order->id,
                 $this->order->id_cart,
                 $this->order->reference,
-                $external_id
+                $this->order->reference
             );
             PaynowLogger::info(
                 'Payment has been successfully created {orderReference={}, paymentId={}, status={}}',
@@ -162,20 +161,21 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 Paynow\Model\Payment\Status::STATUS_NEW,
                 Paynow\Model\Payment\Status::STATUS_PENDING
             ])) {
-                Tools::redirect(LinkHelper::getReturnUrl($this->order->reference, Tools::encrypt($this->order->reference)));
+                Tools::redirect(LinkHelper::getReturnUrl(
+                    $this->order->id_cart,
+                    Tools::encrypt($this->order->reference),
+                    $this->order->reference
+                ));
             }
 
             if (!$payment->getRedirectUrl()) {
-                $redirect_data = [
-                    'order_reference' => $external_id,
-                    'paymentId' => $payment->getPaymentId(),
-                    'paymentStatus' => $payment->getStatus(),
-                    'token' => Tools::encrypt($external_id)
-                ];
-                if (!empty(Tools::getValue('blikCode'))) {
-                    Tools::redirect($this->context->link->getModuleLink('paynow', 'confirmBlik', $redirect_data));
-                }
-                Tools::redirect(LinkHelper::getContinueUrl($this->order, $this->module->id, $this->order->secure_key, $redirect_data));
+                Tools::redirect(LinkHelper::getContinueUrl(
+                    $this->order->id_cart,
+                    $this->module->id,
+                    $this->order->secure_key,
+                    $this->order->id,
+                    $this->order->reference
+                ));
             }
 
             Tools::redirect($payment->getRedirectUrl());

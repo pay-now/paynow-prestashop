@@ -6,6 +6,7 @@
             </label>
             <div class="col-md-3">
                 <input autocomplete="off" inputmode="numeric" pattern="[0-9]*" minlength="6" maxlength="6" size="6" id="paynow_blik_code" name="blikCode" type="text" placeholder="___ ___" value="" class="required form-control">
+                <span class="error"></span>
             </div>
             <div class="col-md-2" id="payment-confirmation">
                 <button type="submit" class="btn btn-primary" disabled>
