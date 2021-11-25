@@ -16,7 +16,6 @@ if (! defined('_PS_VERSION_')) {
 
 use Paynow\Client;
 use Paynow\Exception\ConfigurationException;
-use Paynow\Exception\PaynowException;
 use Paynow\Response\Payment\Authorize;
 use Paynow\Service\Payment;
 

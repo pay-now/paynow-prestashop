@@ -16,7 +16,7 @@ if (! defined('_PS_VERSION_')) {
 
 use Paynow\Exception\PaynowException;
 
-class PaynowFrontController extends ModuleFrontController
+class PaynowFrontController extends ModuleFrontControllerCore
 {
     protected $order;
 
@@ -77,6 +77,16 @@ class PaynowFrontController extends ModuleFrontController
             );
         } catch (Exception $e) {
             PaynowLogger::error($e->getMessage() . ' {paymentId={}}', [$id_payment]);
+        }
+    }
+
+    protected function ajaxRender($value = null, $controller = null, $method = null)
+    {
+        header('Content-Type: application/json');
+        if (version_compare(_PS_VERSION_, '1.7', 'gt')) {
+            parent::ajaxRender($value, $controller, $method);
+        } else {
+            echo $value;
         }
     }
 }

@@ -14,12 +14,12 @@ if (! defined('_PS_VERSION_')) {
     exit;
 }
 
-use Paynow\Exception\ConfigurationException;
-
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 require_once(dirname(__FILE__) . '/../../classes/PaymentProcessor.php');
 require_once(dirname(__FILE__) . '/../../classes/PaymentDataBuilder.php');
-include_once(dirname(__FILE__) . '/../../models/PaynowPaymentData.php');
+require_once(dirname(__FILE__) . '/../../models/PaynowPaymentData.php');
+
+use Paynow\Exception\ConfigurationException;
 
 class PaynowPaymentModuleFrontController extends PaynowFrontController
 {

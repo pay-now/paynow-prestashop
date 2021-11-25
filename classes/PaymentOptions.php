@@ -1,13 +1,23 @@
 <?php
+/**
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the MIT License (MIT)
+ * that is bundled with this package in the file LICENSE.md.
+ *
+ * @author mElements S.A.
+ * @copyright mElements S.A.
+ * @license   MIT License
+ */
+
+if (! defined('_PS_VERSION_')) {
+    exit;
+}
 
 use Paynow\Model\PaymentMethods\PaymentMethod;
 use Paynow\Response\DataProcessing\Notices;
 use Paynow\Response\PaymentMethods\PaymentMethods;
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
-
-if (! defined('_PS_VERSION_')) {
-    exit;
-}
 
 class PaymentOptions
 {
@@ -86,7 +96,7 @@ class PaymentOptions
                                 LinkHelper::getPaymentUrl([
                                     'paymentMethodId' => $payment_method->getId()
                                 ]),
-                                $this->isWhiteLabelEnabled($payment_method->getType(), $payment_method) ? 'module:paynow/views/templates/front/1.7/blik_payment_form.tpl' : null
+                                $this->isWhiteLabelEnabled($payment_method->getType(), $payment_method) ? 'module:paynow/views/templates/front/1.7/payment_method_blik_form.tpl' : null
                             ));
                         }
                         $list[$payment_method->getType()] = $payment_method->getId();

@@ -79,7 +79,7 @@ p.payment_module .paynow img {
     width: 100%;
     padding: 10px;
     min-height: 80px;
-    margin: 5px;
+    margin: 5px 0;
 }
 
 .paynow-payment-option-pbl button:enabled:hover {
@@ -170,21 +170,34 @@ p.payment_module.paynow button:after {
 .paynow-payment-option-blik input[type=text] + span {
     text-align: center;
     color: darkred;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     display: block;
+}
+
+.paynow-payment-form .paynow-payment-option-blik input[type=text] + span {
+    font-size: 0.8rem;
 }
 
 .paynow-data-processing-info {
     color: #797979;
     text-align: justify;
+    clear: both;
 }
 
-.payment-form .paynow-data-processing-info {
+.paynow-data-processing-info .paynow-data-processing-info-less span {
+    cursor: pointer;
+}
+
+.paynow-payment-form .paynow-data-processing-info {
     font-size: 0.7rem;
 }
 
 .paynow-data-processing-info ul {
     list-style-type: lower-alpha;
+    margin: 0 1.5rem;
+}
+
+.paynow-payment-form .paynow-data-processing-info ul {
     margin: 0 1rem;
 }
 
@@ -203,6 +216,10 @@ p.payment_module.paynow button:after {
     font-size: 1.3125rem;
     color: #232323;
     font-weight: 400;
+}
+
+.paynow-return img {
+    float: right;
 }
 
 @media (max-width: 768px) {

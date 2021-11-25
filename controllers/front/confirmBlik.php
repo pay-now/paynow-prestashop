@@ -7,8 +7,13 @@
  *
  * @author mElements S.A.
  * @copyright mElements S.A.
- * @license MIT License
+ * @license   MIT License
  */
+
+if (! defined('_PS_VERSION_')) {
+    exit;
+}
+
 
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
@@ -21,10 +26,9 @@ class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
         parent::initContent();
 
         $order_reference = Tools::getValue('order_reference');
-        //TODO: validate token
         $token = Tools::getValue('token');
 
-        if (!$order_reference) {
+        if (!$order_reference || $token != $this->context->customer->secure_key) {
             $this->redirectToOrderHistory();
         }
 

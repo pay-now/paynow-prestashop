@@ -7,13 +7,19 @@
  *
  * @author mElements S.A.
  * @copyright mElements S.A.
- * @license MIT License
+ * @license   MIT License
  */
+
+if (! defined('_PS_VERSION_')) {
+    exit;
+}
 
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
 require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
 require_once(dirname(__FILE__) . '/../../models/PaynowPaymentData.php');
+
+use Paynow\Model\Payment\Status;
 
 class PaynowReturnModuleFrontController extends PaynowFrontController
 {
@@ -48,19 +54,26 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             $this->redirectToOrderHistory();
         }
 
-        if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')) {
+        if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')
+            && Status::STATUS_CONFIRMED !== $this->payment['status']) {
             $payment_id = Tools::getValue('paymentId');
             $payment_status = $this->getPaymentStatus($payment_id);
             $this->updateOrderState(
-                $this->payment->id_order,
-                $this->payment->id_payment,
-                $this->payment->id_cart,
-                $this->payment->order_reference,
-                $this->payment->external_id,
-                $this->payment->status,
+                $this->payment['id_order'],
+                $this->payment['id_payment'],
+                $this->payment['id_cart'],
+                $this->payment['order_reference'],
+                $this->payment['external_id'],
+                $this->payment['status'],
                 $payment_status
             );
-            $this->redirectToReturnPageWithoutPaymentIdAndStatusQuery();
+            Tools::redirectLink(LinkHelper::getContinueUrl(
+                $this->order->id_cart,
+                $this->module->id,
+                $this->order->secure_key,
+                $this->order->id,
+                $this->order->reference
+            ));
         }
 
         $currentState = $this->order->getCurrentStateFull($this->context->language->id);
@@ -79,11 +92,6 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         ]);
 
         $this->renderTemplate('return.tpl');
-    }
-
-    private function redirectToReturnPageWithoutPaymentIdAndStatusQuery()
-    {
-        Tools::redirectLink(LinkHelper::getContinueUrl($this->order->id_cart, $this->module->id, $this->order->secure_key, $this->order->id, $this->order->reference));
     }
 
     private function displayOrderConfirmation()

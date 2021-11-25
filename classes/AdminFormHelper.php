@@ -1,4 +1,18 @@
 <?php
+/**
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the MIT License (MIT)
+ * that is bundled with this package in the file LICENSE.md.
+ *
+ * @author mElements S.A.
+ * @copyright mElements S.A.
+ * @license   MIT License
+ */
+
+if (! defined('_PS_VERSION_')) {
+    exit;
+}
 
 class AdminFormHelper
 {
@@ -30,9 +44,9 @@ class AdminFormHelper
         $helper->submit_action = 'submit' . $this->module->name;
         $helper->default_form_language = (new Language((int)Configuration::get('PS_LANG_DEFAULT')))->id;
         $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG', 0);
-        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false, [], [
-                'configure' => $this->module->name,
-                'tab_module' => $this->module->tab,
+        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&' . http_build_query([
+                'configure'   => $this->module->name,
+                'tab_module'  => $this->module->tab,
                 'module_name' => $this->module->name
             ]);
         $helper->token = Tools::getAdminTokenLite('AdminModules');

@@ -13,9 +13,9 @@
         <p>{l s='Choose bank:' mod='paynow'}</p>
         <div class="row paynow-payment-pbls">
             {foreach from=$paynowPbls item=method}
-                {include file="module:paynow/views/templates/front/1.7/_partials/payment_option_pbl.tpl"}
+                {include file="module:paynow/views/templates/front/1.7/_partials/payment_method_pbl.tpl"}
             {/foreach}
         </div>
-        {include file="module:paynow/views/templates/front/1.7/_partials/data_processing_info.tpl"}
+        {include file="module:paynow/views/templates/front/1.7/_partials/payment_data_processing_info.tpl"}
     </form>
 {/if}

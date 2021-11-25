@@ -15,7 +15,7 @@
                 {l s='Enter the BLIK code' mod='paynow'}
             </label>
             <div class="col-md-4">
-                <input autocomplete="off" inputmode="numeric" pattern="[0-9]*" minlength="6" maxlength="6" size="6" id="paynow_blik_code" name="blikCode" type="text" value="" class="required form-control">
+                <input autocomplete="off" inputmode="numeric" pattern="[0-9]{'{3}'|escape:'htmlall':'UTF-8'} [0-9]{'{3}'|escape:'htmlall':'UTF-8'}" minlength="6" maxlength="6" size="6" id="paynow_blik_code" name="blikCode" type="text" value="" class="required form-control">
                 <span class="error"></span>
             </div>
             <div class="col-md-3">
@@ -24,6 +24,6 @@
                 </button>
             </div>
         </div>
-        {include file="module:paynow/views/templates/front/1.7/_partials/data_processing_info.tpl"}
+        {include file="module:paynow/views/templates/front/1.7/_partials/payment_data_processing_info.tpl"}
     </div>
 </form>

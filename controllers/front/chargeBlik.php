@@ -7,15 +7,19 @@
  *
  * @author mElements S.A.
  * @copyright mElements S.A.
- * @license MIT License
+ * @license   MIT License
  */
 
-use Paynow\Exception\PaynowException;
+if (! defined('_PS_VERSION_')) {
+    exit;
+}
 
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 require_once(dirname(__FILE__) . '/../../classes/PaymentProcessor.php');
 require_once(dirname(__FILE__) . '/../../classes/PaymentDataBuilder.php');
 include_once(dirname(__FILE__) . '/../../models/PaynowPaymentData.php');
+
+use Paynow\Exception\PaynowException;
 
 class PaynowChargeBlikModuleFrontController extends PaynowFrontController
 {
@@ -81,7 +85,7 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                     PaynowLogger::info(
                         'Payment has been successfully created {orderReference={}, paymentId={}, status={}}',
                         [
-                            $this->order->reference,
+                            $order->reference,
                             $payment->getPaymentId(),
                             $payment->getStatus()
                         ]

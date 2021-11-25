@@ -36,12 +36,10 @@ class OrderStateProcessor
         $new_status
     ) {
         $order = new Order($id_order);
-        if ($order && $order->module == $this->module->name) {
-            $payment_status = $old_status;
-
-            if (!$this->isCorrectStatus($payment_status, $new_status)) {
+        if ($order && $order->module == $this->module->name && $old_status !== $new_status) {
+            if (!$this->isCorrectStatus($old_status, $new_status)) {
                 throw new Exception(
-                    'Status transition is incorrect ' . $payment_status . ' - ' . $new_status
+                    'Status transition is incorrect ' . $old_status . ' - ' . $new_status
                 );
             }
 

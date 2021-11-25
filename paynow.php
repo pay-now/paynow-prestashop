@@ -34,7 +34,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.4.2';
+        $this->version = '1.5.0';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -376,6 +376,20 @@ class Paynow extends PaymentModule
                                 'pbls' => $payment_methods->getOnlyPbls()
                             ]);
                         } else {
+                            if (Paynow\Model\PaymentMethods\Type::BLIK == $payment_method->getType()) {
+                                $this->context->smarty->assign([
+                                    'action_blik' => Context::getContext()->link->getModuleLink(
+                                        'paynow',
+                                        'chargeBlik',
+                                        [
+                                            'paymentMethodId' => $payment_method->getId()
+                                        ]
+                                    ),
+                                    'action_token' => $this->context->customer->secure_key,
+                                    'error_message' => $this->getTranslationsArray()['An error occurred during the payment process'],
+                                    'terms_message' => $this->getTranslationsArray()['You have to accept terms and conditions']
+                                ]);
+                            }
                             array_push($payment_options, [
                                 'name' => $this->getPaymentMethodTitle($payment_method->getType()),
                                 'image' => $payment_method->getImage(),
@@ -550,6 +564,7 @@ class Paynow extends PaymentModule
 
     private function postProcess()
     {
+        //TODO: add ConfigurationProcessor
         Configuration::updateValue(
             'PAYNOW_DEBUG_LOGS_ENABLED',
             Tools::getValue('PAYNOW_DEBUG_LOGS_ENABLED')

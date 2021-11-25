@@ -31,7 +31,6 @@ $(function () {
     $('input[name="payment-option"]').on("change", function () {
         setTimeout(function () {
             enableBlikSupport();
-            enableBlikFormSupport();
             enablePblSupport();
         }, 200);
     });
@@ -44,7 +43,7 @@ function enableBlikFormSupport()
         let $form = $('.paynow-blik-form');
         $('.paynow-blik-form button').on('click', function (e) {
             e.preventDefault();
-            let $regulations = $('#conditions_to_approve\\[terms-and-conditions\\]'),
+            let $regulations = $('#conditions_to_approve\\[terms-and-conditions\\], #cgv'),
                 $error_span = $('#paynow_blik_code').next('span'),
                 $blik_pay_button = $($form).find('button');
             if ($regulations.is(':checked')) {
@@ -56,13 +55,12 @@ function enableBlikFormSupport()
                         'token': $form.data('token')
                     },
                 }).success(function (response) {
-                    $error_span.text('')
-                    let json = JSON.parse(response);
-                    if (json.success === true) {
-                        window.location.href = json.redirect_url;
+                    $error_span.text('');
+                    if (response.success === true) {
+                        window.location.href = response.redirect_url;
                     } else {
                         $blik_pay_button.prop('disabled', false);
-                        $error_span.text(json.message);
+                        $error_span.text(response.message);
                     }
                 }).error(function () {
                     $error_span.text($form.data('error-message'))
@@ -76,14 +74,14 @@ function enableBlikFormSupport()
 
 function enableBlikSupport()
 {
+    enableBlikFormSupport();
     let $blik_code_input = $('#paynow_blik_code'), $payment_button = $('#payment-confirmation button')
     $blik_code_input.mask('000 000', {placeholder: "___ ___"});
     if ($blik_code_input.is(':visible')) {
-        let $regulation = $('#conditions_to_approve\\[terms-and-conditions\\]');
+        let $regulation = $('#conditions_to_approve\\[terms-and-conditions\\], #cgv');
         if ($regulation.length) {
             $regulation.prop('checked', true)
         }
-        // $payment_button.remove();
         $payment_button.prop('disabled', true).hide();
         validateBlikCode($blik_code_input.val())
     } else {

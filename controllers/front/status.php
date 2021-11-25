@@ -10,9 +10,15 @@
  * @license   MIT License
  */
 
+if (! defined('_PS_VERSION_')) {
+    exit;
+}
+
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
 include_once(dirname(__FILE__) . '/../../models/PaynowPaymentData.php');
+
+use Paynow\Model\Payment\Status;
 
 class PaynowStatusModuleFrontController extends PaynowFrontController
 {
@@ -25,28 +31,28 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
     public function displayAjax()
     {
         if (Tools::getValue('order_reference') && Tools::getValue('token') == Tools::encrypt(Tools::getValue('order_reference'))) {
-            $this->payment  = PaynowPaymentData::findLastByOrderReference(Tools::getValue('order_reference'));
-            $payment_status = $this->payment->status;
-            if ($this->payment->status != 'CONFIRMED') {
-                $payment_status = $this->getPaymentStatus($this->payment->id_payment);
+            $payment  = PaynowPaymentData::findLastByOrderReference(Tools::getValue('order_reference'));
+            $payment_status = $payment->status;
+            if (Status::STATUS_CONFIRMED !== $payment->status) {
+                $payment_status = $this->getPaymentStatus($payment->id_payment);
                 $this->updateOrderState(
-                    $this->payment->id_order,
-                    $this->payment->id_payment,
-                    $this->payment->id_cart,
-                    $this->payment->order_reference,
-                    $this->payment->external_id,
-                    $this->payment->status,
+                    $payment->id_order,
+                    $payment->id_payment,
+                    $payment->id_cart,
+                    $payment->order_reference,
+                    $payment->external_id,
+                    $payment->status,
                     $payment_status
                 );
             }
-            $this->order   = new Order($this->payment->id_order);
+            $this->order   = new Order($payment->id_order);
             $current_state = $this->order->getCurrentStateFull($this->context->language->id);
 
-            header('Content-Type: application/json');
-            echo json_encode([
+            $this->ajaxRender(json_encode([
                 'order_status'   => $current_state['name'],
                 'payment_status' => $payment_status
-            ]);
+            ]));
+            exit;
         }
     }
 }

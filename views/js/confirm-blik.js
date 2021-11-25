@@ -10,7 +10,6 @@
  **/
 (function () {
     let status = $('.paynow-confirm-blik .status'),
-
         redirectToReturn = function () {
             window.location.replace('return' + window.location.search)
         },
@@ -24,9 +23,9 @@
                 url: 'status' + window.location.search,
                 dataType: 'json',
                 type: 'get',
-                success: function (data) {
-                    status.text(data.order_status);
-                    if (data.payment_status === "CONFIRMED") {
+                success: function (message) {
+                    status.text(message.order_status);
+                    if (message.payment_status === "CONFIRMED") {
                         clearInterval(pollPaymentStatus);
                         redirectToReturn();
                     }
