@@ -318,22 +318,31 @@ class Paynow extends PaymentModule
      */
     private function getPaymentMethods(): ?\Paynow\Response\PaymentMethods\PaymentMethods
     {
-        $total = number_format($this->context->cart->getOrderTotal(true, Cart::BOTH) * 100, 0, '', '');
+        $total = number_format($this->context->cart->getOrderTotal() * 100, 0, '', '');
         $currency = new Currency($this->context->cart->id_currency);
-        $payment_methods_helper = new PaymentMethodsHelper($this->getPaynowClient());
-        return $payment_methods_helper->getAvailable($currency->iso_code, $total);
+        return (new PaymentMethodsHelper($this->getPaynowClient()))->getAvailable($currency->iso_code, $total);
     }
 
-    private function getGDPRNotices()
+    private function getGDPRNotices(): array
     {
         $locale  = $this->context->language->locale ?? $this->context->language->language_code;
-        $gdpr_helper  = new GDPRHelper($this->getPaynowClient());
-        return $gdpr_helper->getNotices($locale);
+        return (new GDPRHelper($this->getPaynowClient()))->getNotices($locale);
+    }
+
+    /** Returns is possible to show payment option
+     *
+     * @param $params
+     *
+     * @return bool
+     */
+    private function arePaymentOptionsEnabled($params): bool
+    {
+        return $this->isActive() && $this->checkCurrency($params['cart']) && $this->context->cart->getOrderTotal() >= 1.00;
     }
 
     public function hookPaymentOptions($params)
     {
-        if (!$this->isActive() || !$this->checkCurrency($params['cart'])) {
+        if (!$this->arePaymentOptionsEnabled($params)) {
             return;
         }
 
@@ -348,7 +357,7 @@ class Paynow extends PaymentModule
 
     public function hookPayment($params)
     {
-        if (!$this->isActive() || !$this->checkCurrency($params['cart'])) {
+        if (!$this->arePaymentOptionsEnabled($params)) {
             return;
         }
 
@@ -361,6 +370,7 @@ class Paynow extends PaymentModule
         ]);
 
         $payment_options = [];
+        //TODO: validate $total of order
         if (Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS')) {
             $payment_methods = $this->getPaymentMethods();
             if (!empty($payment_methods)) {

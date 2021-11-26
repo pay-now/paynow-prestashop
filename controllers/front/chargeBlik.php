@@ -122,7 +122,7 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
         $this->module->validateOrder(
             (int)$cart->id,
             Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
-            (float)$cart->getOrderTotal(true, Cart::BOTH),
+            (float)$cart->getOrderTotal(),
             $this->module->displayName,
             null,
             null,
