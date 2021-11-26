@@ -167,7 +167,7 @@ p.payment_module.paynow button:after {
     letter-spacing: 3px;
 }
 
-.paynow-payment-option-blik input[type=text] + span {
+.paynow-payment-option-blik span.error {
     text-align: center;
     color: darkred;
     font-size: 0.9rem;
