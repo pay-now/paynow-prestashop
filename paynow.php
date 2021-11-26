@@ -16,6 +16,7 @@ if (!defined('_PS_VERSION_')) {
 
 include_once(dirname(__FILE__) . '/vendor/autoload.php');
 include_once(dirname(__FILE__) . '/classes/PaynowLogger.php');
+include_once(dirname(__FILE__) . '/classes/ConfigurationHelper.php');
 include_once(dirname(__FILE__) . '/classes/PaymentMethodsHelper.php');
 include_once(dirname(__FILE__) . '/classes/PaymentOptions.php');
 include_once(dirname(__FILE__) . '/classes/RefundProcessor.php');
@@ -370,7 +371,6 @@ class Paynow extends PaymentModule
         ]);
 
         $payment_options = [];
-        //TODO: validate $total of order
         if (Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS')) {
             $payment_methods = $this->getPaymentMethods();
             if (!empty($payment_methods)) {
@@ -574,91 +574,7 @@ class Paynow extends PaymentModule
 
     private function postProcess()
     {
-        //TODO: add ConfigurationProcessor
-        Configuration::updateValue(
-            'PAYNOW_DEBUG_LOGS_ENABLED',
-            Tools::getValue('PAYNOW_DEBUG_LOGS_ENABLED')
-        );
-        Configuration::updateValue(
-            'PAYNOW_USE_CLASSIC_RETURN_URL',
-            Tools::getValue('PAYNOW_USE_CLASSIC_RETURN_URL')
-        );
-        Configuration::updateValue(
-            'PAYNOW_REFUNDS_ENABLED',
-            Tools::getValue('PAYNOW_REFUNDS_ENABLED')
-        );
-        Configuration::updateValue(
-            'PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED',
-            Tools::getValue('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED')
-        );
-        Configuration::updateValue(
-            'PAYNOW_REFUNDS_ON_STATUS',
-            Tools::getValue('PAYNOW_REFUNDS_ON_STATUS')
-        );
-        Configuration::updateValue(
-            'PAYNOW_REFUNDS_WITH_SHIPPING_COSTS',
-            Tools::getValue('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS')
-        );
-        Configuration::updateValue(
-            'PAYNOW_SEPARATE_PAYMENT_METHODS',
-            Tools::getValue('PAYNOW_SEPARATE_PAYMENT_METHODS')
-        );
-        Configuration::updateValue(
-            'PAYNOW_PROD_API_KEY',
-            Tools::getValue('PAYNOW_PROD_API_KEY')
-        );
-        Configuration::updateValue(
-            'PAYNOW_PROD_API_SIGNATURE_KEY',
-            Tools::getValue('PAYNOW_PROD_API_SIGNATURE_KEY')
-        );
-        Configuration::updateValue(
-            'PAYNOW_SANDBOX_ENABLED',
-            Tools::getValue('PAYNOW_SANDBOX_ENABLED')
-        );
-        Configuration::updateValue(
-            'PAYNOW_SANDBOX_API_KEY',
-            Tools::getValue('PAYNOW_SANDBOX_API_KEY')
-        );
-        Configuration::updateValue(
-            'PAYNOW_SANDBOX_API_SIGNATURE_KEY',
-            Tools::getValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY')
-        );
-        Configuration::updateValue(
-            'PAYNOW_ORDER_INITIAL_STATE',
-            Tools::getValue('PAYNOW_ORDER_INITIAL_STATE')
-        );
-        Configuration::updateValue(
-            'PAYNOW_ORDER_CONFIRMED_STATE',
-            Tools::getValue('PAYNOW_ORDER_CONFIRMED_STATE')
-        );
-        Configuration::updateValue(
-            'PAYNOW_ORDER_REJECTED_STATE',
-            Tools::getValue('PAYNOW_ORDER_REJECTED_STATE')
-        );
-        Configuration::updateValue(
-            'PAYNOW_ORDER_ERROR_STATE',
-            Tools::getValue('PAYNOW_ORDER_ERROR_STATE')
-        );
-        Configuration::updateValue(
-            'PAYNOW_SEND_ORDER_ITEMS',
-            Tools::getValue('PAYNOW_SEND_ORDER_ITEMS')
-        );
-        Configuration::updateValue(
-            'PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED',
-            Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED')
-        );
-        Configuration::updateValue(
-            'PAYNOW_PAYMENT_VALIDITY_TIME',
-            Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME')
-        );
-        Configuration::updateValue(
-            'PAYNOW_ORDER_ABANDONED_STATE',
-            Tools::getValue('PAYNOW_ORDER_ABANDONED_STATE')
-        );
-        Configuration::updateValue(
-            'PAYNOW_ORDER_EXPIRED_STATE',
-            Tools::getValue('PAYNOW_ORDER_EXPIRED_STATE')
-        );
+        ConfigurationHelper::update();
         if ($this->isConfigured()) {
             $this->html .= $this->displayConfirmation($this->l('Configuration updated'));
             $this->sendShopUrlsConfiguration();
