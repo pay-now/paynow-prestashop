@@ -3,19 +3,12 @@ php:
   - 7.2.0
 script: skip
 before_deploy:
-  - composer install --no-dev --optimize-autoloader
-  - rsync -a --exclude={'*.md','.gitignore',instruction,'.*'} ./* paynow
-  - git clone https://github.com/PrestaShopCorp/autoindex
-  - cd autoindex
-  - composer install
-  - php bin/autoindex prestashop:add:index ../paynow
-  - cd ..
-  - zip -r paynow.zip ./paynow
+  - bash ./scripts/build.sh
 deploy:
   provider: releases
   api_key:
     secure: upx/9oOg8H5leKSnRaMm1YS6WHdjNY3+rAml3fBpITs63KBedqrq85vNsAiVsycik8Scq5Zoo7veUwy06myQfemkFtfU05dz8wsV3EV4Lm7JEHy1TpQG9vTJ1vAZigZMRm6C6WHVx72t34QDCDORGeQDEeOhX8DQJtvOYdpJOcG/IXG31EXwSZ4AtDCkyGazM7+EGRvTJuT5HIFdo1Cp+wk1R3vUz/DMXZfDsDnr/w2WLgNV0WbV1LJsGS+/UkTNi9lbW1rqGE7N57Zn0rLrvEMwlsOmwdUZPmiQVCo3J/qRRdVC6IOHT2ylxRhTSBRnYZqk7OIEOT+XSf2yIkIoEuc4Dg7ILFXwDgAZ2fL2rQatZhnfLQxiVX/GviJId9IrazFD3s8uq9eH3NnTtT93RZPJ/ip0zDdY5jYjKLfkeHqA8LVJ3erXdXsRlmysWl9AITx5s0c+KwM9C9e3lS7UNuFlHNF/Vc9XBWlwVgrHsXbJCwqv/gQGhZHEJJqu4Vhz3rfxaZhocgCLmVGaL2pXcJ+9UEHgPwOYUNOMveeAOjoO9kez5+5Yu8clO3ilg5KHsYunEWqowJhhdmUVRWS66U459CNIZHXXGK2WMrh3EQj1i5eN52S3V+3bZmRXUmhkDO3Tog7sEenxCKnNr0xBHzvykPuZfkrQp75u6fC+1OE=
-  file: paynow.zip
+  file: ./dist/paynow.zip
   skip_cleanup: true
   on:
     repo: pay-now/paynow-prestashop
