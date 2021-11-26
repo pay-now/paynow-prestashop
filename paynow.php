@@ -395,7 +395,7 @@ class Paynow extends PaymentModule
                                             'paymentMethodId' => $payment_method->getId()
                                         ]
                                     ),
-                                    'action_token' => $this->context->customer->secure_key,
+                                    'action_token' => Tools::encrypt($this->context->customer->secure_key),
                                     'error_message' => $this->getTranslationsArray()['An error occurred during the payment process'],
                                     'terms_message' => $this->getTranslationsArray()['You have to accept terms and conditions']
                                 ]);

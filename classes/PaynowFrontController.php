@@ -22,6 +22,10 @@ class PaynowFrontController extends ModuleFrontControllerCore
 
     protected $payment;
 
+    public function isTokenValid() {
+        return Tools::encrypt($this->context->customer->secure_key) === Tools::getValue('token');
+    }
+
     protected function renderTemplate($template_name)
     {
         if (version_compare(_PS_VERSION_, '1.7', 'gt')) {

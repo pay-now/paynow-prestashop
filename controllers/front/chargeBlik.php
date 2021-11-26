@@ -41,7 +41,7 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
             'success' => false
         ];
 
-        if ($this->context->customer->secure_key === Tools::getValue('token')) {
+        if ($this->isTokenValid()) {
             $cart = new Cart(Context::getContext()->cart->id);
             if (empty($cart) || ! $cart->id) {
                 $this->ajaxRender(json_encode($response));
@@ -68,7 +68,7 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                             'order_reference' => $order->reference,
                             'paymentId'       => $payment->getPaymentId(),
                             'paymentStatus'   => $payment->getStatus(),
-                            'token'           => Tools::encrypt($order->reference)
+                            'token'           => Tools::encrypt($this->context->customer->secure_key)
                         ])
                     ]);
 
@@ -104,10 +104,12 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                             $response['message'] = $this->translations['BLIK code already used'];
                             break;
                         default:
-                            $response['message'] = $this->translations['An error occurred during the payment process and the payment could not be completed'];
+                            $response['message'] = $this->translations['An error occurred during the payment process'];
                     }
                 }
             }
+        } else {
+            $response['message'] = $this->translations['An error occurred during the payment process'];
         }
 
         $this->ajaxRender(json_encode($response));

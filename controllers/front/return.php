@@ -32,7 +32,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         $id_cart = Tools::getValue('id_cart');
         $token = Tools::getValue('token');
 
-        if ((! $order_reference || ! $id_cart) && ! $token) {
+        if ((! $order_reference || ! $id_cart) && !$this->isTokenValid()) {
             $this->redirectToOrderHistory();
         }
 

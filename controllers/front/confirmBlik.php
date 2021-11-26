@@ -26,9 +26,8 @@ class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
         parent::initContent();
 
         $order_reference = Tools::getValue('order_reference');
-        $token = Tools::getValue('token');
 
-        if (!$order_reference || $token != $this->context->customer->secure_key) {
+        if (!$order_reference || !$this->isTokenValid()) {
             $this->redirectToOrderHistory();
         }
 
