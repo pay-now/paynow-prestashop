@@ -55,12 +55,12 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 exit;
             }
             (new OrderStateProcessor())->updateState(
-                $filteredPayments[0]['id_order'],
+                $filteredPayments[0]->id_order,
                 $notification_data['paymentId'],
-                $filteredPayments[0]['id_cart'],
-                $filteredPayments[0]['order_reference'],
-                $filteredPayments[0]['external_id'],
-                $filteredPayments[0]['status'],
+                $filteredPayments[0]->id_cart,
+                $filteredPayments[0]->order_reference,
+                $filteredPayments[0]->external_id,
+                $filteredPayments[0]->status,
                 $notification_data['status']
             );
         } catch (Exception $exception) {

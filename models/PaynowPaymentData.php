@@ -102,7 +102,7 @@ class PaynowPaymentData extends ObjectModel
         $queryBuilder = new PrestaShopCollection(self::class);
 
         return $queryBuilder
-            ->where('order_reference', '=', $external_id)
+            ->where('external_id', '=', $external_id)
             ->orderBy('created_at', 'desc')
             ->getAll();
     }
