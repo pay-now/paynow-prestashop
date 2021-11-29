@@ -99,7 +99,8 @@ class Paynow extends PaymentModule
             `status` varchar(64) NOT NULL,
             `created_at` datetime,
             `modified_at` datetime,
-            UNIQUE (`id_payment`, `status`)
+            UNIQUE (`id_payment`, `status`),
+            INDEX `index_order_cart_payment_reference` (`id_order`, `id_cart`, `id_payment`, `order_reference`)
         )');
     }
 
