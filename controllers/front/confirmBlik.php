@@ -10,10 +10,6 @@
  * @license   MIT License
  */
 
-require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
-require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
-include_once(dirname(__FILE__) . '/../../models/PaynowPaymentData.php');
-
 class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
 {
     public function initContent()

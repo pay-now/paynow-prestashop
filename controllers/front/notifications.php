@@ -10,9 +10,6 @@
  * @license   MIT License
  */
 
-require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
-require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
-
 class PaynowNotificationsModuleFrontController extends PaynowFrontController
 {
     public function process()

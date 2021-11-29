@@ -10,10 +10,6 @@
  * @license   MIT License
  */
 
-require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
-require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
-include_once(dirname(__FILE__) . '/../../models/PaynowPaymentData.php');
-
 use Paynow\Model\Payment\Status;
 
 class PaynowStatusModuleFrontController extends PaynowFrontController

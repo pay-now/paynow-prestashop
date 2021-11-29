@@ -10,11 +10,6 @@
  * @license   MIT License
  */
 
-require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
-require_once(dirname(__FILE__) . '/../../classes/PaymentProcessor.php');
-require_once(dirname(__FILE__) . '/../../classes/PaymentDataBuilder.php');
-include_once(dirname(__FILE__) . '/../../models/PaynowPaymentData.php');
-
 use Paynow\Exception\PaynowException;
 
 class PaynowChargeBlikModuleFrontController extends PaynowFrontController

@@ -15,6 +15,7 @@ if (!defined('_PS_VERSION_')) {
 }
 
 include_once(dirname(__FILE__) . '/vendor/autoload.php');
+include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
 include_once(dirname(__FILE__) . '/classes/PaynowLogger.php');
 include_once(dirname(__FILE__) . '/classes/ConfigurationHelper.php');
 include_once(dirname(__FILE__) . '/classes/PaymentMethodsHelper.php');
@@ -23,7 +24,11 @@ include_once(dirname(__FILE__) . '/classes/RefundProcessor.php');
 include_once(dirname(__FILE__) . '/classes/GDPRHelper.php');
 include_once(dirname(__FILE__) . '/classes/LinkHelper.php');
 include_once(dirname(__FILE__) . '/classes/AdminFormHelper.php');
+include_once(dirname(__FILE__) . '/classes/OrderStateProcessor.php');
 include_once(dirname(__FILE__) . '/models/PaynowPaymentData.php');
+include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
+include_once(dirname(__FILE__) . '/classes/PaymentProcessor.php');
+include_once(dirname(__FILE__) . '/classes/PaymentDataBuilder.php');
 
 class Paynow extends PaymentModule
 {

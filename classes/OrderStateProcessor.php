@@ -10,8 +10,6 @@
  * @license   MIT License
  */
 
-include_once(dirname(__FILE__) . '/PaynowLogger.php');
-
 class OrderStateProcessor
 {
     /** @var Module */
