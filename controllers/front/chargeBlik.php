@@ -10,10 +10,6 @@
  * @license   MIT License
  */
 
-if (! defined('_PS_VERSION_')) {
-    exit;
-}
-
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 require_once(dirname(__FILE__) . '/../../classes/PaymentProcessor.php');
 require_once(dirname(__FILE__) . '/../../classes/PaymentDataBuilder.php');
@@ -92,7 +88,24 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                     );
                 }
             } catch (PaynowException $exception) {
+                PaynowLogger::error(
+                    $exception->getMessage() . '{externalId={}}',
+                    [
+                        $external_id
+                    ]
+                );
+                foreach ($exception->getErrors() as $error) {
+                    PaynowLogger::error(
+                        $exception->getMessage() . '{externalId={}, error={}, message={}}',
+                        [
+                            $external_id,
+                            $error->getType(),
+                            $error->getMessage()
+                        ]
+                    );
+                }
                 if ($exception->getErrors() && $exception->getErrors()[0]) {
+                    PaynowLogger::error($exception->getMessage());
                     switch ($exception->getErrors()[0]->getType()) {
                         case 'AUTHORIZATION_CODE_INVALID':
                             $response['message'] = $this->translations['Wrong BLIK code'];

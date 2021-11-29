@@ -10,10 +10,6 @@
  * @license   MIT License
  */
 
-if (! defined('_PS_VERSION_')) {
-    exit;
-}
-
 class PaynowPaymentData extends ObjectModel
 {
     const TABLE = 'paynow_payments';

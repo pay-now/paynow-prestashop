@@ -10,10 +10,6 @@
  * @license   MIT License
  */
 
-if (! defined('_PS_VERSION_')) {
-    exit;
-}
-
 use Paynow\Model\PaymentMethods\PaymentMethod;
 use Paynow\Response\DataProcessing\Notices;
 use Paynow\Response\PaymentMethods\PaymentMethods;
@@ -85,8 +81,8 @@ class PaymentOptions
                                         ]
                                     ),
                                     'action_token' => Tools::encrypt($this->context->customer->secure_key),
-                                    'error_message' => $this->module->getTranslationsArray()['An error occurred during the payment process'],
-                                    'terms_message' => $this->module->getTranslationsArray()['You have to accept terms and conditions']
+                                    'error_message' => $this->getMessage('An error occurred during the payment process'),
+                                    'terms_message' => $this->getMessage('You have to accept terms and conditions')
                                 ]);
                             }
 
@@ -96,7 +92,7 @@ class PaymentOptions
                                 LinkHelper::getPaymentUrl([
                                     'paymentMethodId' => $payment_method->getId()
                                 ]),
-                                $this->isWhiteLabelEnabled($payment_method->getType(), $payment_method) ? 'module:paynow/views/templates/front/1.7/payment_method_blik_form.tpl' : null
+                                $this->getForm($payment_method)
                             ));
                         }
                         $list[$payment_method->getType()] = $payment_method->getId();
@@ -122,7 +118,8 @@ class PaymentOptions
      */
     private function isWhiteLabelEnabled(string $payment_method_type, PaymentMethod $payment_method): bool
     {
-        return $payment_method_type == $payment_method->getType() && Paynow\Model\PaymentMethods\AuthorizationType::CODE == $payment_method->getAuthorizationType();
+        return $payment_method_type == $payment_method->getType()
+               && Paynow\Model\PaymentMethods\AuthorizationType::CODE == $payment_method->getAuthorizationType();
     }
 
     /**
@@ -150,5 +147,19 @@ class PaymentOptions
         }
 
         return $paymentOption;
+    }
+
+    private function getMessage($key)
+    {
+        return $this->module->getTranslationsArray()[$key];
+    }
+
+    private function getForm($payment_method)
+    {
+        if ($this->isWhiteLabelEnabled($payment_method->getType(), $payment_method)) {
+            return 'module:paynow/views/templates/front/1.7/payment_method_blik_form.tpl';
+        }
+
+        return null;
     }
 }

@@ -10,13 +10,9 @@
  * @license   MIT License
  */
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
-
 class LinkHelper
 {
-    public static function getContinueUrl($id_cart, $id_module, $secure_key,  $id_order = null,  $order_reference = null)
+    public static function getContinueUrl($id_cart, $id_module, $secure_key, $id_order = null, $order_reference = null)
     {
         if (Configuration::get('PAYNOW_USE_CLASSIC_RETURN_URL')) {
             $params =                 [

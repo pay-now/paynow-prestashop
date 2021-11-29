@@ -10,10 +10,6 @@
  * @license   MIT License
  */
 
-if (! defined('_PS_VERSION_')) {
-    exit;
-}
-
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
 include_once(dirname(__FILE__) . '/../../models/PaynowPaymentData.php');
@@ -30,7 +26,7 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
 
     public function displayAjax()
     {
-        if (Tools::getValue('order_reference') && Tools::getValue('token') == Tools::encrypt(Tools::getValue('order_reference'))) {
+        if (Tools::getValue('order_reference') && $this->isTokenValid()) {
             $payment  = PaynowPaymentData::findLastByOrderReference(Tools::getValue('order_reference'));
             $payment_status = $payment->status;
             if (Status::STATUS_CONFIRMED !== $payment->status) {

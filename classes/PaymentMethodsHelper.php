@@ -10,10 +10,6 @@
  * @license   MIT License
  */
 
-if (! defined('_PS_VERSION_')) {
-    exit;
-}
-
 use Paynow\Client;
 use Paynow\Exception\ConfigurationException;
 use Paynow\Exception\PaynowException;

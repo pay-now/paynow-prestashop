@@ -10,10 +10,6 @@
  * @license   MIT License
  */
 
-if (! defined('_PS_VERSION_')) {
-    exit;
-}
-
 require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
 require_once(dirname(__FILE__) . '/../../classes/PaymentProcessor.php');
 require_once(dirname(__FILE__) . '/../../classes/PaymentDataBuilder.php');
@@ -134,12 +130,12 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
      */
     private function sendPaymentRequest()
     {
-        $idempotency_key      = uniqid($this->order->reference . '_');
-        $payment_request_data = (new PaymentDataBuilder($this->module))->fromOrder($this->order);
-        $payment              = (new PaymentProcessor($this->module->getPaynowClient()))
-            ->process($payment_request_data, $idempotency_key);
+        try {
+            $idempotency_key      = uniqid($this->order->reference . '_');
+            $payment_request_data = (new PaymentDataBuilder($this->module))->fromOrder($this->order);
+            $payment              = (new PaymentProcessor($this->module->getPaynowClient()))
+                ->process($payment_request_data, $idempotency_key);
 
-        if (! empty($payment)) {
             PaynowPaymentData::create(
                 $payment->getPaymentId(),
                 Paynow\Model\Payment\Status::STATUS_NEW,
@@ -157,7 +153,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 ]
             );
 
-            if (!in_array($payment->getStatus(), [
+            if (! in_array($payment->getStatus(), [
                 Paynow\Model\Payment\Status::STATUS_NEW,
                 Paynow\Model\Payment\Status::STATUS_PENDING
             ])) {
@@ -168,7 +164,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 ));
             }
 
-            if (!$payment->getRedirectUrl()) {
+            if (! $payment->getRedirectUrl()) {
                 Tools::redirect(LinkHelper::getContinueUrl(
                     $this->order->id_cart,
                     $this->module->id,
@@ -177,9 +173,24 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                     $this->order->reference
                 ));
             }
-
             Tools::redirect($payment->getRedirectUrl());
-        } else {
+        } catch (Paynow\Exception\PaynowException $exception) {
+            PaynowLogger::error(
+                $exception->getMessage() . '{orderReference={}}',
+                [
+                    $this->order->reference
+                ]
+            );
+            foreach ($exception->getErrors() as $error) {
+                PaynowLogger::error(
+                    $exception->getMessage() . '{orderReference={}, error={}, message={}}',
+                    [
+                        $this->order->reference,
+                        $error->getType(),
+                        $error->getMessage()
+                    ]
+                );
+            }
             $this->displayError();
         }
     }

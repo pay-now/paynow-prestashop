@@ -10,11 +10,8 @@
  * @license   MIT License
  */
 
-if (! defined('_PS_VERSION_')) {
-    exit;
-}
-
 use Paynow\Client;
+use Paynow\Exception\PaynowException;
 
 /**
  * GdprHelper
@@ -41,7 +38,7 @@ class GDPRHelper
      */
     public function getNotices(?string $locale)
     {
-        $configurationId = 'PAYNOW_'.(int)Configuration::get('PAYNOW_SANDBOX_ENABLED') == 1 ? 'SANDBOX_' : ''.'GDPR_' . Tools::strtoupper(str_replace('-', '_', $locale));
+        $configurationId = 'PAYNOW_'.$this->isSandbox() ? 'SANDBOX_' : ''.'GDPR_' . $this->cleanLocale($locale);
         $configurationOption = Configuration::get($configurationId);
 
         if (! $configurationOption) {
@@ -81,10 +78,20 @@ class GDPRHelper
         try {
             PaynowLogger::info("Retrieving GDPR notices");
             return (new Paynow\Service\DataProcessing($this->client))->getNotices($locale)->getAll();
-        } catch (\Paynow\Exception\PaynowException $exception) {
+        } catch (PaynowException $exception) {
             PaynowLogger::error($exception->getMessage());
         }
 
         return null;
+    }
+
+    private function isSandbox()
+    {
+        return (int)Configuration::get('PAYNOW_SANDBOX_ENABLED') == 1;
+    }
+
+    private function cleanLocale($locale)
+    {
+        return Tools::strtoupper(str_replace('-', '_', $locale));
     }
 }

@@ -10,10 +10,6 @@
  * @license   MIT License
  */
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
-
 class PaymentDataBuilder
 {
     private $context;

@@ -212,12 +212,6 @@ p.payment_module.paynow button:after {
     max-width: 35%;
 }
 
-.paynow-confirm-blik .headline {
-    font-size: 1.3125rem;
-    color: #232323;
-    font-weight: 400;
-}
-
 .paynow-return img {
     float: right;
 }

@@ -10,10 +10,6 @@
  * @license   MIT License
  */
 
-if (!defined('_PS_VERSION_')) {
-    exit;
-}
-
 include_once(dirname(__FILE__) . '/PaynowLogger.php');
 
 class OrderStateProcessor

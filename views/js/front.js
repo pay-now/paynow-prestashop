@@ -38,63 +38,58 @@ $(function () {
 
 function enableBlikFormSupport()
 {
-    let $blik_code_input = $('#paynow_blik_code');
-    if ($blik_code_input.is(':visible')) {
-        let $form = $('.paynow-blik-form');
-        $('.paynow-blik-form button').on('click', function (e) {
-            e.preventDefault();
-            let $regulations = $('#conditions_to_approve\\[terms-and-conditions\\], #cgv'),
-                $error_span = $('#paynow_blik_code').next('span'),
-                $blik_pay_button = $($form).find('button');
-            if ($regulations.is(':checked')) {
-                $blik_pay_button.prop('disabled', true);
-                $.ajax($form.data('action'), {
-                    method: 'POST', type: 'POST',
-                    data: {
-                        'blikCode': $blik_code_input.val().replace(/\s/g, ""),
-                        'token': $form.data('token')
-                    },
-                }).success(function (response) {
-                    $error_span.text('');
-                    if (response.success === true) {
-                        window.location.href = response.redirect_url;
-                    } else {
-                        $blik_pay_button.prop('disabled', false);
-                        $error_span.text(response.message);
-                    }
-                }).error(function () {
-                    $error_span.text($form.data('error-message'))
-                });
-            } else {
-                $error_span.text($form.data('terms-message'))
-            }
-        })
-    }
+    var $paynow_blik_form = $('.paynow-blik-form'), $paynow_blik_error_span = $('#paynow_blik_code').next('span');
+    $('.paynow-blik-form button').on('click', function (e) {
+        e.preventDefault();
+        let $blik_pay_button = $($paynow_blik_form).find('button');
+        if ($('#conditions_to_approve\\[terms-and-conditions\\], #cgv').is(':checked')) {
+            $blik_pay_button.prop('disabled', true);
+            $.ajax($paynow_blik_form.data('action'), {
+                method: 'POST', type: 'POST',
+                data: {
+                    'blikCode': $('#paynow_blik_code').val().replace(/\s/g, ""),
+                    'token': $paynow_blik_form.data('token')
+                },
+            }).success(function (response) {
+                $paynow_blik_error_span.text('');
+                if (response.success === true) {
+                    window.location.href = response.redirect_url;
+                } else {
+                    $blik_pay_button.prop('disabled', false);
+                    $paynow_blik_error_span.text(response.message);
+                }
+            }).error(function () {
+                $paynow_blik_error_span.text($paynow_blik_form.data('error-message'))
+            });
+        } else {
+            $paynow_blik_error_span.text($paynow_blik_form.data('terms-message'))
+        }
+    })
 }
 
 function enableBlikSupport()
 {
     enableBlikFormSupport();
-    let $blik_code_input = $('#paynow_blik_code'), $payment_button = $('#payment-confirmation button')
-    $blik_code_input.mask('000 000', {placeholder: "___ ___"});
-    if ($blik_code_input.is(':visible')) {
-        let $regulation = $('#conditions_to_approve\\[terms-and-conditions\\], #cgv');
-        if ($regulation.length) {
-            $regulation.prop('checked', true)
+    let $paynow_blik_code_input = $('#paynow_blik_code'), $payment_button = $('#payment-confirmation button')
+    $paynow_blik_code_input.mask('000 000', {placeholder: "___ ___"});
+    if ($paynow_blik_code_input.is(':visible')) {
+        var $regulations = $('#conditions_to_approve\\[terms-and-conditions\\], #cgv');
+        if ($regulations.length) {
+            $regulations.prop('checked', true)
         }
         $payment_button.prop('disabled', true).hide();
-        validateBlikCode($blik_code_input.val())
+        validateBlikCode($paynow_blik_code_input.val())
     } else {
         $payment_button.prop('disabled', false).show();
     }
-    $blik_code_input.keyup(function () {
-        validateBlikCode($blik_code_input.val())
+    $paynow_blik_code_input.keyup(function () {
+        validateBlikCode($paynow_blik_code_input.val())
     });
 }
 
 function enablePblSupport()
 {
-    let $payment_button = $('#payment-confirmation button');
+    var $payment_button = $('#payment-confirmation button');
     if ($('.paynow-payment-pbls').is(':visible')) {
         $payment_button.prop('disabled', $('input[name="paymentMethodId"]:checked').length === 0)
     }
@@ -106,16 +101,16 @@ function enablePblSupport()
 function validateBlikCode(blik_code_value)
 {
     blik_code_value = blik_code_value.replace(/\s/g, '');
-    let $payment_button = $('#payment-confirmation button'),
-        $blik_payment_button = $('.paynow-blik-form button'),
-        $error_span = $('#paynow_blik_code').next('span');
+    var $payment_button = $('#payment-confirmation button'),
+        $paynow_blik_payment_button = $('.paynow-blik-form button'),
+        $paynow_blik_error_span = $('#paynow_blik_code').next('span');
     if (blik_code_value.length === 6 && !isNaN(parseInt(blik_code_value)) && parseInt(blik_code_value)) {
-        $error_span.text('');
+        $paynow_blik_error_span.text('');
         $payment_button.prop('disabled', false);
-        $blik_payment_button.prop('disabled', false);
+        $paynow_blik_payment_button.prop('disabled', false);
     } else {
         $payment_button.prop('disabled', true);
-        $blik_payment_button.prop('disabled', true);
+        $paynow_blik_payment_button.prop('disabled', true);
         $('#paynow_blik_code').focus();
     }
 }

@@ -10,13 +10,10 @@
  * @license   MIT License
  */
 
-if (! defined('_PS_VERSION_')) {
-    exit;
-}
-
 class ConfigurationHelper
 {
-    public static function update() {
+    public static function update()
+    {
         Configuration::updateValue(
             'PAYNOW_DEBUG_LOGS_ENABLED',
             Tools::getValue('PAYNOW_DEBUG_LOGS_ENABLED')

@@ -9,7 +9,7 @@
 * @license   MIT License
 *}
 <div class="paynow-confirm-blik">
-    <p class="headline">{l s='Confirm the payment using the app on your phone.' mod='paynow'}</p>
+    <h2>{l s='Confirm the payment using the app on your phone.' mod='paynow'}</h2>
     <img src="{$link->getMediaLink("`$module_dir`views/img/blik-confirm.png")}" alt="{l s='Confirm the BLIK payment' mod='paynow'}">
     <div class="order-data clearfix">
         <p>{l s='Your order number:' mod='paynow'} {$order_reference|escape:'htmlall':'UTF-8'}</p>

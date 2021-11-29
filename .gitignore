@@ -6,3 +6,6 @@ composer.lock
 
 # ignore PhpStorm .idea folder
 .idea
+
+# composer dependencies
+vendor

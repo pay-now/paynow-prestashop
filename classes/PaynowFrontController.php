@@ -10,10 +10,6 @@
  * @license   MIT License
  */
 
-if (! defined('_PS_VERSION_')) {
-    exit;
-}
-
 use Paynow\Exception\PaynowException;
 
 class PaynowFrontController extends ModuleFrontControllerCore
@@ -22,7 +18,8 @@ class PaynowFrontController extends ModuleFrontControllerCore
 
     protected $payment;
 
-    public function isTokenValid() {
+    public function isTokenValid()
+    {
         return Tools::encrypt($this->context->customer->secure_key) === Tools::getValue('token');
     }
 
