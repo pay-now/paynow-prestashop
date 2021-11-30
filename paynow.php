@@ -506,7 +506,7 @@ class Paynow extends PaymentModule
                 return $this->fetchTemplate('/views/templates/admin/_partials/upgrade.tpl');
             }
         } catch (Exception $exception) {
-            PaynowLogger::warning($exception->getMessage());
+
         }
 
         return null;
