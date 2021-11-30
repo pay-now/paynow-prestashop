@@ -200,7 +200,7 @@ class Paynow extends PaymentModule
         $state_name = 'PAYNOW_ORDER_INITIAL_STATE';
         if (Configuration::get($state_name) ||
             Validate::isLoadedObject(new OrderState(Configuration::get($state_name)))) {
-            return null;
+            return (int)Configuration::get($state_name);
         }
 
         $order_state = new OrderState();
