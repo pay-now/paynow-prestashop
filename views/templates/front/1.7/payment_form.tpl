@@ -10,15 +10,12 @@
 *}
 {if $paynowPbls}
     <form class="payment-form paynow-payment-form" method="POST" action="{$action}">
-        <div class="row">
+        <p>{l s='Choose bank:' mod='paynow'}</p>
+        <div class="row paynow-payment-pbls">
             {foreach from=$paynowPbls item=method}
-                <div class="col-lg-3 col-xs-4 paynow-payment-option-pbl {if !$method->isEnabled()}disabled{/if}">
-                    <input type="radio" name="paymentMethodId" value="{$method->getId()|escape:'htmlall':'UTF-8'}" id="paynow_method_{$method->getId()|escape:'htmlall':'UTF-8'}" {if !$method->isEnabled()}disabled{/if}/>
-                    <label for="paynow_method_{$method->getId()}">
-                        <img src="{$method->getImage()|escape:'htmlall':'UTF-8'}" alt="{$method->getDescription()|escape:'htmlall':'UTF-8'}" />
-                    </label>
-                </div>
+                {include file="module:paynow/views/templates/front/1.7/_partials/payment_method_pbl.tpl"}
             {/foreach}
         </div>
+        {include file="module:paynow/views/templates/front/1.7/_partials/payment_data_processing_info.tpl"}
     </form>
 {/if}

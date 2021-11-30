@@ -10,14 +10,84 @@
  * @license   MIT License
  */
 
-class PaynowFrontController extends ModuleFrontController
+use Paynow\Exception\PaynowException;
+
+class PaynowFrontController extends ModuleFrontControllerCore
 {
-    public function renderTemplate($template_name)
+    protected $order;
+
+    protected $payment;
+
+    public function isTokenValid()
+    {
+        return Tools::encrypt($this->context->customer->secure_key) === Tools::getValue('token');
+    }
+
+    protected function renderTemplate($template_name)
     {
         if (version_compare(_PS_VERSION_, '1.7', 'gt')) {
             $template_name = 'module:paynow/views/templates/front/1.7/' . $template_name;
         }
 
         $this->setTemplate($template_name);
+    }
+
+    protected function redirectToOrderHistory()
+    {
+        Tools::redirect(
+            'index.php?controller=history',
+            __PS_BASE_URI__,
+            null,
+            'HTTP/1.1 301 Moved Permanently'
+        );
+    }
+
+    protected function getPaymentStatus($paymentId)
+    {
+        PaynowLogger::info('Retrieving payment status {paymentId={}}', [$paymentId]);
+        try {
+            $status = (new Paynow\Service\Payment($this->module->getPaynowClient()))->status($paymentId)->getStatus();
+            PaynowLogger::info('Retrieved payment status {paymentId={}, status={}}', [$paymentId, $status]);
+
+            return $status;
+        } catch (PaynowException $exception) {
+            PaynowLogger::error($exception->getMessage() . ' {paymentId={}}', [$paymentId]);
+        }
+
+        return false;
+    }
+
+    protected function updateOrderState(
+        $id_order,
+        $id_payment,
+        $id_cart,
+        $order_reference,
+        $external_id,
+        $old_status,
+        $new_status
+    ) {
+        try {
+            (new OrderStateProcessor())->updateState(
+                $id_order,
+                $id_payment,
+                $id_cart,
+                $order_reference,
+                $external_id,
+                $old_status,
+                $new_status
+            );
+        } catch (Exception $e) {
+            PaynowLogger::error($e->getMessage() . ' {paymentId={}}', [$id_payment]);
+        }
+    }
+
+    protected function ajaxRender($value = null, $controller = null, $method = null)
+    {
+        header('Content-Type: application/json');
+        if (version_compare(_PS_VERSION_, '1.7', 'gt')) {
+            parent::ajaxRender($value, $controller, $method);
+        } else {
+            echo $value;
+        }
     }
 }

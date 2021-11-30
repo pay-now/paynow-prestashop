@@ -15,24 +15,32 @@ if (!defined('_PS_VERSION_')) {
 }
 
 include_once(dirname(__FILE__) . '/vendor/autoload.php');
+include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
 include_once(dirname(__FILE__) . '/classes/PaynowLogger.php');
+include_once(dirname(__FILE__) . '/classes/ConfigurationHelper.php');
+include_once(dirname(__FILE__) . '/classes/PaymentMethodsHelper.php');
+include_once(dirname(__FILE__) . '/classes/PaymentOptions.php');
+include_once(dirname(__FILE__) . '/classes/RefundProcessor.php');
+include_once(dirname(__FILE__) . '/classes/GDPRHelper.php');
+include_once(dirname(__FILE__) . '/classes/LinkHelper.php');
+include_once(dirname(__FILE__) . '/classes/AdminFormHelper.php');
+include_once(dirname(__FILE__) . '/classes/OrderStateProcessor.php');
+include_once(dirname(__FILE__) . '/models/PaynowPaymentData.php');
+include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
+include_once(dirname(__FILE__) . '/classes/PaymentProcessor.php');
+include_once(dirname(__FILE__) . '/classes/PaymentDataBuilder.php');
 
 class Paynow extends PaymentModule
 {
     protected $html = '';
     protected $postErrors = [];
-    protected $callToActionText = '';
-
-    /**
-     * @var \Paynow\Client
-     */
-    public $api_client;
+    private $call_to_action_text = '';
 
     public function __construct()
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.4.2';
+        $this->version = '1.5.0';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -47,12 +55,12 @@ class Paynow extends PaymentModule
         $this->displayName = $this->l('Pay by paynow.pl');
         $this->description = $this->l('Accepts payments by paynow.pl');
         $this->confirm_uninstall = $this->l('Are you sure you want to uninstall? You will lose all your settings!');
-        $this->callToActionText = $this->l('BLIK, bank transfers and card payments');
+        $this->call_to_action_text = $this->l('BLIK, bank transfers and card payments');
 
         if (!$this->isConfigured()) {
             $this->warning = $this->l('API Keys must be configured before using this module.');
         } else {
-            $this->initializeApiClient();
+            $this->getPaynowClient();
         }
 
         if (!count(Currency::checkPaymentCurrencies($this->id))) {
@@ -91,7 +99,8 @@ class Paynow extends PaymentModule
             `status` varchar(64) NOT NULL,
             `created_at` datetime,
             `modified_at` datetime,
-            UNIQUE (`id_payment`, `status`)
+            UNIQUE (`id_payment`, `status`),
+            INDEX `index_order_cart_payment_reference` (`id_order`, `id_cart`, `id_payment`, `order_reference`)
         )');
     }
 
@@ -184,7 +193,6 @@ class Paynow extends PaymentModule
             Configuration::deleteByName('PAYNOW_PAYMENT_VALIDITY_TIME') &&
             Configuration::deleteByName('PAYNOW_ORDER_ABANDONED_STATE') &&
             Configuration::deleteByName('PAYNOW_ORDER_EXPIRED_STATE');
-        ;
     }
 
     public function createOrderInitialState()
@@ -223,9 +231,17 @@ class Paynow extends PaymentModule
         return $order_state->id;
     }
 
-    private function initializeApiClient()
+    public function getCallToActionText(): string
     {
-        $this->api_client = new \Paynow\Client(
+        return $this->call_to_action_text;
+    }
+
+    /**
+     * @return \Paynow\Client
+     */
+    public function getPaynowClient()
+    {
+        return new \Paynow\Client(
             $this->getApiKey(),
             $this->getSignatureKey(),
             $this->isSandboxEnabled() ? \Paynow\Environment::SANDBOX : \Paynow\Environment::PRODUCTION,
@@ -252,21 +268,21 @@ class Paynow extends PaymentModule
         return (int)Configuration::get('PAYNOW_SANDBOX_ENABLED') === 1;
     }
 
-    private function isActive()
+    private function isActive(): bool
     {
         if (!$this->active || !$this->isConfigured()) {
-            return;
+            return false;
         }
 
         return true;
     }
 
-    private function isConfigured()
+    private function isConfigured(): bool
     {
-        return $this->getApiKey() && $this->getSignatureKey();
+        return !empty($this->getApiKey()) && !empty($this->getSignatureKey());
     }
 
-    public function checkCurrency($cart)
+    public function checkCurrency($cart): bool
     {
         $currency_order = new Currency($cart->id_currency);
         $currencies_module = $this->getCurrency($cart->id_currency);
@@ -284,59 +300,10 @@ class Paynow extends PaymentModule
     public function hookHeader()
     {
         $this->context->controller->addCSS(($this->_path) . 'views/css/front.css', 'all');
-        if (version_compare(_PS_VERSION_, '1.7', '<')) {
-            $this->context->controller->addJs(($this->_path) . 'views/js/front.js', 'all');
-        }
+        $this->context->controller->addJs(($this->_path) . 'views/js/front.js', 'all');
     }
 
-    public function hookPaymentOptions($params)
-    {
-        if (!$this->isActive() || !$this->checkCurrency($params['cart'])) {
-            return;
-        }
-
-        $payment_options = [];
-        if (Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS')) {
-            $payment_methods = $this->getPaymentMethods();
-            if (!empty($payment_methods)) {
-                $list = [];
-                foreach ($payment_methods->getAll() as $payment_method) {
-                    if (!isset($list[$payment_method->getType()])) {
-                        if (Paynow\Model\PaymentMethods\Type::PBL == $payment_method->getType()) {
-                            $this->context->smarty->assign([
-                                'paynowPbls' => $payment_methods->getOnlyPbls(),
-                                'action' => $this->context->link->getModuleLink($this->name, 'payment', [], true)
-                            ]);
-                            array_push($payment_options, $this->paymentOption(
-                                $this->getPaymentMethodTitle($payment_method->getType()),
-                                $this->getLogo(),
-                                $this->context->link->getModuleLink($this->name, 'payment', [], true)
-                            )->setForm($this->context->smarty->fetch(
-                                'module:paynow/views/templates/front/1.7/payment_form.tpl'
-                            )));
-                        } else {
-                            array_push($payment_options, $this->paymentOption(
-                                $this->getPaymentMethodTitle($payment_method->getType()),
-                                $payment_method->getImage(),
-                                $this->context->link->getModuleLink($this->name, 'payment', ['paymentMethodId' => $payment_method->getId()], true)
-                            ));
-                        }
-                        $list[$payment_method->getType()] = $payment_method->getId();
-                    }
-                }
-            }
-        } else {
-            array_push($payment_options, $this->paymentOption(
-                $this->callToActionText,
-                $this->getLogo(),
-                $this->context->link->getModuleLink($this->name, 'payment', [], true)
-            ));
-        }
-
-        return $payment_options;
-    }
-
-    private function getPaymentMethodTitle($payment_method_type)
+    public function getPaymentMethodTitle($payment_method_type): string
     {
         switch ($payment_method_type) {
             default:
@@ -352,41 +319,61 @@ class Paynow extends PaymentModule
         }
     }
 
-    private function getPaymentMethods()
+    /**
+     * @return \Paynow\Response\PaymentMethods\PaymentMethods|null
+     * @throws Exception
+     */
+    private function getPaymentMethods(): ?\Paynow\Response\PaymentMethods\PaymentMethods
     {
-        $total = number_format($this->context->cart->getOrderTotal(true, Cart::BOTH) * 100, 0, '', '');
-        $payment_client = new Paynow\Service\Payment($this->api_client);
+        $total = number_format($this->context->cart->getOrderTotal() * 100, 0, '', '');
         $currency = new Currency($this->context->cart->id_currency);
-        try {
-            return $payment_client->getPaymentMethods($currency->iso_code, $total);
-        } catch (\Paynow\Exception\PaynowException $exception) {
-            PaynowLogger::error($exception->getMessage());
-        }
-
-        return null;
+        return (new PaymentMethodsHelper($this->getPaynowClient()))->getAvailable($currency->iso_code, $total);
     }
 
-    private function paymentOption($title, $logo, $action, $additional = null)
+    private function getGDPRNotices(): array
     {
-        $payment_option = new PrestaShop\PrestaShop\Core\Payment\PaymentOption();
-        $payment_option->setModuleName($this->name)
-            ->setCallToActionText($title)
-            ->setLogo($logo)
-            ->setAdditionalInformation($additional)
-            ->setAction($action);
-        return $payment_option;
+        $locale  = $this->context->language->locale ?? $this->context->language->language_code;
+        return (new GDPRHelper($this->getPaynowClient()))->getNotices($locale);
+    }
+
+    /** Returns is possible to show payment option
+     *
+     * @param $params
+     *
+     * @return bool
+     */
+    private function arePaymentOptionsEnabled($params): bool
+    {
+        return $this->isActive() && $this->checkCurrency($params['cart']) && $this->context->cart->getOrderTotal() >= 1.00;
+    }
+
+    public function hookPaymentOptions($params)
+    {
+        if (!$this->arePaymentOptionsEnabled($params)) {
+            return;
+        }
+
+        $payment_options = new PaymentOptions(
+            $this->context,
+            $this,
+            $this->getPaymentMethods(),
+            $this->getGDPRNotices()
+        );
+        return $payment_options->generate();
     }
 
     public function hookPayment($params)
     {
-        if (!$this->isActive() || !$this->checkCurrency($params['cart'])) {
+        if (!$this->arePaymentOptionsEnabled($params)) {
             return;
         }
 
+        $gdpr_notices = $this->getGDPRNotices();
         $this->context->smarty->assign([
-            'cta_text' => $this->callToActionText,
+            'cta_text' => $this->getCallToActionText(),
             'logo' => $this->getLogo(),
-            'paynow_url' => $this->context->link->getModuleLink('paynow', 'payment')
+            'paynow_url' => LinkHelper::getPaymentUrl(),
+            'data_processing_notices' => $gdpr_notices ?? null
         ]);
 
         $payment_options = [];
@@ -400,14 +387,32 @@ class Paynow extends PaymentModule
                             array_push($payment_options, [
                                 'name' => $this->getPaymentMethodTitle($payment_method->getType()),
                                 'image' => $this->getLogo(),
+                                'type' => $payment_method->getType(),
+                                'authorization' => $payment_method->getAuthorizationType(),
                                 'pbls' => $payment_methods->getOnlyPbls()
                             ]);
                         } else {
+                            if (Paynow\Model\PaymentMethods\Type::BLIK == $payment_method->getType()) {
+                                $this->context->smarty->assign([
+                                    'action_blik' => Context::getContext()->link->getModuleLink(
+                                        'paynow',
+                                        'chargeBlik',
+                                        [
+                                            'paymentMethodId' => $payment_method->getId()
+                                        ]
+                                    ),
+                                    'action_token' => Tools::encrypt($this->context->customer->secure_key),
+                                    'error_message' => $this->getTranslationsArray()['An error occurred during the payment process'],
+                                    'terms_message' => $this->getTranslationsArray()['You have to accept terms and conditions']
+                                ]);
+                            }
                             array_push($payment_options, [
                                 'name' => $this->getPaymentMethodTitle($payment_method->getType()),
                                 'image' => $payment_method->getImage(),
                                 'id' => $payment_method->getId(),
-                                'enabled' => $payment_method->isEnabled()
+                                'enabled' => $payment_method->isEnabled(),
+                                'type' => $payment_method->getType(),
+                                'authorization' => $payment_method->getAuthorizationType(),
                             ]);
                         }
                         $list[$payment_method->getType()] = $payment_method->getId();
@@ -425,9 +430,9 @@ class Paynow extends PaymentModule
     public function hookDisplayPaymentEU()
     {
         return [
-            'cta_text' => $this->callToActionText,
+            'cta_text' => $this->getCallToActionText(),
             'logo' => $this->getLogo(),
-            'action' => $this->context->link->getModuleLink('paynow', 'payment')
+            'action' => LinkHelper::getPaymentUrl()
         ];
     }
 
@@ -439,39 +444,19 @@ class Paynow extends PaymentModule
 
         $id_order = (int)$params['order']->id;
 
-        if (!$this->canOrderPaymentBeRetried($id_order)) {
+        $order = new Order($id_order);
+
+        if (!$this->canOrderPaymentBeRetried($order)) {
             return;
         }
 
         $this->context->smarty->assign([
-            'paynow_url' => $this->context->link->getModuleLink('paynow', 'payment', [
+            'paynow_url' => LinkHelper::getPaymentUrl([
                 'id_order' => $id_order,
                 'order_reference' => $params['order']->reference
             ])
         ]);
         return $this->display(__FILE__, '/views/templates/hook/order_details.tpl');
-    }
-
-    /**
-     * Handle status change to make a refund
-     *
-     * @param $params
-     */
-    public function hookActionOrderStatusPostUpdate($params)
-    {
-        if (Configuration::get('PAYNOW_REFUNDS_ENABLED') && Configuration::get('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED') && $this->context->controller instanceof AdminController) {
-            $order = new Order($params['id_order']);
-            $newOrderStatus = $params['newOrderStatus'];
-
-            if ((int)Configuration::get('PAYNOW_REFUNDS_ON_STATUS') === $newOrderStatus->id) {
-                $amount_to_refund = $order->total_paid;
-                if (!Configuration::get('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS')) {
-                    $amount_to_refund -= $order->total_shipping_tax_incl;
-                }
-                $payments = $order->getOrderPaymentCollection()->getResults();
-                $this->processRefund($order->reference, $payments, $amount_to_refund);
-            }
-        }
     }
 
     /**
@@ -490,55 +475,8 @@ class Paynow extends PaymentModule
                     ->getFirst();
                 $payments = $order->getOrderPaymentCollection()->getResults();
                 $amount_from_slip = $orderSlip->amount + $orderSlip->shipping_cost_amount;
-                $this->processRefund($order->reference, $payments, $amount_from_slip);
-            }
-        }
-    }
-
-    private function processRefund($order_reference, array $payments, $amount)
-    {
-        if (!empty($payments)) {
-            foreach ($payments as $payment) {
-                if ($this->displayName != $payment->payment_method || $payment->amount < $amount) {
-                    continue;
-                }
-
-                $refund_amount = number_format($amount * 100, 0, '', '');
-                try {
-                    PaynowLogger::info(
-                        'Found transaction to make a refund {orderReference={}, paymentId={}, amount={}}',
-                        [
-                            $order_reference,
-                            $payment->transaction_id,
-                            $refund_amount
-                        ]
-                    );
-                    $refund_client = new Paynow\Service\Refund($this->api_client);
-                    $refund = $refund_client->create(
-                        $payment->transaction_id,
-                        uniqid($payment->order_reference, true),
-                        $refund_amount
-                    );
-                    PaynowLogger::info(
-                        'Refund has been created successfully {orderReference={}, refundId={}}',
-                        [
-                            $payment->order_reference,
-                            $refund->getRefundId()
-                        ]
-                    );
-                } catch (Paynow\Exception\PaynowException $exception) {
-                    foreach ($exception->getErrors() as $error) {
-                        PaynowLogger::error(
-                            $exception->getMessage() . ' {orderReference={}, paymentId={}, type={}, message={}}',
-                            [
-                                $payment->order_reference,
-                                $payment->transaction_id,
-                                $error->getType(),
-                                $error->getMessage()
-                            ]
-                        );
-                    }
-                }
+                $refund_processor = new RefundProcessor($this->getPaynowClient(), $this->displayName);
+                $refund_processor->process($order->reference, $payments, $amount_from_slip);
             }
         }
     }
@@ -568,7 +506,7 @@ class Paynow extends PaymentModule
                 return $this->fetchTemplate('/views/templates/admin/_partials/upgrade.tpl');
             }
         } catch (Exception $exception) {
-            PaynowLogger::error($exception->getMessage());
+            PaynowLogger::warning($exception->getMessage());
         }
 
         return null;
@@ -576,23 +514,28 @@ class Paynow extends PaymentModule
 
     public function hookActionAdminControllerSetMedia($params)
     {
-
         $this->context->controller->addJquery();
         $this->context->controller->addJS(($this->_path) . '/views/js/admin.js', 'all');
     }
 
-    public function canOrderPaymentBeRetried($id_order)
+    public function canOrderPaymentBeRetried($order): bool
     {
-        $last_payment_status = $this->getLastPaymentStatusByOrderId($id_order);
-        $order = new Order($id_order);
-        return $last_payment_status['status'] !== \Paynow\Model\Payment\Status::STATUS_CONFIRMED &&
-            in_array(
-                (int)$order->current_state,
-                [
-                    (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
-                    (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE')
-                ]
-            );
+        try {
+            $last_payment_data = PaynowPaymentData::findLastByOrderId($order->id);
+
+            return $last_payment_data->status !== \Paynow\Model\Payment\Status::STATUS_CONFIRMED &&
+                   in_array(
+                       (int)$order->current_state,
+                       [
+                           (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
+                           (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE')
+                       ]
+                   );
+        } catch (PrestaShopException $exception) {
+            PaynowLogger::error($exception->getMessage());
+        }
+
+        return false;
     }
 
     public function getLogo()
@@ -615,102 +558,29 @@ class Paynow extends PaymentModule
                 $this->postErrors[] = $this->l('Integration keys must be set');
             }
 
-            if((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 1 && ((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') > 86400 || (int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') < 60)) {
+            if ($this->validateValidityTime()) {
                 $this->postErrors[] = $this->l('Payment validity time must be greater than 60 and less than 86400 seconds');
             }
 
-            if((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 1 && !Validate::isInt(Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME'))) {
+            if ((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 1 && !Validate::isInt(Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME'))) {
                 $this->postErrors[] = $this->l('Payment validity time must be integer');
             }
         }
     }
 
+    private function validateValidityTime()
+    {
+        if ((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 0) {
+            return false;
+        }
+
+        return (int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') > 86400 &&
+               (int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') < 60;
+    }
+
     private function postProcess()
     {
-        Configuration::updateValue(
-            'PAYNOW_DEBUG_LOGS_ENABLED',
-            Tools::getValue('PAYNOW_DEBUG_LOGS_ENABLED')
-        );
-        Configuration::updateValue(
-            'PAYNOW_USE_CLASSIC_RETURN_URL',
-            Tools::getValue('PAYNOW_USE_CLASSIC_RETURN_URL')
-        );
-        Configuration::updateValue(
-            'PAYNOW_REFUNDS_ENABLED',
-            Tools::getValue('PAYNOW_REFUNDS_ENABLED')
-        );
-        Configuration::updateValue(
-            'PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED',
-            Tools::getValue('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED')
-        );
-        Configuration::updateValue(
-            'PAYNOW_REFUNDS_ON_STATUS',
-            Tools::getValue('PAYNOW_REFUNDS_ON_STATUS')
-        );
-        Configuration::updateValue(
-            'PAYNOW_REFUNDS_WITH_SHIPPING_COSTS',
-            Tools::getValue('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS')
-        );
-        Configuration::updateValue(
-            'PAYNOW_SEPARATE_PAYMENT_METHODS',
-            Tools::getValue('PAYNOW_SEPARATE_PAYMENT_METHODS')
-        );
-        Configuration::updateValue(
-            'PAYNOW_PROD_API_KEY',
-            Tools::getValue('PAYNOW_PROD_API_KEY')
-        );
-        Configuration::updateValue(
-            'PAYNOW_PROD_API_SIGNATURE_KEY',
-            Tools::getValue('PAYNOW_PROD_API_SIGNATURE_KEY')
-        );
-        Configuration::updateValue(
-            'PAYNOW_SANDBOX_ENABLED',
-            Tools::getValue('PAYNOW_SANDBOX_ENABLED')
-        );
-        Configuration::updateValue(
-            'PAYNOW_SANDBOX_API_KEY',
-            Tools::getValue('PAYNOW_SANDBOX_API_KEY')
-        );
-        Configuration::updateValue(
-            'PAYNOW_SANDBOX_API_SIGNATURE_KEY',
-            Tools::getValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY')
-        );
-        Configuration::updateValue(
-            'PAYNOW_ORDER_INITIAL_STATE',
-            Tools::getValue('PAYNOW_ORDER_INITIAL_STATE')
-        );
-        Configuration::updateValue(
-            'PAYNOW_ORDER_CONFIRMED_STATE',
-            Tools::getValue('PAYNOW_ORDER_CONFIRMED_STATE')
-        );
-        Configuration::updateValue(
-            'PAYNOW_ORDER_REJECTED_STATE',
-            Tools::getValue('PAYNOW_ORDER_REJECTED_STATE')
-        );
-        Configuration::updateValue(
-            'PAYNOW_ORDER_ERROR_STATE',
-            Tools::getValue('PAYNOW_ORDER_ERROR_STATE')
-        ); 
-        Configuration::updateValue(
-            'PAYNOW_SEND_ORDER_ITEMS',
-            Tools::getValue('PAYNOW_SEND_ORDER_ITEMS')
-        );
-        Configuration::updateValue(
-            'PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED',
-            Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED')
-        );
-        Configuration::updateValue(
-            'PAYNOW_PAYMENT_VALIDITY_TIME',
-            Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME')
-        );
-        Configuration::updateValue(
-            'PAYNOW_ORDER_ABANDONED_STATE',
-            Tools::getValue('PAYNOW_ORDER_ABANDONED_STATE')
-        );
-        Configuration::updateValue(
-            'PAYNOW_ORDER_EXPIRED_STATE',
-            Tools::getValue('PAYNOW_ORDER_EXPIRED_STATE')
-        );
+        ConfigurationHelper::update();
         if ($this->isConfigured()) {
             $this->html .= $this->displayConfirmation($this->l('Configuration updated'));
             $this->sendShopUrlsConfiguration();
@@ -719,14 +589,12 @@ class Paynow extends PaymentModule
 
     private function sendShopUrlsConfiguration()
     {
-        $this->initializeApiClient();
-        $shop_configuration = new Paynow\Service\ShopConfiguration($this->api_client);
+        $shop_configuration = new Paynow\Service\ShopConfiguration($this->getPaynowClient());
         try {
             $shop_configuration->changeUrls(
-                $this->context->link->getModuleLink('paynow', 'return'),
-                $this->context->link->getModuleLink('paynow', 'notifications')
+                Context::getContext()->link->getModuleLink($this->name, 'return'),
+                LinkHelper::getNotificationUrl()
             );
-            return true;
         } catch (Paynow\Exception\PaynowException $exception) {
             PaynowLogger::error('Could not properly configure shop urls {message={}}', [$exception->getMessage()]);
             if ($exception->getCode() == 401) {
@@ -746,7 +614,6 @@ class Paynow extends PaymentModule
                     }
                 }
             }
-            return false;
         }
     }
 
@@ -766,7 +633,7 @@ class Paynow extends PaymentModule
         }
 
         $this->displayBackOfficeAccountInformation();
-        $this->renderForm();
+        $this->html .= (new AdminFormHelper($this, $this->context, $this->getTranslationsArray()))->generate();
 
         return $this->html;
     }
@@ -776,513 +643,55 @@ class Paynow extends PaymentModule
         $this->html .= $this->fetchTemplate('/views/templates/admin/_partials/account.tpl');
     }
 
-    private function renderForm()
-    {
-        $form = [];
-        $form['pos_sandbox'] = [
-            'form' => [
-                'legend' => [
-                    'title' => $this->l('Sandbox configuration'),
-                    'icon' => 'icon-cog'
-                ],
-                'input' => [
-                    [
-                        'type' => 'switch',
-                        'label' => $this->l('Test mode (Sandbox)'),
-                        'desc' => $this->l('Enable if you are using test shop environment'),
-                        'name' => 'PAYNOW_SANDBOX_ENABLED',
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => $this->l('Enabled')
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => $this->l('Disabled')
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'text',
-                        'label' => $this->l('API Key'),
-                        'name' => 'PAYNOW_SANDBOX_API_KEY'
-                    ],
-                    [
-                        'type' => 'text',
-                        'label' => $this->l('API Signature Key'),
-                        'name' => 'PAYNOW_SANDBOX_API_SIGNATURE_KEY'
-                    ]
-                ],
-                'submit' => [
-                    'title' => $this->l('Save')
-                ]
-            ]
-        ];
-
-        $form['pos_prod'] = [
-            'form' => [
-                'legend' => [
-                    'title' => $this->l('Production configuration'),
-                    'icon' => 'icon-cog'
-                ],
-                'input' => [
-                    [
-                        'type' => 'text',
-                        'label' => $this->l('API Key'),
-                        'name' => 'PAYNOW_PROD_API_KEY'
-                    ],
-                    [
-                        'type' => 'text',
-                        'label' => $this->l('API Signature Key'),
-                        'name' => 'PAYNOW_PROD_API_SIGNATURE_KEY'
-                    ]
-                ],
-                'submit' => [
-                    'title' => $this->l('Save')
-                ]
-            ]
-        ];
-
-        $order_states = OrderState::getOrderStates(ContextCore::getContext()->language->id);
-        $form['payment_statuses'] = [
-            'form' => [
-                'legend' => [
-                    'title' => $this->l('Payment status mapping'),
-                    'icon' => 'icon-cog'
-                ],
-                'input' => [
-                    [
-                        'type' => 'select',
-                        'label' => $this->l('Awaiting payment confirmation'),
-                        'name' => 'PAYNOW_ORDER_INITIAL_STATE',
-                        'options' => [
-                            'query' => $order_states,
-                            'id' => 'id_order_state',
-                            'name' => 'name'
-                        ]
-                    ],
-                    [
-                        'type' => 'select',
-                        'label' => $this->l('Payment has been authorized by the buyer'),
-                        'name' => 'PAYNOW_ORDER_CONFIRMED_STATE',
-                        'options' => [
-                            'query' => $order_states,
-                            'id' => 'id_order_state',
-                            'name' => 'name'
-                        ]
-                    ],
-                    [
-                        'type' => 'select',
-                        'label' => $this->l('Payment has not been authorized by the buyer'),
-                        'name' => 'PAYNOW_ORDER_REJECTED_STATE',
-                        'options' => [
-                            'query' => $order_states,
-                            'id' => 'id_order_state',
-                            'name' => 'name'
-                        ]
-                    ],
-                    [
-                        'type' => 'select',
-                        'label' => $this->l('Error occurred during the payment process and the payment could not be completed'),
-                        'name' => 'PAYNOW_ORDER_ERROR_STATE',
-                        'options' => [
-                            'query' => $order_states,
-                            'id' => 'id_order_state',
-                            'name' => 'name'
-                        ]
-                    ],
-                    [
-                        'type' => 'select',
-                        'label' => $this->l('Payment has been abandoned by the buyer'),
-                        'name' => 'PAYNOW_ORDER_ABANDONED_STATE',
-                        'options' => [
-                            'query' => $order_states,
-                            'id' => 'id_order_state',
-                            'name' => 'name'
-                        ]
-                    ],
-                    [
-                        'type' => 'select',
-                        'label' => $this->l('Payment has been expired'),
-                        'name' => 'PAYNOW_ORDER_EXPIRED_STATE',
-                        'options' => [
-                            'query' => $order_states,
-                            'id' => 'id_order_state',
-                            'name' => 'name'
-                        ]
-                    ]
-                ],
-                'submit' => [
-                    'title' => $this->l('Save')
-                ]
-            ]
-        ];
-
-        $form['refunds'] = [
-            'form' => [
-                'legend' => [
-                    'title' => $this->l('Refunds'),
-                    'icon' => 'icon-cog'
-                ],
-                'input' => [
-                    [
-                        'type' => 'html',
-                        'name' => '',
-                        'html_content' => $this->displayInfoMessage($this->l('The module allows you to make an automatic refund from the balance for payments made by paynow.pl. To use this option, you must select the daily payout frequency in the paynow panel. To do this, go to Settings -> Payout schedule and then select the setting for the appropriate store.'))
-                    ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->l('Enable refunds'),
-                        'name' => 'PAYNOW_REFUNDS_ENABLED',
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => $this->l('Enabled')
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => $this->l('Disabled')
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->l('After status change'),
-                        'name' => 'PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED',
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => $this->l('Enabled')
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => $this->l('Disabled')
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'select',
-                        'label' => $this->l('On status'),
-                        'name' => 'PAYNOW_REFUNDS_ON_STATUS',
-                        'options' => [
-                            'query' => $order_states,
-                            'id' => 'id_order_state',
-                            'name' => 'name'
-                        ]
-                    ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->l('Include shipping costs'),
-                        'name' => 'PAYNOW_REFUNDS_WITH_SHIPPING_COSTS',
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => $this->l('Yes')
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => $this->l('No')
-                            ]
-                        ],
-                    ],
-                ],
-                'submit' => [
-                    'title' => $this->l('Save')
-                ]
-            ]
-        ];
-
-        $logs_path = _PS_MODULE_DIR_ . $this->name . '/logs';
-        $form['additional_options'] = [
-            'form' => [
-                'legend' => [
-                    'title' => $this->l('Additional options'),
-                    'icon' => 'icon-cog'
-                ],
-                'input' => [
-                    [
-                        'type' => 'switch',
-                        'label' => $this->l('Show separated payment methods'),
-                        'name' => 'PAYNOW_SEPARATE_PAYMENT_METHODS',
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => $this->l('Enabled')
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => $this->l('Disabled')
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->l('Use classic return page'),
-                        'desc' => $this->l('Buyer will be redirected to order-confirmation page after payment.'),
-                        'name' => 'PAYNOW_USE_CLASSIC_RETURN_URL',
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => $this->l('Enabled')
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => $this->l('Disabled')
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->l('Send order items'),
-                        'desc' => $this->l('Enable sending ordered products information: name, categories, quantity and unit price.'),
-                        'name' => 'PAYNOW_SEND_ORDER_ITEMS',
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => $this->l('Enabled')
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => $this->l('Disabled')
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->l('Enable logs'),
-                        'desc' => $this->l('Logs are available in ') . ' ' . $logs_path,
-                        'name' => 'PAYNOW_DEBUG_LOGS_ENABLED',
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => $this->l('Enabled')
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => $this->l('Disabled')
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'switch',
-                        'label' => $this->l('Payment validity time'),
-                        'desc' => $this->l('Enable to limit the validity of the payment.'),
-                        'name' => 'PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED',
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => $this->l('Enabled')
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => $this->l('Disabled')
-                            ]
-                        ],
-                    ],
-                    [
-                        'type' => 'text',
-                        'label' => $this->l('Payment validity time'),
-                        'desc' => $this->l('Determines how long it will be possible to pay for the order from the moment the payment link is generated. Value expressed in seconds. The value must be between 60 and 86400 seconds.'),
-                        'name' => 'PAYNOW_PAYMENT_VALIDITY_TIME'
-                    ],
-                ],
-                'submit' => [
-                    'title' => $this->l('Save')
-                ]
-            ]
-        ];
-
-        $helper = new HelperForm();
-        $helper->show_toolbar = false;
-        $helper->name_controller = $this->name;
-        $lang = new Language((int)Configuration::get('PS_LANG_DEFAULT'));
-        $helper->title = $this->displayName;
-        $helper->submit_action = 'submit' . $this->name;
-        $helper->default_form_language = $lang->id;
-        $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG', 0);
-        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&configure=' .
-            $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
-        $helper->token = Tools::getAdminTokenLite('AdminModules');
-        $helper->tpl_vars = [
-            'fields_value' => $this->getConfigFieldsValues(),
-            'languages' => $this->context->controller->getLanguages(),
-            'id_language' => $this->context->language->id
-        ];
-
-        $this->html .= $helper->generateForm($form);
-    }
-
-    public function displayInfoMessage($message)
-    {
-        $this->context->smarty->assign([
-            'message' => $message
-        ]);
-        return $this->fetchTemplate('/views/templates/admin/_partials/info.tpl');
-    }
-
-    private function fetchTemplate($view)
+    public function fetchTemplate($view)
     {
         return $this->context->smarty->fetch(_PS_MODULE_DIR_ . $this->name . $view);
     }
 
-    private function getConfigFieldsValues()
+    public function getTranslationsArray(): array
     {
         return [
-            'PAYNOW_REFUNDS_ENABLED' => Configuration::get('PAYNOW_REFUNDS_ENABLED'),
-            'PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED' => Configuration::get('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED'),
-            'PAYNOW_REFUNDS_ON_STATUS' => Configuration::get('PAYNOW_REFUNDS_ON_STATUS'),
-            'PAYNOW_REFUNDS_WITH_SHIPPING_COSTS' => Configuration::get('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS'),
-            'PAYNOW_DEBUG_LOGS_ENABLED' => Configuration::get('PAYNOW_DEBUG_LOGS_ENABLED'),
-            'PAYNOW_SEPARATE_PAYMENT_METHODS' => Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS'),
-            'PAYNOW_USE_CLASSIC_RETURN_URL' => Configuration::get('PAYNOW_USE_CLASSIC_RETURN_URL'),
-            'PAYNOW_PROD_API_KEY' => Configuration::get('PAYNOW_PROD_API_KEY'),
-            'PAYNOW_PROD_API_SIGNATURE_KEY' => Configuration::get('PAYNOW_PROD_API_SIGNATURE_KEY'),
-            'PAYNOW_SANDBOX_ENABLED' => Configuration::get('PAYNOW_SANDBOX_ENABLED'),
-            'PAYNOW_SANDBOX_API_KEY' => Configuration::get('PAYNOW_SANDBOX_API_KEY'),
-            'PAYNOW_SANDBOX_API_SIGNATURE_KEY' => Configuration::get('PAYNOW_SANDBOX_API_SIGNATURE_KEY'),
-            'PAYNOW_ORDER_INITIAL_STATE' => Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
-            'PAYNOW_ORDER_CONFIRMED_STATE' => Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'),
-            'PAYNOW_ORDER_REJECTED_STATE' => Configuration::get('PAYNOW_ORDER_REJECTED_STATE'),
-            'PAYNOW_ORDER_ERROR_STATE' => Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
-            'PAYNOW_SEND_ORDER_ITEMS' => Configuration::get('PAYNOW_SEND_ORDER_ITEMS'),
-            'PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED' => Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED'),
-            'PAYNOW_PAYMENT_VALIDITY_TIME' => Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME'),
-            'PAYNOW_ORDER_ABANDONED_STATE' => Configuration::get('PAYNOW_ORDER_ABANDONED_STATE'),
-            'PAYNOW_ORDER_EXPIRED_STATE' => Configuration::get('PAYNOW_ORDER_EXPIRED_STATE'),
+            'Sandbox configuration'                                                                                                                                                             => $this->l('Sandbox configuration'),
+            'Test mode (Sandbox)'                                                                                                                                                               => $this->l('Test mode (Sandbox)'),
+            'Enable to use test environment'                                                                                                                                                    => $this->l('Enable to use test environment'),
+            'Yes'                                                                                                                                                                               => $this->l('Yes'),
+            'No'                                                                                                                                                                                => $this->l('No'),
+            'API Key'                                                                                                                                                                           => $this->l('API Key'),
+            'API Signature Key'                                                                                                                                                                 => $this->l('API Signature Key'),
+            'Save'                                                                                                                                                                              => $this->l('Save'),
+            'Production configuration'                                                                                                                                                          => $this->l('Production configuration'),
+            'Payment status mapping'                                                                                                                                                            => $this->l('Payment status mapping'),
+            'Awaiting payment confirmation'                                                                                                                                                     => $this->l('Awaiting payment confirmation'),
+            'Payment has been authorized by the buyer'                                                                                                                                          => $this->l('Payment has been authorized by the buyer'),
+            'Payment has not been authorized by the buyer'                                                                                                                                      => $this->l('Payment has not been authorized by the buyer'),
+            'An error occurred during the payment process and the payment could not be completed'                                                                                               => $this->l('An error occurred during the payment process and the payment could not be completed'),
+            'An error occurred during the payment process'                                                                                                                                      => $this->l('An error occurred during the payment process.'),
+            'Payment has been abandoned by the buyer'                                                                                                                                           => $this->l('Payment has been abandoned by the buyer'),
+            'Payment has been expired'                                                                                                                                                          => $this->l('Payment has been expired'),
+            'Refunds'                                                                                                                                                                           => $this->l('Refunds'),
+            'Enable refunds'                                                                                                                                                                    => $this->l('Enable refunds'),
+            'After status change'                                                                                                                                                               => $this->l('After status change'),
+            'On status'                                                                                                                                                                         => $this->l('On status'),
+            'Include shipping costs'                                                                                                                                                            => $this->l('Include shipping costs'),
+            'Additional options'                                                                                                                                                                => $this->l('Additional options'),
+            'Show separated payment methods'                                                                                                                                                    => $this->l('Show separated payment methods'),
+            'Use order-confirmation page as shop\'s return URL'                                                                                                                                 => $this->l('Use order-confirmation page as shop\'s return URL'),
+            'Buyer will be redirected to order-confirmation page after payment.'                                                                                                                => $this->l('Buyer will be redirected to order-confirmation page after payment.'),
+            'Send order items'                                                                                                                                                                  => $this->l('Send order items'),
+            'Enable sending ordered products information: name, categories, quantity and unit price.'                                                                                           => $this->l('Enable sending ordered products information: name, categories, quantity and unit price.'),
+            'Enable logs'                                                                                                                                                                       => $this->l('Enable logs'),
+            'Logs are available in '                                                                                                                                                            => $this->l('Logs are available in '),
+            'Use payment validity time'                                                                                                                                                         => $this->l('Use payment validity time'),
+            'Enable to limit the validity of the payment.'                                                                                                                                      => $this->l('Enable to limit the validity of the payment.'),
+            'Payment validity time'                                                                                                                                                             => $this->l('Payment validity time'),
+            'Determines how long it will be possible to pay for the order from the moment the payment link is generated. The value expressed in seconds. Must be between 60 and 86400 seconds.' => $this->l('Determines how long it will be possible to pay for the order from the moment the payment link is generated. Value expressed in seconds. The value must be between 60 and 86400 seconds.'),
+            'Order No: '                                                                                                                                                                        => $this->l('Order No: '),
+            'Order to cart: '                                                                                                                                                                   => $this->l('Order to cart: '),
+            'Confirm the payment using the app on your phone.'                                                                                                                                  => $this->l('Confirm the payment using the app on your phone.'),
+            'Wrong BLIK code'                                                                                                                                                                   => $this->l('Wrong BLIK code'),
+            'BLIK code has expired'                                                                                                                                                             => $this->l('BLIK code has expired'),
+            'BLIK code already used'                                                                                                                                                            => $this->l('BLIK code already used'),
+            'You have to accept terms and conditions'                                                                                                                                           => $this->l('You have to accept terms and conditions')
         ];
-    }
-
-    public function storePaymentState(
-        $id_payment,
-        $status,
-        $id_order,
-        $id_cart,
-        $order_reference,
-        $external_id,
-        $modified_at = null
-    ) {
-        $modified_at = !$modified_at ? 'NOW()' : '"' . $modified_at . '"';
-
-        try {
-            $sql = '
-                INSERT INTO ' . _DB_PREFIX_ . 'paynow_payments 
-                    (id_order, id_cart, id_payment, order_reference, external_id, status, created_at, modified_at) 
-                VALUES (
-                    ' . (int)$id_order . ', 
-                    ' . (int)$id_cart . ', 
-                    "' . pSQL($id_payment) . '", 
-                    "' . pSQL($order_reference) . '", 
-                    "' . pSQL($external_id) . '", 
-                    "' . pSQL($status) . '", 
-                    NOW(), 
-                    ' . $modified_at . '
-                ) 
-                ON DUPLICATE KEY 
-                UPDATE modified_at=' . $modified_at;
-            if (Db::getInstance()->execute($sql)) {
-                return (int)Db::getInstance()->Insert_ID();
-            }
-        } catch (PrestaShopDatabaseException $exception) {
-            PaynowLogger::error($exception->getMessage() . '{orderReference={}}', [$order_reference]);
-        }
-
-        return false;
-    }
-
-    public function updatePaymentState(
-        $id_payment,
-        $status,
-        $modified_at = null
-    ) {
-        $modified_at = !$modified_at ? 'NOW()' : '"' . $modified_at . '"';
-
-        try {
-            $sql = '
-                UPDATE ' . _DB_PREFIX_ . 'paynow_payments 
-                SET status = "' . pSQL($status) . '", modified_at = ' . $modified_at . '  
-                WHERE id_payment = "' . pSQL($id_payment) . '"';
-            if (Db::getInstance()->execute($sql)) {
-                return (int)Db::getInstance()->Insert_ID();
-            }
-        } catch (PrestaShopDatabaseException $exception) {
-            PaynowLogger::error($exception->getMessage() . '{orderReference={}}', [$id_payment]);
-        }
-
-        return false;
-    }
-
-    public function getLastPaymentStatus($id_payment)
-    {
-        return Db::getInstance()->getRow('
-            SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
-            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
-            WHERE id_payment="' . pSQL($id_payment) . '" ORDER BY created_at DESC');
-    }
-
-    public function getLastPaymentStatusByOrderId($id_order)
-    {
-        return Db::getInstance()->getRow('
-            SELECT status 
-            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
-            WHERE id_order="' . (int)$id_order . '" ORDER BY created_at DESC');
-    }
-
-    public function getLastPaymentDataByOrderReference($order_reference)
-    {
-        return Db::getInstance()->getRow('
-            SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
-            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
-            WHERE order_reference="' . pSQL($order_reference) . '" ORDER BY created_at DESC');
-    }
-
-    public function getAllPaymentsDataByOrderReference($order_reference)
-    {
-        return Db::getInstance()->executeS('
-            SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
-            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
-            WHERE order_reference="' . pSQL($order_reference) . '" ORDER BY created_at DESC');
-    }
-
-    public function getOrderUrl($order)
-    {
-        if (Cart::isGuestCartByCartId($order->id_cart)) {
-            $customer = new Customer((int)$order->id_customer);
-            return $this->context->link->getPageLink(
-                'guest-tracking',
-                null,
-                $this->context->language->id,
-                [
-                    'order_reference' => $order->reference,
-                    'email' => $customer->email
-                ]
-            );
-        }
-
-        return $this->context->link->getPageLink(
-            'order-detail',
-            null,
-            $this->context->language->id,
-            [
-                'id_order' => $order->id
-            ]
-        );
     }
 }

@@ -52,8 +52,7 @@ class PaynowLogger
     {
         $now = microtime(true);
         $micro = sprintf('%06d', ($now - floor($now)) * 1000000);
-        $date_time = new DateTime(date('Y-m-d H:i:s.' . $micro, $now));
-        return $date_time->format('Y-m-d G:i:s.u');
+        return (new DateTime(date('Y-m-d H:i:s.' . $micro, $now)))->format('Y-m-d G:i:s.u');
     }
 
     public static function info($message, $context = [])

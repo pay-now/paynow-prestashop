@@ -7,31 +7,34 @@
  *
  * @author mElements S.A.
  * @copyright mElements S.A.
- * @license MIT License
+ * @license   MIT License
  */
 
-require_once(dirname(__FILE__) . '/../../classes/PaynowFrontController.php');
-require_once(dirname(__FILE__) . '/../../classes/OrderStateProcessor.php');
+use Paynow\Model\Payment\Status;
 
 class PaynowReturnModuleFrontController extends PaynowFrontController
 {
-    private $order;
-
-    private $payment;
-
     public function initContent()
     {
         $this->display_column_left = false;
         parent::initContent();
 
         $order_reference = Tools::getValue('order_reference');
+        $id_cart = Tools::getValue('id_cart');
         $token = Tools::getValue('token');
 
-        if (!$order_reference) {
+        if ((! $order_reference || ! $id_cart) && !$this->isTokenValid()) {
             $this->redirectToOrderHistory();
         }
 
-        $this->payment = $this->module->getLastPaymentDataByOrderReference($order_reference);
+        if ($order_reference) {
+            $this->payment = (array)PaynowPaymentData::findLastByOrderReference($order_reference);
+        }
+
+        if ($id_cart) {
+            $this->payment = (array)PaynowPaymentData::findLastByCartId($id_cart);
+        }
+
         if (!$this->payment) {
             $this->redirectToOrderHistory();
         }
@@ -42,44 +45,44 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             $this->redirectToOrderHistory();
         }
 
-        if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')) {
-            $this->getPaymentStatus();
+        if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')
+            && Status::STATUS_CONFIRMED !== $this->payment['status']) {
+            $payment_id = Tools::getValue('paymentId');
+            $payment_status = $this->getPaymentStatus($payment_id);
+            $this->updateOrderState(
+                $this->payment['id_order'],
+                $this->payment['id_payment'],
+                $this->payment['id_cart'],
+                $this->payment['order_reference'],
+                $this->payment['external_id'],
+                $this->payment['status'],
+                $payment_status
+            );
+            Tools::redirectLink(LinkHelper::getContinueUrl(
+                $this->order->id_cart,
+                $this->module->id,
+                $this->order->secure_key,
+                $this->order->id,
+                $this->order->reference
+            ));
         }
 
         $currentState = $this->order->getCurrentStateFull($this->context->language->id);
         $this->context->smarty->assign([
             'logo' => $this->module->getLogo(),
-            'details_url' => $this->module->getOrderUrl($this->order),
+            'details_url' => LinkHelper::getOrderUrl($this->order),
             'order_status' => $currentState['name'],
             'order_reference' => $this->order->reference,
             'show_details_button' => $token == Tools::encrypt($order_reference),
-            'show_retry_button' => $this->module->canOrderPaymentBeRetried($this->order->id),
+            'show_retry_button' => $this->module->canOrderPaymentBeRetried($this->order),
             'HOOK_ORDER_CONFIRMATION' => $this->displayOrderConfirmation(),
-            'retry_url' => $this->context->link->getModuleLink('paynow', 'payment', [
-                'id_order' => $this->order->id,
-                'order_reference' => $order_reference
+            'retry_url' => LinkHelper::getPaymentUrl([
+                'id_order'        => $this->order->id,
+                'order_reference' => $this->order->reference
             ])
         ]);
 
         $this->renderTemplate('return.tpl');
-    }
-
-    private function redirectToOrderHistory()
-    {
-        Tools::redirect(
-            'index.php?controller=history',
-            __PS_BASE_URI__,
-            null,
-            'HTTP/1.1 301 Moved Permanently'
-        );
-    }
-
-    private function redirectToReturnPageWithoutPaymentIdAndStatusQuery()
-    {
-        $params = ['order_reference' => Tools::getValue('order_reference'), 'token' => Tools::getValue('token')];
-        $url = $this->context->link->getModuleLink($this->module->name, 'return', $params);
-
-        Tools::redirectLink($url);
     }
 
     private function displayOrderConfirmation()
@@ -98,19 +101,5 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             'currency' => $currency->sign,
             'total_to_pay' => $this->order->getOrdersTotalPaid()
         ];
-    }
-
-    private function getPaymentStatus()
-    {
-        try {
-            $payment_client = new Paynow\Service\Payment($this->module->api_client);
-            $paymentId = Tools::getValue('paymentId');
-            $status = $payment_client->status($paymentId)->getStatus();
-            $orderStateProcessor = new OrderStateProcessor();
-            $orderStateProcessor->updateState($this->payment, $status, $paymentId);
-        } catch (Exception $exception) {
-            PaynowLogger::error($exception->getMessage());
-        }
-        $this->redirectToReturnPageWithoutPaymentIdAndStatusQuery();
     }
 }

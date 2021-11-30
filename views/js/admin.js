@@ -9,19 +9,20 @@
  * @license   MIT License
  **/
 $(document).ready(function () {
-    var paymentValidityTimeSwitchOn = $('#PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED_on');
-    var paymentValidityTimeSwitchOff = $('#PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED_off');
-    var paymentValidityTimeInput = $('input[name="PAYNOW_PAYMENT_VALIDITY_TIME"]');
+    let paymentValidityTimeSwitchOn = $('#PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED_on');
+    let paymentValidityTimeSwitchOnLabel = $('label[for="PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED_on"]');
+    let paymentValidityTimeSwitchOffLabel = $('label[for="PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED_off"]');
+    let paymentValidityTimeInput = $('input[name="PAYNOW_PAYMENT_VALIDITY_TIME"]');
 
     if (!paymentValidityTimeSwitchOn.is(':checked')) {
         paymentValidityTimeInput.prop('disabled', true);
     }
 
-    paymentValidityTimeSwitchOn.on("change", function(){
+    paymentValidityTimeSwitchOnLabel.on("click", function () {
         paymentValidityTimeInput.prop('disabled', false);
     });
 
-    paymentValidityTimeSwitchOff.on("change", function(){
+    paymentValidityTimeSwitchOffLabel.on("click", function () {
         paymentValidityTimeInput.prop('disabled', true);
-    });
+    })
 });
