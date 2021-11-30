@@ -17,6 +17,7 @@ if (!defined('_PS_VERSION_')) {
 function upgrade_module_1_5_0($module)
 {
     return $module->registerHook('displayAdminOrder') &&
+           $module->unregisterHook('displayAdminOrderTop') &&
            Db::getInstance()->execute(
                "ALTER TABLE `" . _DB_PREFIX_ . "paynow_payments` 
                ADD INDEX `index_order_cart_payment_reference` (`id_order`, `id_cart`, `id_payment`, `order_reference`)");

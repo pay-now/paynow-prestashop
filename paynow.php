@@ -110,7 +110,6 @@ class Paynow extends PaymentModule
             $this->registerHook('displayOrderDetail') &&
             $this->registerHook('actionOrderStatusPostUpdate') &&
             $this->registerHook('actionOrderSlipAdd') &&
-            $this->registerHook('displayAdminOrderTop') &&
             $this->registerHook('displayAdminOrder') &&
             $this->registerHook('displayAdminAfterHeader') &&
             $this->registerHook('actionAdminControllerSetMedia');
@@ -378,7 +377,7 @@ class Paynow extends PaymentModule
         ]);
 
         $payment_options = [];
-        if (Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS')) {
+        if ((int)Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS') === 1) {
             $payment_methods = $this->getPaymentMethods();
             if (!empty($payment_methods)) {
                 $list = [];
@@ -467,7 +466,7 @@ class Paynow extends PaymentModule
      */
     public function hookActionOrderSlipAdd($params)
     {
-        if ((int)Configuration::get('PAYNOW_REFUNDS_ENABLED') == 1 && Tools::isSubmit('makeRefundViaPaynow') &&
+        if ((int)Configuration::get('PAYNOW_REFUNDS_ENABLED') === 1 && Tools::isSubmit('makeRefundViaPaynow') &&
             $this->name = $params['order']->module) {
                 (new RefundProcessor($this->getPaynowClient(), $this->displayName))
                     ->processFromOrderSlip($params['order']);
@@ -481,8 +480,8 @@ class Paynow extends PaymentModule
      */
     public function hookActionOrderStatusPostUpdate($params)
     {
-        if ((int)Configuration::get('PAYNOW_REFUNDS_ENABLED') == 1 &&
-            (int)Configuration::get('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED') == 1 &&
+        if ((int)Configuration::get('PAYNOW_REFUNDS_ENABLED') === 1 &&
+            (int)Configuration::get('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED') === 1 &&
             $this->context->controller instanceof AdminController) {
             $order = new Order($params['id_order']);
             $newOrderStatus = $params['newOrderStatus'];
@@ -494,9 +493,9 @@ class Paynow extends PaymentModule
         }
     }
 
-    public function hookDisplayAdminOrderTop($params)
+    public function hookDisplayAdminOrder($params)
     {
-        if (!(int)Configuration::get('PAYNOW_REFUNDS_ENABLED') == 1) {
+        if (!(int)Configuration::get('PAYNOW_REFUNDS_ENABLED') === 1) {
             return;
         }
 
@@ -507,12 +506,6 @@ class Paynow extends PaymentModule
 
         $this->context->smarty->assign('makePaynowRefundCheckboxLabel', $this->l('Make a refund via paynow.pl'));
         return $this->fetchTemplate('/views/templates/hook/admin_order_top.tpl');
-    }
-
-
-    public function hookDisplayAdminOrder($params)
-    {
-        return $this->hookDisplayAdminOrderTop($params);
     }
 
     public function hookDisplayAdminAfterHeader()
@@ -570,7 +563,7 @@ class Paynow extends PaymentModule
     private function postValidation()
     {
         if (Tools::isSubmit('submit' . $this->name)) {
-            if ((int)Tools::getValue('PAYNOW_SANDBOX_ENABLED') == 1 &&
+            if ((int)Tools::getValue('PAYNOW_SANDBOX_ENABLED') === 1 &&
                 (!Tools::getValue('PAYNOW_SANDBOX_API_KEY') ||
                     !Tools::getValue('PAYNOW_SANDBOX_API_SIGNATURE_KEY'))) {
                 $this->postErrors[] = $this->l('Integration keys must be set');
@@ -586,7 +579,8 @@ class Paynow extends PaymentModule
                 $this->postErrors[] = $this->l('Payment validity time must be greater than 60 and less than 86400 seconds');
             }
 
-            if ((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 1 && !Validate::isInt(Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME'))) {
+            if ((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') === 1 &&
+                !Validate::isInt(Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME'))) {
                 $this->postErrors[] = $this->l('Payment validity time must be integer');
             }
         }
