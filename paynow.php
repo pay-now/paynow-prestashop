@@ -111,6 +111,7 @@ class Paynow extends PaymentModule
             $this->registerHook('actionOrderStatusPostUpdate') &&
             $this->registerHook('actionOrderSlipAdd') &&
             $this->registerHook('displayAdminOrderTop') &&
+            $this->registerHook('displayAdminOrder') &&
             $this->registerHook('displayAdminAfterHeader') &&
             $this->registerHook('actionAdminControllerSetMedia');
 
@@ -466,29 +467,52 @@ class Paynow extends PaymentModule
      */
     public function hookActionOrderSlipAdd($params)
     {
-        if (Configuration::get('PAYNOW_REFUNDS_ENABLED') && Tools::isSubmit('makeRefundViaPaynow')) {
-            $order = $params['order'];
-            PaynowLogger::info('Processing refund request {orderReference={}}', [$order->reference]);
-            if ($this->name = $order->module) {
-                $orderSlip = $order->getOrderSlipsCollection()
-                    ->orderBy('date_upd', 'desc')
-                    ->getFirst();
-                $payments = $order->getOrderPaymentCollection()->getResults();
-                $amount_from_slip = $orderSlip->amount + $orderSlip->shipping_cost_amount;
-                $refund_processor = new RefundProcessor($this->getPaynowClient(), $this->displayName);
-                $refund_processor->process($order->reference, $payments, $amount_from_slip);
+        if ((int)Configuration::get('PAYNOW_REFUNDS_ENABLED') == 1 && Tools::isSubmit('makeRefundViaPaynow') &&
+            $this->name = $params['order']->module) {
+                (new RefundProcessor($this->getPaynowClient(), $this->displayName))
+                    ->processFromOrderSlip($params['order']);
+        }
+    }
+
+    /**
+     * Handle status change to make a refund
+     *
+     * @param $params
+     */
+    public function hookActionOrderStatusPostUpdate($params)
+    {
+        if ((int)Configuration::get('PAYNOW_REFUNDS_ENABLED') == 1 &&
+            (int)Configuration::get('PAYNOW_REFUNDS_AFTER_STATUS_CHANGE_ENABLED') == 1 &&
+            $this->context->controller instanceof AdminController) {
+            $order = new Order($params['id_order']);
+            $newOrderStatus = $params['newOrderStatus'];
+
+            if ((int)Configuration::get('PAYNOW_REFUNDS_ON_STATUS') === $newOrderStatus->id) {
+                (new RefundProcessor($this->getPaynowClient(), $this->displayName))
+                    ->processFromOrderStatusChange($order);
             }
         }
     }
 
     public function hookDisplayAdminOrderTop($params)
     {
-        if (!Configuration::get('PAYNOW_REFUNDS_ENABLED')) {
+        if (!(int)Configuration::get('PAYNOW_REFUNDS_ENABLED') == 1) {
+            return;
+        }
+
+        $order = new Order($params['id_order']);
+        if ($order->module !== $this->name) {
             return;
         }
 
         $this->context->smarty->assign('makePaynowRefundCheckboxLabel', $this->l('Make a refund via paynow.pl'));
         return $this->fetchTemplate('/views/templates/hook/admin_order_top.tpl');
+    }
+
+
+    public function hookDisplayAdminOrder($params)
+    {
+        return $this->hookDisplayAdminOrderTop($params);
     }
 
     public function hookDisplayAdminAfterHeader()
