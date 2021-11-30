@@ -87,7 +87,7 @@ class GDPRHelper
 
     private function isSandbox()
     {
-        return (int)Configuration::get('PAYNOW_SANDBOX_ENABLED') == 1;
+        return (int)Configuration::get('PAYNOW_SANDBOX_ENABLED') === 1;
     }
 
     private function cleanLocale($locale)
