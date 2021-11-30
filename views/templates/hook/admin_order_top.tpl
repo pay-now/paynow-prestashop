@@ -24,7 +24,7 @@ $(document).ready(() => {
                 </div>
          </div>
     `;
-    $('.refund-checkboxes-container').prepend(makePaynowRefundCheckbox);
+    $('.refund-checkboxes-container, div.partial_refund_fields').prepend(makePaynowRefundCheckbox);
 });
 {/literal}
 </script>
