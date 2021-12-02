@@ -30,7 +30,7 @@ class OrderStateProcessor
         $new_status
     ) {
         $order = new Order($id_order);
-        if ($order && $order->module == $this->module->name && $old_status !== $new_status) {
+        if ($order && $order->module == $this->module->name && $this->canProcessStatusChange($old_status, $new_status)) {
             if (!$this->isCorrectStatus($old_status, $new_status)) {
                 throw new Exception(
                     'Status transition is incorrect ' . $old_status . ' - ' . $new_status
@@ -85,6 +85,11 @@ class OrderStateProcessor
                 ]
             );
         }
+    }
+
+    private function canProcessStatusChange($old_status, $new_status): bool
+    {
+        return $old_status !== $new_status && $old_status !== Paynow\Model\Payment\Status::STATUS_CONFIRMED;
     }
 
     private function changeState($order, $new_order_state_id)
