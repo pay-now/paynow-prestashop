@@ -19,7 +19,7 @@ class PaynowLogger
 
     public static function log($type, $message, $context = [])
     {
-        if ((int)Configuration::get('PAYNOW_DEBUG_LOGS_ENABLED')) {
+        if ((int)Configuration::get('PAYNOW_DEBUG_LOGS_ENABLED') === 1) {
             $file_name = 'paynow-' . date('Y-m-d');
             $file_path = dirname(__FILE__) . '/../log/' . $file_name . '-' . Tools::encrypt($file_name) . '.log';
 
@@ -27,7 +27,7 @@ class PaynowLogger
         }
     }
 
-    private static function processRecord($type, $message, $context)
+    private static function processRecord($type, $message, $context): string
     {
         $split_message = explode('{}', $message);
         $message_part_count = sizeof($split_message);
