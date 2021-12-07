@@ -71,21 +71,7 @@ class PaymentOptions
                                 'module:paynow/views/templates/front/1.7/payment_form.tpl'
                             ));
                         } else {
-                            if (Paynow\Model\PaymentMethods\Type::BLIK == $payment_method->getType()) {
-                                $this->context->smarty->assign([
-                                    'action_blik' => Context::getContext()->link->getModuleLink(
-                                        'paynow',
-                                        'chargeBlik',
-                                        [
-                                            'paymentMethodId' => $payment_method->getId()
-                                        ]
-                                    ),
-                                    'action_token' => Tools::encrypt($this->context->customer->secure_key),
-                                    'error_message' => $this->getMessage('An error occurred during the payment process'),
-                                    'terms_message' => $this->getMessage('You have to accept terms and conditions')
-                                ]);
-                            }
-
+                            $this->setUpAdditionalTemplateVariables($payment_method);
                             array_push($payment_options, $this->getPaymentOption(
                                 $this->module->getPaymentMethodTitle($payment_method->getType()),
                                 $payment_method->getImage(),
@@ -108,6 +94,32 @@ class PaymentOptions
         }
 
         return $payment_options;
+    }
+
+    private function setUpAdditionalTemplateVariables($payment_method) {
+        if (Paynow\Model\PaymentMethods\Type::BLIK == $payment_method->getType()) {
+            $this->context->smarty->assign([
+                'action_blik' => Context::getContext()->link->getModuleLink(
+                    'paynow',
+                    'chargeBlik',
+                    [
+                        'paymentMethodId' => $payment_method->getId()
+                    ]
+                ),
+                'action_token' => Tools::encrypt($this->context->customer->secure_key),
+                'error_message' => $this->getMessage('An error occurred during the payment process'),
+                'terms_message' => $this->getMessage('You have to accept terms and conditions')
+            ]);
+        }
+    }
+
+    private function getForm($payment_method): ?string
+    {
+        if ($this->isWhiteLabelEnabled(Paynow\Model\PaymentMethods\Type::BLIK, $payment_method)) {
+            return 'module:paynow/views/templates/front/1.7/payment_method_blik_form.tpl';
+        }
+
+        return null;
     }
 
     /**
@@ -152,14 +164,5 @@ class PaymentOptions
     private function getMessage($key)
     {
         return $this->module->getTranslationsArray()[$key];
-    }
-
-    private function getForm($payment_method)
-    {
-        if ($this->isWhiteLabelEnabled($payment_method->getType(), $payment_method)) {
-            return 'module:paynow/views/templates/front/1.7/payment_method_blik_form.tpl';
-        }
-
-        return null;
     }
 }
