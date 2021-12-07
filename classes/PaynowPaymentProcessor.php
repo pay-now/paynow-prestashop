@@ -15,7 +15,7 @@ use Paynow\Exception\ConfigurationException;
 use Paynow\Response\Payment\Authorize;
 use Paynow\Service\Payment;
 
-class PaymentProcessor
+class PaynowPaymentProcessor
 {
     /**
      * @var Payment

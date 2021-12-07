@@ -58,7 +58,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
                 $this->payment['status'],
                 $payment_status
             );
-            Tools::redirectLink(LinkHelper::getContinueUrl(
+            Tools::redirectLink(PaynowLinkHelper::getContinueUrl(
                 $this->order->id_cart,
                 $this->module->id,
                 $this->order->secure_key,
@@ -70,13 +70,13 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         $currentState = $this->order->getCurrentStateFull($this->context->language->id);
         $this->context->smarty->assign([
             'logo' => $this->module->getLogo(),
-            'details_url' => LinkHelper::getOrderUrl($this->order),
+            'details_url' => PaynowLinkHelper::getOrderUrl($this->order),
             'order_status' => $currentState['name'],
             'order_reference' => $this->order->reference,
             'show_details_button' => $token == Tools::encrypt($order_reference),
             'show_retry_button' => $this->module->canOrderPaymentBeRetried($this->order),
             'HOOK_ORDER_CONFIRMATION' => $this->displayOrderConfirmation(),
-            'retry_url' => LinkHelper::getPaymentUrl([
+            'retry_url' => PaynowLinkHelper::getPaymentUrl([
                 'id_order'        => $this->order->id,
                 'order_reference' => $this->order->reference
             ])

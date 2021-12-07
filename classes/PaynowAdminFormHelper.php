@@ -10,7 +10,7 @@
  * @license   MIT License
  */
 
-class AdminFormHelper
+class PaynowAdminFormHelper
 {
     /**
      * @var Module

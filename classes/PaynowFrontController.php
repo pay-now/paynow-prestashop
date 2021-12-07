@@ -67,7 +67,7 @@ class PaynowFrontController extends ModuleFrontControllerCore
         $new_status
     ) {
         try {
-            (new OrderStateProcessor())->updateState(
+            (new PaynowOrderStateProcessor())->updateState(
                 $id_order,
                 $id_payment,
                 $id_cart,

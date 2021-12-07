@@ -127,8 +127,8 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     {
         try {
             $idempotency_key      = uniqid($this->order->reference . '_');
-            $payment_request_data = (new PaymentDataBuilder($this->module))->fromOrder($this->order);
-            $payment              = (new PaymentProcessor($this->module->getPaynowClient()))
+            $payment_request_data = (new PaynowPaymentDataBuilder($this->module))->fromOrder($this->order);
+            $payment              = (new PaynowPaymentProcessor($this->module->getPaynowClient()))
                 ->process($payment_request_data, $idempotency_key);
 
             PaynowPaymentData::create(
@@ -152,7 +152,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 Paynow\Model\Payment\Status::STATUS_NEW,
                 Paynow\Model\Payment\Status::STATUS_PENDING
             ])) {
-                Tools::redirect(LinkHelper::getReturnUrl(
+                Tools::redirect(PaynowLinkHelper::getReturnUrl(
                     $this->order->id_cart,
                     Tools::encrypt($this->order->reference),
                     $this->order->reference
@@ -160,7 +160,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             }
 
             if (! $payment->getRedirectUrl()) {
-                Tools::redirect(LinkHelper::getContinueUrl(
+                Tools::redirect(PaynowLinkHelper::getContinueUrl(
                     $this->order->id_cart,
                     $this->module->id,
                     $this->order->secure_key,
@@ -194,7 +194,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     {
         $this->context->smarty->assign([
             'total_to_pay' => Tools::displayPrice($this->order->total_paid, (int)$this->order->id_currency),
-            'button_action' => LinkHelper::getPaymentUrl(
+            'button_action' => PaynowLinkHelper::getPaymentUrl(
                 [
                     'id_order' => $this->order->id,
                     'order_reference' => $this->order->reference
