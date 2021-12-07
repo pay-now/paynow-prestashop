@@ -9,7 +9,7 @@
 * @license   MIT License
 *}
 <form class="payment-form paynow-payment-form paynow-blik-form" data-method="POST" data-action="{$action_blik}" data-token="{$action_token}" data-error-message="{$error_message}" data-terms-message="{$terms_message}">
-    <div class="paynow-payment-option-blik">
+    <div class="paynow-payment-option-container">
         <div class="form-group row">
             <label for="paynow_blik_code" class="col-md-3 form-control-label required">
                 {l s='Enter the BLIK code' mod='paynow'}

@@ -150,10 +150,6 @@ p.payment_module.paynow button:after {
     margin: 1.5rem 0;
 }
 
-.paynow-payment-option-blik {
-    padding: 1rem;
-}
-
 .paynow-payment-option-blik .paynow-data-processing-info {
     margin-top: 1rem;
 }
@@ -221,5 +217,19 @@ p.payment_module.paynow button:after {
         float: none !important;
         margin-bottom: .5rem;
         max-width: 50%;
+    }
+
+    .paynow-blik-form .paynow-payment-option-container  label {
+        padding-bottom: 0.5rem;
+    }
+
+    .paynow-blik-form .paynow-payment-option-container  button {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+}
+@media (min-width: 768px) {
+    .paynow-payment-option-container {
+        padding: 1rem;
     }
 }
