@@ -42,8 +42,8 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
             try {
                 $external_id          = $this->context->cart->id;
                 $idempotency_key      = uniqid($external_id . '_');
-                $payment_request_data = (new PaymentDataBuilder($this->module))->fromCart();
-                $payment              = (new PaymentProcessor($this->module->getPaynowClient()))
+                $payment_request_data = (new PaynowPaymentDataBuilder($this->module))->fromCart();
+                $payment              = (new PaynowPaymentProcessor($this->module->getPaynowClient()))
                     ->process($payment_request_data, $idempotency_key);
 
                 if ($payment && in_array($payment->getStatus(), [
@@ -55,7 +55,7 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                         'success'      => true,
                         'payment_id'   => $payment->getPaymentId(),
                         'order_id'     => $order->id,
-                        'redirect_url' => LinkHelper::getBlikConfirmUrl([
+                        'redirect_url' => PaynowLinkHelper::getBlikConfirmUrl([
                             'order_reference' => $order->reference,
                             'paymentId'       => $payment->getPaymentId(),
                             'paymentStatus'   => $payment->getStatus(),

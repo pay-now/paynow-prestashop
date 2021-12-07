@@ -10,7 +10,7 @@
  * @license   MIT License
  */
 
-class ConfigurationHelper
+class PaynowConfigurationHelper
 {
     public static function update()
     {

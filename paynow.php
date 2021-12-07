@@ -17,18 +17,18 @@ if (!defined('_PS_VERSION_')) {
 include_once(dirname(__FILE__) . '/vendor/autoload.php');
 include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
 include_once(dirname(__FILE__) . '/classes/PaynowLogger.php');
-include_once(dirname(__FILE__) . '/classes/ConfigurationHelper.php');
-include_once(dirname(__FILE__) . '/classes/PaymentMethodsHelper.php');
-include_once(dirname(__FILE__) . '/classes/PaymentOptions.php');
-include_once(dirname(__FILE__) . '/classes/RefundProcessor.php');
-include_once(dirname(__FILE__) . '/classes/GDPRHelper.php');
-include_once(dirname(__FILE__) . '/classes/LinkHelper.php');
-include_once(dirname(__FILE__) . '/classes/AdminFormHelper.php');
-include_once(dirname(__FILE__) . '/classes/OrderStateProcessor.php');
+include_once(dirname(__FILE__) . '/classes/PaynowConfigurationHelper.php');
+include_once(dirname(__FILE__) . '/classes/PaynowPaymentMethodsHelper.php');
+include_once(dirname(__FILE__) . '/classes/PaynowPaymentOptions.php');
+include_once(dirname(__FILE__) . '/classes/PaynowRefundProcessor.php');
+include_once(dirname(__FILE__) . '/classes/PaynowGDPRHelper.php');
+include_once(dirname(__FILE__) . '/classes/PaynowLinkHelper.php');
+include_once(dirname(__FILE__) . '/classes/PaynowAdminFormHelper.php');
+include_once(dirname(__FILE__) . '/classes/PaynowOrderStateProcessor.php');
 include_once(dirname(__FILE__) . '/models/PaynowPaymentData.php');
 include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
-include_once(dirname(__FILE__) . '/classes/PaymentProcessor.php');
-include_once(dirname(__FILE__) . '/classes/PaymentDataBuilder.php');
+include_once(dirname(__FILE__) . '/classes/PaynowPaymentProcessor.php');
+include_once(dirname(__FILE__) . '/classes/PaynowPaymentDataBuilder.php');
 
 class Paynow extends PaymentModule
 {
@@ -40,7 +40,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.5.2';
+        $this->version = '1.5.3';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -327,13 +327,13 @@ class Paynow extends PaymentModule
     {
         $total = number_format($this->context->cart->getOrderTotal() * 100, 0, '', '');
         $currency = new Currency($this->context->cart->id_currency);
-        return (new PaymentMethodsHelper($this->getPaynowClient()))->getAvailable($currency->iso_code, $total);
+        return (new PaynowPaymentMethodsHelper($this->getPaynowClient()))->getAvailable($currency->iso_code, $total);
     }
 
     private function getGDPRNotices(): array
     {
         $locale  = $this->context->language->locale ?? $this->context->language->language_code;
-        return (new GDPRHelper($this->getPaynowClient()))->getNotices($locale);
+        return (new PaynowGDPRHelper($this->getPaynowClient()))->getNotices($locale);
     }
 
     /** Returns is possible to show payment option
@@ -353,7 +353,7 @@ class Paynow extends PaymentModule
             return;
         }
 
-        $payment_options = new PaymentOptions(
+        $payment_options = new PaynowPaymentOptions(
             $this->context,
             $this,
             $this->getPaymentMethods(),
@@ -372,7 +372,7 @@ class Paynow extends PaymentModule
         $this->context->smarty->assign([
             'cta_text' => $this->getCallToActionText(),
             'logo' => $this->getLogo(),
-            'paynow_url' => LinkHelper::getPaymentUrl(),
+            'paynow_url' => PaynowLinkHelper::getPaymentUrl(),
             'data_processing_notices' => $gdpr_notices ?? null
         ]);
 
@@ -432,7 +432,7 @@ class Paynow extends PaymentModule
         return [
             'cta_text' => $this->getCallToActionText(),
             'logo' => $this->getLogo(),
-            'action' => LinkHelper::getPaymentUrl()
+            'action' => PaynowLinkHelper::getPaymentUrl()
         ];
     }
 
@@ -451,7 +451,7 @@ class Paynow extends PaymentModule
         }
 
         $this->context->smarty->assign([
-            'paynow_url' => LinkHelper::getPaymentUrl([
+            'paynow_url' => PaynowLinkHelper::getPaymentUrl([
                 'id_order' => $id_order,
                 'order_reference' => $params['order']->reference
             ])
@@ -468,7 +468,7 @@ class Paynow extends PaymentModule
     {
         if ((int)Configuration::get('PAYNOW_REFUNDS_ENABLED') === 1 && Tools::isSubmit('makeRefundViaPaynow') &&
             $this->name = $params['order']->module) {
-                (new RefundProcessor($this->getPaynowClient(), $this->displayName))
+                (new PaynowRefundProcessor($this->getPaynowClient(), $this->displayName))
                     ->processFromOrderSlip($params['order']);
         }
     }
@@ -487,7 +487,7 @@ class Paynow extends PaymentModule
             $newOrderStatus = $params['newOrderStatus'];
 
             if ((int)Configuration::get('PAYNOW_REFUNDS_ON_STATUS') === $newOrderStatus->id) {
-                (new RefundProcessor($this->getPaynowClient(), $this->displayName))
+                (new PaynowRefundProcessor($this->getPaynowClient(), $this->displayName))
                     ->processFromOrderStatusChange($order);
             }
         }
@@ -598,7 +598,7 @@ class Paynow extends PaymentModule
 
     private function postProcess()
     {
-        ConfigurationHelper::update();
+        PaynowConfigurationHelper::update();
         if ($this->isConfigured()) {
             $this->html .= $this->displayConfirmation($this->l('Configuration updated'));
             $this->sendShopUrlsConfiguration();
@@ -611,7 +611,7 @@ class Paynow extends PaymentModule
         try {
             $shop_configuration->changeUrls(
                 Context::getContext()->link->getModuleLink($this->name, 'return'),
-                LinkHelper::getNotificationUrl()
+                PaynowLinkHelper::getNotificationUrl()
             );
         } catch (Paynow\Exception\PaynowException $exception) {
             PaynowLogger::error('Could not properly configure shop urls {message={}}', [$exception->getMessage()]);
@@ -651,7 +651,7 @@ class Paynow extends PaymentModule
         }
 
         $this->displayBackOfficeAccountInformation();
-        $this->html .= (new AdminFormHelper($this, $this->context, $this->getTranslationsArray()))->generate();
+        $this->html .= (new PaynowAdminFormHelper($this, $this->context, $this->getTranslationsArray()))->generate();
 
         return $this->html;
     }

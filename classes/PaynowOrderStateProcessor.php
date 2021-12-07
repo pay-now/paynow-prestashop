@@ -10,7 +10,7 @@
  * @license   MIT License
  */
 
-class OrderStateProcessor
+class PaynowOrderStateProcessor
 {
     /** @var Module */
     public $module;

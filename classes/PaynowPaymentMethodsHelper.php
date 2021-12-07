@@ -19,7 +19,7 @@ use Paynow\Service\Payment;
 /**
  * Class PaymentMethodsHelper
  */
-class PaymentMethodsHelper
+class PaynowPaymentMethodsHelper
 {
     /**
      * @var Payment
