@@ -26,11 +26,14 @@ class PaynowLinkHelper
             }
 
             if ($order_reference) {
-                $params['order_reference'] = $id_order;
+                $params['order_reference'] = $order_reference;
             }
 
             return Context::getContext()->link->getPageLink(
-                'order-confirmation'
+                'order-confirmation',
+                null,
+                Context::getContext()->language->id,
+                $params
             );
         }
 
