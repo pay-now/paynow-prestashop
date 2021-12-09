@@ -27,7 +27,7 @@
                     status.text(message.order_status);
                     if (message.payment_status === "CONFIRMED") {
                         clearInterval(pollPaymentStatus);
-                        redirectToReturn();
+                        window.location.replace(message.redirect_url);
                     }
                 },
                 error: function () {

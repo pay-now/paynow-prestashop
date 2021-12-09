@@ -40,10 +40,22 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
             $this->order   = new Order($payment->id_order);
             $current_state = $this->order->getCurrentStateFull($this->context->language->id);
 
-            $this->ajaxRender(json_encode([
+            $response = [
                 'order_status'   => $current_state['name'],
                 'payment_status' => $payment_status
-            ]));
+            ];
+
+            if (Status::STATUS_CONFIRMED === $payment_status) {
+                $response['redirect_url'] = PaynowLinkHelper::getContinueUrl(
+                    $payment->id_cart,
+                    $this->module->id,
+                    $this->context->customer->secure_key,
+                    $payment->id_order,
+                    $payment->order_reference
+                );
+            }
+
+            $this->ajaxRender(json_encode($response));
             exit;
         }
     }
