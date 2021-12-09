@@ -10,6 +10,9 @@
 *}
 {if !empty($payment_options)}
     {foreach from=$payment_options item=method}
+        {if ($method.type !== 'BLIK' AND $method.type !== 'PBL' ||  ($method.type == 'BLIK' AND $method.authorization != 'CODE')) }
+            <form action="{$paynow_url|escape:'htmlall':'UTF-8'}" method="POST">
+        {/if}
         <p class="payment_module paynow{if !empty($method.pbls)} with-pbls{/if}">
             {include file="./_partials/payment_method_button.tpl"}
             {if !empty($method.pbls)}
@@ -20,12 +23,17 @@
                 {/if}
             {/if}
         </p>
+        {if ($method.type !== 'BLIK' AND $method.type !== 'PBL' ||  ($method.type == 'BLIK' AND $method.authorization != 'CODE')) }
+            </form>
+        {/if}
     {/foreach}
 {else}
-    <p class="payment_module paynow">
-        <button name="paymentMethodId" type="submit" class="payment-option">
-            <img src="{$logo|escape:'htmlall':'UTF-8'}" alt="{$cta_text|escape:'htmlall':'UTF-8'}">
-            {$cta_text|escape:'htmlall':'UTF-8'}
-        </button>
-    </p>
+    <form action="{$paynow_url|escape:'htmlall':'UTF-8'}" method="POST">
+        <p class="payment_module paynow">
+            <button name="paymentMethodId" type="submit" class="payment-option">
+                <img src="{$logo|escape:'htmlall':'UTF-8'}" alt="{$cta_text|escape:'htmlall':'UTF-8'}">
+                {$cta_text|escape:'htmlall':'UTF-8'}
+            </button>
+        </p>
+    </form>
 {/if}
