@@ -15,7 +15,7 @@ use Paynow\Response\DataProcessing\Notices;
 use Paynow\Response\PaymentMethods\PaymentMethods;
 use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
 
-class PaymentOptions
+class PaynowPaymentOptions
 {
     /**
      * @var Context
@@ -53,7 +53,7 @@ class PaymentOptions
             if (! empty($this->payment_methods)) {
                 $list = [];
                 $this->context->smarty->assign([
-                    'action' => LinkHelper::getPaymentUrl(),
+                    'action' => PaynowLinkHelper::getPaymentUrl(),
                     'data_processing_notices' => $this->data_processing_notices
                 ]);
 
@@ -67,7 +67,7 @@ class PaymentOptions
                             array_push($payment_options, $this->getPaymentOption(
                                 $this->module->getPaymentMethodTitle($payment_method->getType()),
                                 $this->module->getLogo(),
-                                LinkHelper::getPaymentUrl(),
+                                PaynowLinkHelper::getPaymentUrl(),
                                 'module:paynow/views/templates/front/1.7/payment_form.tpl'
                             ));
                         } else {
@@ -75,7 +75,7 @@ class PaymentOptions
                             array_push($payment_options, $this->getPaymentOption(
                                 $this->module->getPaymentMethodTitle($payment_method->getType()),
                                 $payment_method->getImage(),
-                                LinkHelper::getPaymentUrl([
+                                PaynowLinkHelper::getPaymentUrl([
                                     'paymentMethodId' => $payment_method->getId()
                                 ]),
                                 $this->getForm($payment_method)
@@ -89,7 +89,7 @@ class PaymentOptions
             array_push($payment_options, $this->getPaymentOption(
                 $this->module->getCallToActionText(),
                 $this->module->getLogo(),
-                LinkHelper::getPaymentUrl()
+                PaynowLinkHelper::getPaymentUrl()
             ));
         }
 

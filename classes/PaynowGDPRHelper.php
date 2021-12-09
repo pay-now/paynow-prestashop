@@ -16,7 +16,7 @@ use Paynow\Exception\PaynowException;
 /**
  * GdprHelper
  */
-class GDPRHelper
+class PaynowGDPRHelper
 {
     /**
      * @var Client

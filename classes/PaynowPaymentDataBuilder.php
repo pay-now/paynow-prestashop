@@ -10,7 +10,7 @@
  * @license   MIT License
  */
 
-class PaymentDataBuilder
+class PaynowPaymentDataBuilder
 {
     private $context;
 
@@ -104,7 +104,7 @@ class PaymentDataBuilder
                 'email'     => $customer->email,
                 'locale'    => $this->context->language->locale ?? $this->context->language->language_code
             ],
-            'continueUrl' => LinkHelper::getContinueUrl(
+            'continueUrl' => PaynowLinkHelper::getContinueUrl(
                 $id_cart,
                 $this->module->id,
                 $customer->secure_key,

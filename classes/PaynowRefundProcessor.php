@@ -12,7 +12,7 @@
 
 use Paynow\Client;
 
-class RefundProcessor
+class PaynowRefundProcessor
 {
     /**
      * @var Client

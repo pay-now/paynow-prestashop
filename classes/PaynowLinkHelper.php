@@ -10,7 +10,7 @@
  * @license   MIT License
  */
 
-class LinkHelper
+class PaynowLinkHelper
 {
     public static function getContinueUrl($id_cart, $id_module, $secure_key, $id_order = null, $order_reference = null)
     {
@@ -34,7 +34,7 @@ class LinkHelper
             );
         }
 
-        return LinkHelper::getReturnUrl($id_cart, Tools::encrypt($order_reference), $order_reference);
+        return PaynowLinkHelper::getReturnUrl($id_cart, Tools::encrypt($order_reference), $order_reference);
     }
 
     public static function getPaymentUrl($url_params = null)

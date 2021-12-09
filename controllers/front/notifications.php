@@ -46,7 +46,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 header('HTTP/1.1 400 Bad Request', true, 400);
                 exit;
             }
-            (new OrderStateProcessor())->updateState(
+            (new PaynowOrderStateProcessor())->updateState(
                 $filteredPayments[0]->id_order,
                 $notification_data['paymentId'],
                 $filteredPayments[0]->id_cart,

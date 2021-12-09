@@ -42,7 +42,7 @@ function enableBlikFormSupport()
     $('.paynow-blik-form button').on('click', function (e) {
         e.preventDefault();
         let $blik_pay_button = $($paynow_blik_form).find('button');
-        if ($('#conditions_to_approve\\[terms-and-conditions\\], #cgv').is(':checked')) {
+        if ($('#conditions_to_approve\\[terms-and-conditions\\], #cgv').length == 0 || $('#conditions_to_approve\\[terms-and-conditions\\], #cgv').length && $('#conditions_to_approve\\[terms-and-conditions\\], #cgv').is(':checked')) {
             $blik_pay_button.prop('disabled', true);
             $.ajax($paynow_blik_form.data('action'), {
                 method: 'POST', type: 'POST',
@@ -62,7 +62,9 @@ function enableBlikFormSupport()
                 $paynow_blik_error_span.text($paynow_blik_form.data('error-message'))
             });
         } else {
-            $paynow_blik_error_span.text($paynow_blik_form.data('terms-message'))
+            if ($('#conditions_to_approve\\[terms-and-conditions\\], #cgv').length) {
+                $paynow_blik_error_span.text($paynow_blik_form.data('terms-message'));
+            }
         }
     })
 }
