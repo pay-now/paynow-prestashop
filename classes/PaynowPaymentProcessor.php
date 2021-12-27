@@ -12,6 +12,7 @@
 
 use Paynow\Client;
 use Paynow\Exception\ConfigurationException;
+use Paynow\Exception\PaynowException;
 use Paynow\Response\Payment\Authorize;
 use Paynow\Service\Payment;
 
@@ -37,6 +38,7 @@ class PaynowPaymentProcessor
      * @param $idempotency_key
      *
      * @return Authorize|null
+     * @throws PaynowException
      */
     public function process($payment_request_data, $idempotency_key): ?Authorize
     {

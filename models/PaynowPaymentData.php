@@ -30,6 +30,8 @@ class PaynowPaymentData extends ObjectModel
 
     public $status;
 
+    public $total;
+
     public $created_at;
 
     public $modified_at;
@@ -39,12 +41,13 @@ class PaynowPaymentData extends ObjectModel
         'primary' => self::PRIMARY_KEY,
         'fields'  => [
             self::PRIMARY_KEY => ['type' => self::TYPE_INT],
-            'id_order'        => ['type' => self::TYPE_INT, 'required' => true],
+            'id_order'        => ['type' => self::TYPE_INT, 'required' => false],
             'id_cart'         => ['type' => self::TYPE_INT, 'required' => true],
             'id_payment'      => ['type' => self::TYPE_STRING, 'required' => true],
-            'order_reference' => ['type' => self::TYPE_STRING, 'required' => true],
+            'order_reference' => ['type' => self::TYPE_STRING, 'required' => false],
             'external_id'     => ['type' => self::TYPE_STRING, 'required' => true],
             'status'          => ['type' => self::TYPE_STRING, 'required' => true],
+            'total'           => ['type' => self::TYPE_FLOAT, 'validate' => 'isPrice', 'required' => false],
             'created_at'      => ['type' => self::TYPE_DATE, 'required' => true],
             'modified_at'     => ['type' => self::TYPE_DATE, 'required' => true]
         ]
@@ -56,7 +59,8 @@ class PaynowPaymentData extends ObjectModel
         $id_order,
         $id_cart,
         $order_reference,
-        $external_id
+        $external_id,
+        $total = null
     ) {
         $now      = (new DateTime())->format('Y-m-d H:i:s');
         $model                  = new PaynowPaymentData();
@@ -66,6 +70,9 @@ class PaynowPaymentData extends ObjectModel
         $model->order_reference = $order_reference;
         $model->external_id     = $external_id;
         $model->status          = $status;
+        if ($total) {
+            $model->total = $total;
+        }
         $model->created_at      = $now;
         $model->modified_at     = $now;
         $model->add(false);
@@ -101,6 +108,22 @@ class PaynowPaymentData extends ObjectModel
             ->where('external_id', '=', $external_id)
             ->orderBy('created_at', 'desc')
             ->getAll();
+    }
+
+    /**
+     * @param $external_id
+     *
+     * @return false|ObjectModel
+     * @throws PrestaShopException
+     */
+    public static function findLastByExternalId($external_id)
+    {
+        $queryBuilder = new PrestaShopCollection(self::class);
+
+        return $queryBuilder
+            ->where('external_id', '=', $external_id)
+            ->orderBy('created_at', 'desc')
+            ->getFirst();
     }
 
     /**
@@ -153,9 +176,21 @@ class PaynowPaymentData extends ObjectModel
 
     public static function updateStatus($id_payment, $status)
     {
-        $data = PaynowPaymentData::findByPaymentId($id_payment);
-        $data->status = $status;
+        $data              = PaynowPaymentData::findByPaymentId($id_payment);
+        $data->status      = $status;
         $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
+        $data->update();
+    }
+
+    public static function updateOrderIdAndOrderReferenceByPaymentId(
+        $id_order,
+        $order_reference,
+        $id_payment
+    ) {
+        $data                  = PaynowPaymentData::findByPaymentId($id_payment);
+        $data->id_order        = $id_order;
+        $data->order_reference = $order_reference;
+        $data->modified_at     = (new DateTime())->format('Y-m-d H:i:s');
         $data->update();
     }
 }

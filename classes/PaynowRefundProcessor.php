@@ -37,7 +37,8 @@ class PaynowRefundProcessor
     /**
      * @param Order $order
      */
-    public function processFromOrderSlip(Order $order) {
+    public function processFromOrderSlip(Order $order)
+    {
         $orderSlip = $order->getOrderSlipsCollection()
                            ->orderBy('date_upd', 'desc')
                            ->getFirst();
@@ -52,7 +53,8 @@ class PaynowRefundProcessor
     /**
      * @param Order $order
      */
-    public function processFromOrderStatusChange(Order $order) {
+    public function processFromOrderStatusChange(Order $order)
+    {
         $amount_to_refund = $order->total_paid;
         if (!Configuration::get('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS')) {
             $amount_to_refund -= $order->total_shipping_tax_incl;

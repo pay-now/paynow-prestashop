@@ -96,7 +96,8 @@ class PaynowPaymentOptions
         return $payment_options;
     }
 
-    private function setUpAdditionalTemplateVariables($payment_method) {
+    private function setUpAdditionalTemplateVariables($payment_method)
+    {
         if (Paynow\Model\PaymentMethods\Type::BLIK == $payment_method->getType()) {
             $this->context->smarty->assign([
                 'action_blik' => Context::getContext()->link->getModuleLink(

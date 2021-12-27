@@ -40,7 +40,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.5.5';
+        $this->version = '1.6.0';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -168,7 +168,8 @@ class Paynow extends PaymentModule
             Configuration::updateValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED', 0) &&
             Configuration::updateValue('PAYNOW_PAYMENT_VALIDITY_TIME', 86400) &&
             Configuration::updateValue('PAYNOW_ORDER_ABANDONED_STATE', Configuration::get('PAYNOW_ORDER_INITIAL_STATE')) &&
-            Configuration::updateValue('PAYNOW_ORDER_EXPIRED_STATE', Configuration::get('PAYNOW_ORDER_INITIAL_STATE'));
+            Configuration::updateValue('PAYNOW_ORDER_EXPIRED_STATE', Configuration::get('PAYNOW_ORDER_INITIAL_STATE')) &&
+            Configuration::updateValue('PAYNOW_CREATE_ORDER_STATE', 1);
     }
 
     private function deleteModuleSettings()
@@ -192,7 +193,8 @@ class Paynow extends PaymentModule
             Configuration::deleteByName('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') &&
             Configuration::deleteByName('PAYNOW_PAYMENT_VALIDITY_TIME') &&
             Configuration::deleteByName('PAYNOW_ORDER_ABANDONED_STATE') &&
-            Configuration::deleteByName('PAYNOW_ORDER_EXPIRED_STATE');
+            Configuration::deleteByName('PAYNOW_ORDER_EXPIRED_STATE') &&
+            Configuration::deleteByName('PAYNOW_CREATE_ORDER_STATE');
     }
 
     public function createOrderInitialState()
@@ -365,7 +367,7 @@ class Paynow extends PaymentModule
     public function hookPayment($params)
     {
         if (!$this->arePaymentOptionsEnabled($params)) {
-            return;
+            return [];
         }
 
         $gdpr_notices = $this->getGDPRNotices();
@@ -427,8 +429,12 @@ class Paynow extends PaymentModule
         return $this->display(__FILE__, '/views/templates/hook/payment.tpl');
     }
 
-    public function hookDisplayPaymentEU()
+    public function hookDisplayPaymentEU($params)
     {
+        if (!$this->arePaymentOptionsEnabled($params)) {
+            return [];
+        }
+
         return [
             'cta_text' => $this->getCallToActionText(),
             'logo' => $this->getLogo(),
@@ -523,7 +529,6 @@ class Paynow extends PaymentModule
                 return $this->fetchTemplate('/views/templates/admin/_partials/upgrade.tpl');
             }
         } catch (Exception $exception) {
-
         }
 
         return null;
@@ -709,7 +714,10 @@ class Paynow extends PaymentModule
             'Wrong BLIK code'                                                                                                                                                                   => $this->l('Wrong BLIK code'),
             'BLIK code has expired'                                                                                                                                                             => $this->l('BLIK code has expired'),
             'BLIK code already used'                                                                                                                                                            => $this->l('BLIK code already used'),
-            'You have to accept terms and conditions'                                                                                                                                           => $this->l('You have to accept terms and conditions')
+            'You have to accept terms and conditions'                                                                                                                                           => $this->l('You have to accept terms and conditions'),
+            'Moment of creating order'                                                                                                                                                          => $this->l('Moment of creating order'),
+            'On clicking the Place order'                                                                                                                                                       => $this->l('On clicking the Place order'),
+            'After the successful Paynow payment'                                                                                                                                               => $this->l('After the successful Paynow payment')
         ];
     }
 }

@@ -18,6 +18,9 @@ class PaynowFrontController extends ModuleFrontControllerCore
 
     protected $payment;
 
+    /** @var Paynow */
+    public $module;
+
     public function generateToken(): string
     {
         return Tools::encrypt($this->context->customer->secure_key);

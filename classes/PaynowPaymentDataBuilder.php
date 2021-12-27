@@ -46,7 +46,7 @@ class PaynowPaymentDataBuilder
             $this->context->cart->id,
             $this->translations['Order to cart: '] . $this->context->cart->id,
             null,
-            uniqid($this->context->cart->id . '_')
+            $this->context->cart->id
         );
     }
 
