@@ -40,9 +40,9 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
             }
 
             try {
-                $external_id          = $this->context->cart->id;
-                $idempotency_key      = uniqid($external_id . '_');
-                $payment_request_data = (new PaynowPaymentDataBuilder($this->module))->fromCart();
+                $external_id     = uniqid($this->context->cart->id . '_', false);
+                $idempotency_key = substr(uniqid($this->context->cart->id . '_', true), 0, 45);
+                $payment_request_data = (new PaynowPaymentDataBuilder($this->module))->fromCart($external_id);
                 $payment              = (new PaynowPaymentProcessor($this->module->getPaynowClient()))
                     ->process($payment_request_data, $idempotency_key);
 
