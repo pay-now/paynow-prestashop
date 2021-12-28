@@ -21,10 +21,14 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         $this->display_column_left = false;
         parent::initContent();
 
-        $this->isPaymentRetry() ? $this->processRetryPayment() : $this->processNewPayment();
+        if ($this->isRetryPayment()) {
+            $this->processRetryPayment();
+        } else {
+            $this->processNewPayment();
+        }
     }
 
-    private function isPaymentRetry()
+    private function isRetryPayment(): bool
     {
         return Tools::getValue('id_order') !== false &&
             Tools::getValue('order_reference') !== false &&
@@ -42,7 +46,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
 
         $this->order = new Order($id_order);
 
-        if (!Validate::isLoadedObject($this->order) || $this->order->reference !== $order_reference) {
+        if (! Validate::isLoadedObject($this->order) || $this->order->reference !== $order_reference) {
             Tools::redirect('index.php?controller=history');
         }
 
@@ -50,26 +54,9 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         $this->sendPaymentRequest();
     }
 
-    public function postProcess()
-    {
-        if (!Module::isEnabled($this->module->name)) {
-            die($this->module->l('This payment method is not available.'));
-        }
-
-        if (!$this->module->active) {
-            die($this->module->l('Paynow module isn\'t active.'));
-        }
-
-        if ($this->isPaymentRetry()) {
-            $this->processRetryPayment();
-        } else {
-            $this->cartValidation();
-        }
-    }
-
     private function cartValidation()
     {
-        if (!$this->context->cart->id) {
+        if (! $this->context->cart->id) {
             PaynowLogger::warning('Empty cart');
             Tools::redirect('index.php?controller=cart');
         }
@@ -89,17 +76,21 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             Tools::redirect('index.php?controller=order&step=1');
         }
 
-        // Check if customer exists
         $customer = new Customer($id_customer);
         if (!Validate::isLoadedObject($customer)) {
             Tools::redirect('index.php?controller=order&step=1');
         }
     }
 
+    /**
+     * @throws ConfigurationException
+     * @throws Exception
+     */
     private function processNewPayment()
     {
-        $total = (float)$this->context->cart->getOrderTotal();
         $this->cartValidation();
+
+        $total = (float)$this->context->cart->getOrderTotal();
         if ($this->canCreateOrderBeforePayment()) {
             $this->module->validateOrder(
                 (int)$this->context->cart->id,
@@ -113,6 +104,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 $this->context->cart->secure_key
             );
         }
+
         $this->sendPaymentRequest();
     }
 
@@ -122,15 +114,15 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     private function sendPaymentRequest()
     {
         try {
-            if (1 === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE')) {
+            if (PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE')) {
                 $this->order = new Order($this->module->currentOrder);
                 $external_id = $this->order->reference;
                 $idempotency_key = substr(uniqid($this->order->reference . '_', true), 0, 45);
                 $payment_request_data = (new PaynowPaymentDataBuilder($this->module))->fromOrder($this->order);
             } else {
-                $external_id     = $this->context->cart->id;
-                $idempotency_key = substr(uniqid($external_id . '_', true), 0, 45);
-                $payment_request_data = (new PaynowPaymentDataBuilder($this->module))->fromCart();
+                $external_id     = uniqid($this->context->cart->id . '_', false);
+                $idempotency_key = substr(uniqid($this->context->cart->id . '_', true), 0, 45);
+                $payment_request_data = (new PaynowPaymentDataBuilder($this->module))->fromCart($external_id);
             }
 
             $payment              = (new PaynowPaymentProcessor($this->module->getPaynowClient()))
@@ -217,15 +209,16 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
 
     private function displayError()
     {
+        $currency = new Currency($this->context->cart->id_currency);
         $this->context->smarty->assign([
-            'total_to_pay' => Tools::displayPrice($this->order->total_paid, (int)$this->order->id_currency),
+            'total_to_pay' => Tools::displayPrice($this->context->cart->getCartTotalPrice(), $currency),
             'button_action' => PaynowLinkHelper::getPaymentUrl(
+                !empty($this->order) ??
                 [
                     'id_order' => $this->order->id,
                     'order_reference' => $this->order->reference
                 ]
             ),
-            'order_reference' => $this->order->reference,
             'cta_text' => $this->module->getCallToActionText()
         ]);
 

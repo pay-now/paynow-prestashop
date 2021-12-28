@@ -12,7 +12,7 @@
 
 class PaynowLinkHelper
 {
-    public static function getContinueUrl($id_cart, $id_module, $secure_key, $id_order = null, $order_reference = null)
+    public static function getContinueUrl($id_cart, $id_module, $secure_key, $id_order = null, $order_reference = null): string
     {
         if (Configuration::get('PAYNOW_USE_CLASSIC_RETURN_URL')) {
             $params =                 [
@@ -40,7 +40,7 @@ class PaynowLinkHelper
         return PaynowLinkHelper::getReturnUrl($id_cart, Tools::encrypt($order_reference), $order_reference);
     }
 
-    public static function getPaymentUrl($url_params = null)
+    public static function getPaymentUrl($url_params = null): string
     {
         return Context::getContext()->link->getModuleLink(
             'paynow',
@@ -49,12 +49,12 @@ class PaynowLinkHelper
         );
     }
 
-    public static function getNotificationUrl()
+    public static function getNotificationUrl(): string
     {
         return Context::getContext()->link->getModuleLink('paynow', 'notifications');
     }
 
-    public static function getReturnUrl($id_cart, $token, $order_reference = null)
+    public static function getReturnUrl($id_cart, $token, $order_reference = null): string
     {
         $params = [
             'token' => $token
@@ -75,7 +75,7 @@ class PaynowLinkHelper
         );
     }
 
-    public static function getOrderUrl($order)
+    public static function getOrderUrl($order): string
     {
         if (Cart::isGuestCartByCartId($order->id_cart)) {
             $customer = new Customer((int)$order->id_customer);

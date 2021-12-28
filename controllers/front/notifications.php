@@ -60,7 +60,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             }
 
             if ($this->canProcessCreateOrder($filteredPayments, $notification_data['status'])) {
-                $cart = new Cart((int)$notification_data['externalId']);
+                $cart = new Cart((int)$filteredPayments[0]->id_cart);
 
                 if ((float)$filteredPayments[0]->total === $cart->getCartTotalPrice()) {
                     $order = $this->createOrderFromCart($cart);

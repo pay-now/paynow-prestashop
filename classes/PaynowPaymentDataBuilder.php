@@ -37,7 +37,7 @@ class PaynowPaymentDataBuilder
      * @return array
      * @throws Exception
      */
-    public function fromCart(): array
+    public function fromCart($external_id): array
     {
         return $this->build(
             $this->context->cart->id_currency,
@@ -46,7 +46,7 @@ class PaynowPaymentDataBuilder
             $this->context->cart->id,
             $this->translations['Order to cart: '] . $this->context->cart->id,
             null,
-            $this->context->cart->id
+            $external_id
         );
     }
 
