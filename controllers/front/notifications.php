@@ -59,9 +59,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 exit;
             }
 
-            if (1 <= count($filteredPayments) &&
-                PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
-                Paynow\Model\Payment\Status::STATUS_CONFIRMED === $notification_data['status']) {
+            if ($this->canProcessCreateOrder($filteredPayments, $notification_data['status'])) {
                 $cart = new Cart((int)$notification_data['externalId']);
 
                 if ((float)$filteredPayments[0]->total === $cart->getCartTotalPrice()) {
@@ -135,6 +133,13 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         return $headers;
     }
 
+    private function canProcessCreateOrder($filteredPayments, $payment_notification_status): bool
+    {
+        return 1 <= count($filteredPayments) &&
+        PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
+        Paynow\Model\Payment\Status::STATUS_CONFIRMED === $payment_notification_status;
+    }
+
     private function createOrderFromCart($cart): Order
     {
         $this->module->validateOrder(
@@ -160,13 +165,5 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             return $payment->id_payment === $payment_id ||
                    $payment_status === Paynow\Model\Payment\Status::STATUS_NEW;
         });
-    }
-
-    private function getAllPaymentsDataByOrderReference($order_reference)
-    {
-        return Db::getInstance()->executeS('
-            SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
-            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
-            WHERE order_reference="' . pSQL($order_reference) . '" ORDER BY created_at DESC');
     }
 }
