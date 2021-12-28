@@ -98,51 +98,71 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
 
     private function processNewPayment()
     {
-        $cart = $this->context->cart;
-        $currency = $this->context->currency;
-        $total = (float)$cart->getOrderTotal();
-
+        $total = (float)$this->context->cart->getOrderTotal();
         $this->cartValidation();
-        $customer = new Customer($cart->id_customer);
-        $this->module->validateOrder(
-            (int)$cart->id,
-            Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
-            $total,
-            $this->module->displayName,
-            null,
-            null,
-            (int)$currency->id,
-            false,
-            $customer->secure_key
-        );
-        $this->order = new Order($this->module->currentOrder);
-
+        if ($this->canCreateOrderBeforePayment()) {
+            $this->module->validateOrder(
+                (int)$this->context->cart->id,
+                Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
+                $total,
+                $this->module->displayName,
+                null,
+                null,
+                (int)$this->context->currency->id,
+                false,
+                $this->context->cart->secure_key
+            );
+        }
         $this->sendPaymentRequest();
     }
 
     /**
-     * @throws ConfigurationException
+     * @throws ConfigurationException|Exception
      */
     private function sendPaymentRequest()
     {
         try {
-            $idempotency_key      = uniqid($this->order->reference . '_');
-            $payment_request_data = (new PaynowPaymentDataBuilder($this->module))->fromOrder($this->order);
+            if (1 === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE')) {
+                $this->order = new Order($this->module->currentOrder);
+                $external_id = $this->order->reference;
+                $idempotency_key = substr(uniqid($this->order->reference . '_', true), 0, 45);
+                $payment_request_data = (new PaynowPaymentDataBuilder($this->module))->fromOrder($this->order);
+            } else {
+                $external_id     = $this->context->cart->id;
+                $idempotency_key = substr(uniqid($external_id . '_', true), 0, 45);
+                $payment_request_data = (new PaynowPaymentDataBuilder($this->module))->fromCart();
+            }
+
             $payment              = (new PaynowPaymentProcessor($this->module->getPaynowClient()))
                 ->process($payment_request_data, $idempotency_key);
 
-            PaynowPaymentData::create(
-                $payment->getPaymentId(),
-                Paynow\Model\Payment\Status::STATUS_NEW,
-                $this->order->id,
-                $this->order->id_cart,
-                $this->order->reference,
-                $this->order->reference
-            );
-            PaynowLogger::info(
-                'Payment has been successfully created {orderReference={}, paymentId={}, status={}}',
-                [
+
+            if ($this->canCreateOrderBeforePayment()) {
+                PaynowPaymentData::create(
+                    $payment->getPaymentId(),
+                    Paynow\Model\Payment\Status::STATUS_NEW,
+                    $this->order->id,
+                    $this->order->id_cart,
                     $this->order->reference,
+                    $this->order->reference,
+                    $this->order->total_paid
+                );
+            } else {
+                PaynowPaymentData::create(
+                    $payment->getPaymentId(),
+                    Paynow\Model\Payment\Status::STATUS_NEW,
+                    null,
+                    $external_id,
+                    null,
+                    $external_id,
+                    $this->context->cart->getOrderTotal()
+                );
+            }
+
+            PaynowLogger::info(
+                'Payment has been successfully created {externalId={}, paymentId={}, status={}}',
+                [
+                    $external_id,
                     $payment->getPaymentId(),
                     $payment->getStatus()
                 ]
@@ -171,16 +191,16 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             Tools::redirect($payment->getRedirectUrl());
         } catch (Paynow\Exception\PaynowException $exception) {
             PaynowLogger::error(
-                $exception->getMessage() . '{orderReference={}}',
+                $exception->getMessage() . '{externalId={}}',
                 [
-                    $this->order->reference
+                    $external_id
                 ]
             );
             foreach ($exception->getErrors() as $error) {
                 PaynowLogger::error(
-                    $exception->getMessage() . '{orderReference={}, error={}, message={}}',
+                    $exception->getMessage() . '{externalId={}, error={}, message={}}',
                     [
-                        $this->order->reference,
+                        $external_id,
                         $error->getType(),
                         $error->getMessage()
                     ]
@@ -188,6 +208,11 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             }
             $this->displayError();
         }
+    }
+
+    private function canCreateOrderBeforePayment(): bool
+    {
+        return PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE');
     }
 
     private function displayError()

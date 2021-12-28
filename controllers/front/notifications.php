@@ -18,25 +18,37 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         $headers = $this->getRequestHeaders();
         $notification_data = json_decode($payload, true);
         PaynowLogger::info(
-            'Incoming notification {paymentId={}, status={}}',
+            'Incoming notification {paymentId={}, externalId={}, status={}}',
             [
                 $notification_data['paymentId'],
+                $notification_data['externalId'],
                 $notification_data['status']
             ]
         );
 
         try {
             new Notification($this->module->getSignatureKey(), $payload, $headers);
-            $payments = PaynowPaymentData::findAllByExternalId($notification_data['externalId'])->getResults();
+            $filteredPayments = $this->getFilteredPayments(
+                $notification_data['externalId'],
+                $notification_data['paymentId'],
+                $notification_data['status']
+            );
 
-            $filteredPayments = array_filter($payments, function ($payment) use ($notification_data, $payments) {
-                return $payment->id_payment === $notification_data['paymentId'] ||
-                     $notification_data['status'] === Paynow\Model\Payment\Status::STATUS_NEW;
-            });
+            if (Paynow\Model\Payment\Status::STATUS_CONFIRMED === $filteredPayments[0]->status) {
+                PaynowLogger::info(
+                    'Order already has a paid status. Skipped notification processing {paymentId={}, externalId={}}',
+                    [
+                        $notification_data['paymentId'],
+                        $notification_data['externalId'],
+                    ]
+                );
+                header("HTTP/1.1 202 Accepted");
+                exit;
+            }
 
             if (empty($filteredPayments)) {
                 PaynowLogger::warning(
-                    'Payment for order not exists {paymentId={}, status={}, externalId={}}',
+                    'Payment for order or cart not exists {paymentId={}, status={}, externalId={}}',
                     [
                         $notification_data['paymentId'],
                         $notification_data['status'],
@@ -46,6 +58,43 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 header('HTTP/1.1 400 Bad Request', true, 400);
                 exit;
             }
+
+            if ($this->canProcessCreateOrder($filteredPayments, $notification_data['status'])) {
+                $cart = new Cart((int)$notification_data['externalId']);
+
+                if ((float)$filteredPayments[0]->total === $cart->getCartTotalPrice()) {
+                    $order = $this->createOrderFromCart($cart);
+                    PaynowLogger::info(
+                        'An order has been created {paymentId={}, externalId={}, orderId={}}',
+                        [
+                            $notification_data['paymentId'],
+                            $notification_data['externalId'],
+                            $order->id,
+                        ]
+                    );
+                    PaynowPaymentData::updateOrderIdAndOrderReferenceByPaymentId(
+                        $order->id,
+                        $order->reference,
+                        $notification_data['paymentId']
+                    );
+                    $filteredPayments = $this->getFilteredPayments(
+                        $notification_data['externalId'],
+                        $notification_data['paymentId'],
+                        $notification_data['status']
+                    );
+                } else {
+                    PaynowLogger::warning(
+                        'Inconsistent payment and cart amount {paymentId={}, externalId={}, paymentAmount={}, cartAmount={}}',
+                        [
+                            $notification_data['paymentId'],
+                            $notification_data['externalId'],
+                            $filteredPayments[0]->total,
+                            $cart->getCartTotalPrice()
+                        ]
+                    );
+                }
+            }
+
             (new PaynowOrderStateProcessor())->updateState(
                 $filteredPayments[0]->id_order,
                 $notification_data['paymentId'],
@@ -72,7 +121,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         exit;
     }
 
-    private function getRequestHeaders()
+    private function getRequestHeaders(): array
     {
         $headers = [];
         foreach ($_SERVER as $key => $value) {
@@ -84,11 +133,37 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         return $headers;
     }
 
-    private function getAllPaymentsDataByOrderReference($order_reference)
+    private function canProcessCreateOrder($filteredPayments, $payment_notification_status): bool
     {
-        return Db::getInstance()->executeS('
-            SELECT id_order, id_cart, order_reference, status, id_payment, external_id 
-            FROM  ' . _DB_PREFIX_ . 'paynow_payments 
-            WHERE order_reference="' . pSQL($order_reference) . '" ORDER BY created_at DESC');
+        return 1 <= count($filteredPayments) &&
+        PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
+        Paynow\Model\Payment\Status::STATUS_CONFIRMED === $payment_notification_status;
+    }
+
+    private function createOrderFromCart($cart): Order
+    {
+        $this->module->validateOrder(
+            (int)$cart->id,
+            Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
+            $cart->getCartTotalPrice(),
+            $this->module->displayName,
+            null,
+            null,
+            (int)$cart->id_currency,
+            false,
+            $cart->secure_key
+        );
+
+        return new Order($this->module->currentOrder);
+    }
+
+    private function getFilteredPayments($external_id, $payment_id, $payment_status): array
+    {
+        $payments = PaynowPaymentData::findAllByExternalId($external_id)->getResults();
+
+        return array_filter($payments, function ($payment) use ($payment_id, $payment_status) {
+            return $payment->id_payment === $payment_id ||
+                   $payment_status === Paynow\Model\Payment\Status::STATUS_NEW;
+        });
     }
 }

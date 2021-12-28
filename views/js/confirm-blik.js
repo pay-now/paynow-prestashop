@@ -25,9 +25,9 @@
                 type: 'get',
                 success: function (message) {
                     status.text(message.order_status);
-                    if (message.payment_status === "CONFIRMED") {
+                    if (message.payment_status !== "PENDING") {
                         clearInterval(pollPaymentStatus);
-                        window.location.replace(message.redirect_url);
+                        window.location.location = message.redirect_url;
                     }
                 },
                 error: function () {

@@ -45,7 +45,7 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
                 'payment_status' => $payment_status
             ];
 
-            if (Status::STATUS_CONFIRMED === $payment_status) {
+            if (Status::STATUS_PENDING !== $payment_status) {
                 $response['redirect_url'] = PaynowLinkHelper::getContinueUrl(
                     $payment->id_cart,
                     $this->module->id,

@@ -359,6 +359,25 @@ class PaynowAdminFormHelper
                         ],
                     ],
                     [
+                        'type'    => 'select',
+                        'label'   => $this->translations['Moment of creating order'],
+                        'name'    => 'PAYNOW_CREATE_ORDER_STATE',
+                        'options' => [
+                            'query' => [
+                                [
+                                    'id_option' => 1,
+                                    'name'      => $this->translations['On clicking the Place order']
+                                ],
+                                [
+                                    'id_option' => 2,
+                                    'name'      => $this->translations['After the successful Paynow payment']
+                                ],
+                            ],
+                            'id'    => 'id_option',
+                            'name'  => 'name'
+                        ]
+                    ],
+                    [
                         'type' => 'switch',
                         'label' => $this->translations['Use payment validity time'],
                         'desc' => $this->translations['Enable to limit the validity of the payment.'],
@@ -381,7 +400,7 @@ class PaynowAdminFormHelper
                         'label' => $this->translations['Payment validity time'],
                         'desc' => $this->translations['Determines how long it will be possible to pay for the order from the moment the payment link is generated. The value expressed in seconds. Must be between 60 and 86400 seconds.'],
                         'name' => 'PAYNOW_PAYMENT_VALIDITY_TIME'
-                    ],
+                    ]
                 ],
                 'submit' => [
                     'title' => $this->translations['Save']
@@ -415,8 +434,8 @@ class PaynowAdminFormHelper
             'PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED' => Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED'),
             'PAYNOW_PAYMENT_VALIDITY_TIME' => Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME'),
             'PAYNOW_ORDER_ABANDONED_STATE' => Configuration::get('PAYNOW_ORDER_ABANDONED_STATE'),
-            'PAYNOW_ORDER_EXPIRED_STATE' => Configuration::get('PAYNOW_ORDER_EXPIRED_STATE')
+            'PAYNOW_ORDER_EXPIRED_STATE' => Configuration::get('PAYNOW_ORDER_EXPIRED_STATE'),
+            'PAYNOW_CREATE_ORDER_STATE' => Configuration::get('PAYNOW_CREATE_ORDER_STATE')
         ];
     }
 }
-

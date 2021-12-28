@@ -12,6 +12,9 @@
 
 class PaynowConfigurationHelper
 {
+    public const CREATE_ORDER_BEFORE_PAYMENT = 1;
+    public const CREATE_ORDER_AFTER_PAYMENT = 2;
+
     public static function update()
     {
         Configuration::updateValue(
@@ -97,6 +100,10 @@ class PaynowConfigurationHelper
         Configuration::updateValue(
             'PAYNOW_ORDER_EXPIRED_STATE',
             Tools::getValue('PAYNOW_ORDER_EXPIRED_STATE')
+        );
+        Configuration::updateValue(
+            'PAYNOW_CREATE_ORDER_STATE',
+            Tools::getValue('PAYNOW_CREATE_ORDER_STATE')
         );
     }
 }

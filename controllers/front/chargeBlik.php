@@ -70,7 +70,8 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                             $order->id,
                             $order->id_cart,
                             $order->reference,
-                            $payment_request_data['externalId']
+                            $payment_request_data['externalId'],
+                            $order->total_paid
                         );
                     }
                     PaynowLogger::info(
