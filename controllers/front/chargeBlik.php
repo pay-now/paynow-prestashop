@@ -10,8 +10,6 @@
  * @license   MIT License
  */
 
-use Paynow\Exception\PaynowException;
-
 class PaynowChargeBlikModuleFrontController extends PaynowFrontController
 {
     /**
@@ -40,69 +38,58 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
             }
 
             try {
-                $external_id     = uniqid($this->context->cart->id . '_', false);
-                $idempotency_key = substr(uniqid($this->context->cart->id . '_', true), 0, 45);
-                $payment_request_data = (new PaynowPaymentDataBuilder($this->module))->fromCart($external_id);
-                $payment              = (new PaynowPaymentProcessor($this->module->getPaynowClient()))
-                    ->process($payment_request_data, $idempotency_key);
+                $payment_data = (new PaynowPaymentProcessor($this->context, $this->module))->process();
 
-                if ($payment && in_array($payment->getStatus(), [
+                if ($payment_data['status'] && in_array($payment_data['status'], [
                         Paynow\Model\Payment\Status::STATUS_NEW,
                         Paynow\Model\Payment\Status::STATUS_PENDING
                     ])) {
-                    $order    = new Order($this->createOrder($cart));
+                    if (PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE')) {
+                        $order = $this->createOrder($cart);
+                    }
                     $response = array_merge($response, [
                         'success'      => true,
-                        'payment_id'   => $payment->getPaymentId(),
-                        'order_id'     => $order->id,
+                        'payment_id'   => $payment_data['payment_id'],
+                        'order_id'     => $order->id ?? null,
                         'redirect_url' => PaynowLinkHelper::getBlikConfirmUrl([
-                            'order_reference' => $order->reference,
-                            'paymentId'       => $payment->getPaymentId(),
-                            'paymentStatus'   => $payment->getStatus(),
-                            'token'           => Tools::encrypt($this->context->customer->secure_key)
+                            'external_id'   => $payment_data['external_id'],
+                            'paymentId'     => $payment_data['payment_id'],
+                            'paymentStatus' => $payment_data['status'],
+                            'token'         => Tools::encrypt($this->context->customer->secure_key)
                         ])
                     ]);
 
-                    if ($order->id) {
-                        PaynowPaymentData::create(
-                            $payment->getPaymentId(),
-                            Paynow\Model\Payment\Status::STATUS_NEW,
+                    if (!empty($order) && $order->id) {
+                        PaynowPaymentData::updateOrderIdAndOrderReferenceByPaymentId(
                             $order->id,
-                            $order->id_cart,
                             $order->reference,
-                            $payment_request_data['externalId'],
-                            $order->total_paid
+                            $payment_data['payment_id']
                         );
                     }
-                    PaynowLogger::info(
-                        'Payment has been successfully created {orderReference={}, paymentId={}, status={}}',
-                        [
-                            $order->reference,
-                            $payment->getPaymentId(),
-                            $payment->getStatus()
-                        ]
-                    );
+                } else {
+                    $response['message'] = $this->translations['An error occurred during the payment process'];
                 }
-            } catch (PaynowException $exception) {
+            } catch (PaynowPaymentAuthorizeException $exception) {
                 PaynowLogger::error(
                     $exception->getMessage() . '{externalId={}}',
                     [
-                        $external_id
+                        $exception->getExternalId()
                     ]
                 );
-                foreach ($exception->getErrors() as $error) {
+
+                foreach ($exception->getPrevious()->getErrors() as $error) {
                     PaynowLogger::error(
                         $exception->getMessage() . '{externalId={}, error={}, message={}}',
                         [
-                            $external_id,
+                            $exception->getExternalId(),
                             $error->getType(),
                             $error->getMessage()
                         ]
                     );
                 }
-                if ($exception->getErrors() && $exception->getErrors()[0]) {
+                if ($exception->getPrevious()->getErrors() && $exception->getPrevious()->getErrors()[0]) {
                     PaynowLogger::error($exception->getMessage());
-                    switch ($exception->getErrors()[0]->getType()) {
+                    switch ($exception->getPrevious()->getErrors()[0]->getType()) {
                         case 'AUTHORIZATION_CODE_INVALID':
                             $response['message'] = $this->translations['Wrong BLIK code'];
                             break;
@@ -125,7 +112,7 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
         exit;
     }
 
-    private function createOrder($cart)
+    private function createOrder($cart): Order
     {
         $currency = $this->context->currency;
         $customer = new Customer($cart->id_customer);
@@ -142,6 +129,6 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
             $customer->secure_key
         );
 
-        return $this->module->currentOrder;
+        return new Order($this->module->currentOrder);
     }
 }

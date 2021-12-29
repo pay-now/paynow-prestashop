@@ -288,6 +288,25 @@ class PaynowAdminFormHelper
                 ],
                 'input' => [
                     [
+                        'type'    => 'select',
+                        'label'   => $this->translations['Moment of creating order'],
+                        'name'    => 'PAYNOW_CREATE_ORDER_STATE',
+                        'options' => [
+                            'query' => [
+                                [
+                                    'id_option' => 1,
+                                    'name'      => $this->translations['On clicking the Place order']
+                                ],
+                                [
+                                    'id_option' => 2,
+                                    'name'      => $this->translations['After the successful Paynow payment']
+                                ],
+                            ],
+                            'id'    => 'id_option',
+                            'name'  => 'name'
+                        ]
+                    ],
+                    [
                         'type' => 'switch',
                         'label' => $this->translations['Show separated payment methods'],
                         'name' => 'PAYNOW_SEPARATE_PAYMENT_METHODS',
@@ -342,43 +361,6 @@ class PaynowAdminFormHelper
                     ],
                     [
                         'type' => 'switch',
-                        'label' => $this->translations['Enable logs'],
-                        'desc' => $this->translations['Logs are available in '] . ' ' . $logs_path,
-                        'name' => 'PAYNOW_DEBUG_LOGS_ENABLED',
-                        'values' => [
-                            [
-                                'id' => 'active_on',
-                                'value' => 1,
-                                'label' => $this->translations['Yes']
-                            ],
-                            [
-                                'id' => 'active_off',
-                                'value' => 0,
-                                'label' => $this->translations['No']
-                            ]
-                        ],
-                    ],
-                    [
-                        'type'    => 'select',
-                        'label'   => $this->translations['Moment of creating order'],
-                        'name'    => 'PAYNOW_CREATE_ORDER_STATE',
-                        'options' => [
-                            'query' => [
-                                [
-                                    'id_option' => 1,
-                                    'name'      => $this->translations['On clicking the Place order']
-                                ],
-                                [
-                                    'id_option' => 2,
-                                    'name'      => $this->translations['After the successful Paynow payment']
-                                ],
-                            ],
-                            'id'    => 'id_option',
-                            'name'  => 'name'
-                        ]
-                    ],
-                    [
-                        'type' => 'switch',
                         'label' => $this->translations['Use payment validity time'],
                         'desc' => $this->translations['Enable to limit the validity of the payment.'],
                         'name' => 'PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED',
@@ -400,7 +382,25 @@ class PaynowAdminFormHelper
                         'label' => $this->translations['Payment validity time'],
                         'desc' => $this->translations['Determines how long it will be possible to pay for the order from the moment the payment link is generated. The value expressed in seconds. Must be between 60 and 86400 seconds.'],
                         'name' => 'PAYNOW_PAYMENT_VALIDITY_TIME'
-                    ]
+                    ],
+                    [
+                        'type' => 'switch',
+                        'label' => $this->translations['Enable logs'],
+                        'desc' => $this->translations['Logs are available in '] . ' ' . $logs_path,
+                        'name' => 'PAYNOW_DEBUG_LOGS_ENABLED',
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->translations['Yes']
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->translations['No']
+                            ]
+                        ],
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->translations['Save']
