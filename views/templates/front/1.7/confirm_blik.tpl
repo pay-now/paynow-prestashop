@@ -15,8 +15,12 @@
     <h2>{l s='Confirm the payment using the app on your phone.' mod='paynow'}</h2>
     <img src="{$link->getMediaLink("`$module_dir`views/img/blik-confirm.png")}" alt="{l s='Confirm the BLIK payment' mod='paynow'}">
     <div class="order-data clearfix">
-        <p>{l s='Your order number:' mod='paynow'} {$order_reference|escape:'htmlall':'UTF-8'}</p>
-        <p>{l s='Current order status:' mod='paynow'} <span class="status">{$order_status|escape:'htmlall':'UTF-8'}</span></p>
+        {if !empty($order_reference)}
+            <p>{l s='Your order number:' mod='paynow'} {$order_reference|escape:'htmlall':'UTF-8'}</p>
+        {/if}
+        {if !empty($order_status)}
+            <p>{l s='Current order status:' mod='paynow'} <span class="status">{$order_status|escape:'htmlall':'UTF-8'}</span></p>
+        {/if}
     </div>
 </div>
 {/block}

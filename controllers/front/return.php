@@ -16,11 +16,11 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
 {
     public function initContent()
     {
-        $this->display_column_left = false;
         parent::initContent();
 
         $order_reference = Tools::getValue('order_reference');
         $id_cart = Tools::getValue('id_cart');
+        $external_id = Tools::getValue('external_id');
         $token = Tools::getValue('token');
 
         if ((! $order_reference || ! $id_cart) && !$this->isTokenValid()) {
@@ -35,6 +35,10 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             $this->payment = (array)PaynowPaymentData::findLastByCartId($id_cart);
         }
 
+        if ($external_id) {
+            $this->payment = (array)PaynowPaymentData::findLastByExternalId($external_id);
+        }
+
         if (!$this->payment) {
             $this->redirectToOrderHistory();
         }
@@ -47,8 +51,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
 
         if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')
             && Status::STATUS_CONFIRMED !== $this->payment['status']) {
-            $payment_id = Tools::getValue('paymentId');
-            $payment_status = $this->getPaymentStatus($payment_id);
+            $payment_status = $this->getPaymentStatus($this->payment['id_payment']);
             $this->updateOrderState(
                 $this->payment['id_order'],
                 $this->payment['id_payment'],
@@ -62,8 +65,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
                 $this->order->id_cart,
                 $this->module->id,
                 $this->order->secure_key,
-                $this->order->id,
-                $this->order->reference
+                $this->payment['external_id']
             ));
         }
 
@@ -90,7 +92,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         return Hook::exec('displayOrderConfirmation', $this->hookParams());
     }
 
-    private function hookParams()
+    private function hookParams(): array
     {
         $currency = new Currency((int)$this->order->id_currency);
 

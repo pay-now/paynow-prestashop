@@ -19,6 +19,7 @@ include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
 include_once(dirname(__FILE__) . '/classes/PaynowLogger.php');
 include_once(dirname(__FILE__) . '/classes/PaynowConfigurationHelper.php');
 include_once(dirname(__FILE__) . '/classes/PaynowPaymentMethodsHelper.php');
+include_once(dirname(__FILE__) . '/classes/PaynowPaymentAuthorizeException.php');
 include_once(dirname(__FILE__) . '/classes/PaynowPaymentOptions.php');
 include_once(dirname(__FILE__) . '/classes/PaynowRefundProcessor.php');
 include_once(dirname(__FILE__) . '/classes/PaynowGDPRHelper.php');

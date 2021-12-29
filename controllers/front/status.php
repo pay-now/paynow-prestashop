@@ -22,8 +22,8 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
 
     public function displayAjax()
     {
-        if (Tools::getValue('order_reference') && $this->isTokenValid()) {
-            $payment  = PaynowPaymentData::findLastByOrderReference(Tools::getValue('order_reference'));
+        if (Tools::getValue('external_id') && $this->isTokenValid()) {
+            $payment  = PaynowPaymentData::findLastByExternalId(Tools::getValue('external_id'));
             $payment_status = $payment->status;
             if (Status::STATUS_CONFIRMED !== $payment->status) {
                 $payment_status = $this->getPaymentStatus($payment->id_payment);
@@ -50,8 +50,7 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
                     $payment->id_cart,
                     $this->module->id,
                     $this->context->customer->secure_key,
-                    $payment->id_order,
-                    $payment->order_reference
+                    $payment->external_id
                 );
             }
 

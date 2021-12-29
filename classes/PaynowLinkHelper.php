@@ -12,7 +12,7 @@
 
 class PaynowLinkHelper
 {
-    public static function getContinueUrl($id_cart, $id_module, $secure_key, $id_order = null, $order_reference = null): string
+    public static function getContinueUrl($id_cart, $id_module, $secure_key, $external_id = null): string
     {
         if (Configuration::get('PAYNOW_USE_CLASSIC_RETURN_URL')) {
             $params =                 [
@@ -20,14 +20,6 @@ class PaynowLinkHelper
                 'id_module' => $id_module,
                 'key'       => $secure_key
             ];
-
-            if ($id_order) {
-                $params['id_order'] = $id_order;
-            }
-
-            if ($order_reference) {
-                $params['order_reference'] = $order_reference;
-            }
 
             return Context::getContext()->link->getPageLink(
                 'order-confirmation',
@@ -37,7 +29,7 @@ class PaynowLinkHelper
             );
         }
 
-        return PaynowLinkHelper::getReturnUrl($id_cart, Tools::encrypt($order_reference), $order_reference);
+        return PaynowLinkHelper::getReturnUrl($external_id, Tools::encrypt($secure_key));
     }
 
     public static function getPaymentUrl($url_params = null): string
@@ -54,18 +46,14 @@ class PaynowLinkHelper
         return Context::getContext()->link->getModuleLink('paynow', 'notifications');
     }
 
-    public static function getReturnUrl($id_cart, $token, $order_reference = null): string
+    public static function getReturnUrl($external_id, $token = null): string
     {
         $params = [
             'token' => $token
         ];
 
-        if ($order_reference) {
-            $params['order_reference'] = $order_reference;
-        }
-
-        if ($id_cart) {
-            $params['id_cart'] = $id_cart;
+        if ($external_id) {
+            $params['external_id'] = $external_id;
         }
 
         return Context::getContext()->link->getModuleLink(
