@@ -21,6 +21,12 @@ class PaynowFrontController extends ModuleFrontControllerCore
     /** @var Paynow */
     public $module;
 
+    public function initContent()
+    {
+        $this->display_column_left = false;
+        parent::initContent();
+    }
+
     public function generateToken(): string
     {
         return Tools::encrypt($this->context->customer->secure_key);

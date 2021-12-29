@@ -16,22 +16,18 @@ class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
     {
         parent::initContent();
 
-        $order_reference = Tools::getValue('order_reference');
+        $external_id = Tools::getValue('external_id');
 
-        if (!$order_reference || !$this->isTokenValid()) {
+        if (!$external_id || !$this->isTokenValid()) {
             $this->redirectToOrderHistory();
         }
 
-        $this->payment = PaynowPaymentData::findLastByOrderReference($order_reference);
+        $this->payment = PaynowPaymentData::findLastByExternalId($external_id);
         if (!$this->payment) {
             $this->redirectToOrderHistory();
         }
 
         $this->order = new Order($this->payment->id_order);
-
-        if (!Validate::isLoadedObject($this->order)) {
-            $this->redirectToOrderHistory();
-        }
 
         $payment_status = $this->getPaymentStatus($this->payment->id_payment);
         $this->updateOrderState(

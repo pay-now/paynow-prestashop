@@ -34,19 +34,21 @@ class PaynowPaymentDataBuilder
     /**
      * Returns payment request data based on cart
      *
+     * @param $cart
+     * @param $external_id
+     *
      * @return array
      * @throws Exception
      */
-    public function fromCart(): array
+    public function fromCart($cart, $external_id): array
     {
         return $this->build(
-            $this->context->cart->id_currency,
-            $this->context->cart->id_customer,
-            $this->context->cart->getOrderTotal(),
-            $this->context->cart->id,
-            $this->translations['Order to cart: '] . $this->context->cart->id,
-            null,
-            $this->context->cart->id
+            $cart->id_currency,
+            $cart->id_customer,
+            $cart->getOrderTotal(),
+            $cart->id,
+            $this->translations['Order to cart: '] . $cart->id,
+            $external_id
         );
     }
 
@@ -65,7 +67,6 @@ class PaynowPaymentDataBuilder
             $order->total_paid,
             $order->id_cart,
             $this->translations['Order No: '] . $order->reference,
-            $order->id,
             $order->reference
         );
     }
@@ -76,8 +77,10 @@ class PaynowPaymentDataBuilder
      * @param $id_currency
      * @param $id_customer
      * @param $total_to_paid
-     * @param $external_id
+     * @param $id_cart
      * @param $description
+     *
+     * @param null $external_id
      *
      * @return array
      */
@@ -87,7 +90,6 @@ class PaynowPaymentDataBuilder
         $total_to_paid,
         $id_cart,
         $description,
-        $id_order = null,
         $external_id = null
     ): array {
         $currency = Currency::getCurrency($id_currency);
@@ -108,7 +110,6 @@ class PaynowPaymentDataBuilder
                 $id_cart,
                 $this->module->id,
                 $customer->secure_key,
-                $id_order,
                 $external_id
             )
         ];
