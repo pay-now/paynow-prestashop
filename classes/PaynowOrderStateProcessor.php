@@ -61,13 +61,15 @@ class PaynowOrderStateProcessor
 
             try {
                 if ($new_status === Paynow\Model\Payment\Status::STATUS_NEW) {
+                    $last_payment = PaynowPaymentData::findLastByExternalId($external_id);
                     PaynowPaymentData::create(
                         $id_payment,
                         $new_status,
                         $id_order,
                         $id_cart,
                         $order_reference,
-                        $external_id
+                        $external_id,
+                        $last_payment->total
                     );
                 } else {
                     PaynowPaymentData::updateStatus($id_payment, $new_status);
@@ -77,10 +79,11 @@ class PaynowOrderStateProcessor
             }
 
             PaynowLogger::info(
-                'Changed order status {orderReference={}, paymentId={}, status={}}',
+                'Changed order status {paymentId={}, externalId={}, orderReference={}, status={}}',
                 [
-                    $order_reference,
                     $id_payment,
+                    $external_id,
+                    $order_reference,
                     $new_status
                 ]
             );

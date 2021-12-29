@@ -127,7 +127,7 @@ class PaynowPaymentData extends ObjectModel
     }
 
     /**
-     * @param $id_order
+     * @param $order_reference
      *
      * @return false|ObjectModel
      * @throws PrestaShopException
@@ -138,6 +138,22 @@ class PaynowPaymentData extends ObjectModel
 
         return $queryBuilder
             ->where('order_reference', '=', $order_reference)
+            ->orderBy('created_at', 'desc')
+            ->getFirst();
+    }
+
+    /**
+     * @param $id_payment
+     *
+     * @return false|ObjectModel
+     * @throws PrestaShopException
+     */
+    public static function findLastByPaymentId($id_payment)
+    {
+        $queryBuilder = new PrestaShopCollection(self::class);
+
+        return $queryBuilder
+            ->where('id_payment', '=', $id_payment)
             ->orderBy('created_at', 'desc')
             ->getFirst();
     }

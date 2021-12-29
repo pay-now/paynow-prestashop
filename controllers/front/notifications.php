@@ -28,13 +28,14 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
 
         try {
             new Notification($this->module->getSignatureKey(), $payload, $headers);
-            $filteredPayments = $this->getFilteredPayments(
+            $filtered_payments = $this->getFilteredPayments(
                 $notification_data['externalId'],
                 $notification_data['paymentId'],
                 $notification_data['status']
             );
 
-            if (Paynow\Model\Payment\Status::STATUS_CONFIRMED === $filteredPayments[0]->status) {
+            $filtered_payment = reset($filtered_payments);
+            if (Paynow\Model\Payment\Status::STATUS_CONFIRMED === $filtered_payment->status) {
                 PaynowLogger::info(
                     'Order already has a paid status. Skipped notification processing {paymentId={}, externalId={}}',
                     [
@@ -46,29 +47,30 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 exit;
             }
 
-            if (empty($filteredPayments)) {
+            if (empty($filtered_payments)) {
                 PaynowLogger::warning(
-                    'Payment for order or cart not exists {paymentId={}, status={}, externalId={}}',
+                    'Payment for order or cart not exists {paymentId={}, externalId={}, status={}}',
                     [
                         $notification_data['paymentId'],
-                        $notification_data['status'],
-                        $notification_data['externalId']
+                        $notification_data['externalId'],
+                        $notification_data['status']
                     ]
                 );
                 header('HTTP/1.1 400 Bad Request', true, 400);
                 exit;
             }
 
-            if ($this->canProcessCreateOrder($filteredPayments, $notification_data['status'])) {
-                $cart = new Cart((int)$filteredPayments[0]->id_cart);
+            if ($this->canProcessCreateOrder($filtered_payments, $notification_data['status'])) {
+                $cart = new Cart((int)$filtered_payment->id_cart);
 
-                if ((float)$filteredPayments[0]->total === $cart->getCartTotalPrice()) {
+                if ((float)$filtered_payment->total === $cart->getCartTotalPrice()) {
                     $order = $this->createOrderFromCart($cart);
                     PaynowLogger::info(
-                        'An order has been created {paymentId={}, externalId={}, orderId={}}',
+                        'An order has been created {paymentId={}, externalId={}, orderReference={}, orderId={}}',
                         [
                             $notification_data['paymentId'],
                             $notification_data['externalId'],
+                            $order->reference,
                             $order->id,
                         ]
                     );
@@ -77,40 +79,59 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                         $order->reference,
                         $notification_data['paymentId']
                     );
-                    $filteredPayments = $this->getFilteredPayments(
+                    $filtered_payments = $this->getFilteredPayments(
                         $notification_data['externalId'],
                         $notification_data['paymentId'],
                         $notification_data['status']
                     );
+                    $filtered_payment = reset($filtered_payments);
                 } else {
                     PaynowLogger::warning(
                         'Inconsistent payment and cart amount {paymentId={}, externalId={}, paymentAmount={}, cartAmount={}}',
                         [
                             $notification_data['paymentId'],
                             $notification_data['externalId'],
-                            $filteredPayments[0]->total,
+                            $filtered_payment->total,
                             $cart->getCartTotalPrice()
                         ]
                     );
                 }
+            } else {
+                if (PaynowPaymentData::findByPaymentId($notification_data['paymentId'])) {
+                    PaynowPaymentData::updatetatus($notification_data['paymentId'], $notification_data['status']);
+                } else {
+                    $previous_payment_data = PaynowPaymentData::findLastByExternalId($notification_data['externalId']);
+                    if ($previous_payment_data) {
+                        PaynowPaymentData::create(
+                            $notification_data['paymentId'],
+                            $notification_data['status'],
+                            $previous_payment_data->id_order,
+                            $previous_payment_data->id_cart,
+                            $previous_payment_data->order_reference,
+                            $previous_payment_data->external_id,
+                            $previous_payment_data->total
+                        );
+                    }
+                }
             }
 
             (new PaynowOrderStateProcessor())->updateState(
-                $filteredPayments[0]->id_order,
+                $filtered_payment->id_order,
                 $notification_data['paymentId'],
-                $filteredPayments[0]->id_cart,
-                $filteredPayments[0]->order_reference,
-                $filteredPayments[0]->external_id,
-                $filteredPayments[0]->status,
+                $filtered_payment->id_cart,
+                $filtered_payment->order_reference,
+                $filtered_payment->external_id,
+                $filtered_payment->status,
                 $notification_data['status']
             );
         } catch (Exception $exception) {
             PaynowLogger::error(
-                'An error occurred during processing notification {paymentId={}, status={}, message={}}',
+                'An error occurred during processing notification {paymentId={}, externalId={}, status={}, message={}}',
                 [
                     $notification_data['paymentId'],
+                    $notification_data['externalId'],
                     $notification_data['status'],
-                    $exception->getMessage()
+                    $exception->getMessage() . ' ' . $exception->getTraceAsString()
                 ]
             );
             header('HTTP/1.1 400 Bad Request', true, 400);
@@ -133,9 +154,9 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         return $headers;
     }
 
-    private function canProcessCreateOrder($filteredPayments, $payment_notification_status): bool
+    private function canProcessCreateOrder($filtered_ayments, $payment_notification_status): bool
     {
-        return 1 <= count($filteredPayments) &&
+        return 1 <= count($filtered_ayments) &&
         PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
         Paynow\Model\Payment\Status::STATUS_CONFIRMED === $payment_notification_status;
     }
