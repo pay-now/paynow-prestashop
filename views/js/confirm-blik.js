@@ -27,7 +27,7 @@
                     status.text(message.order_status);
                     if (message.payment_status !== "PENDING") {
                         clearInterval(pollPaymentStatus);
-                        window.location.location = message.redirect_url;
+                        window.location.href = message.redirect_url;
                     }
                 },
                 error: function () {

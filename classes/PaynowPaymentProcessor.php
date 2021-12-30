@@ -80,15 +80,15 @@ class PaynowPaymentProcessor
                 $external_id,
                 null,
                 $external_id,
-                $this->context->cart->getOrderTotal()
+                $cart->getOrderTotal()
             );
         }
 
         PaynowLogger::info(
-            'Payment has been successfully created {externalId={}, paymentId={}, status={}}',
+            'Payment has been successfully created {paymentId={}, externalId={}, status={}}',
             [
-                $external_id,
                 $payment->getPaymentId(),
+                $external_id,
                 $payment->getStatus()
             ]
         );
