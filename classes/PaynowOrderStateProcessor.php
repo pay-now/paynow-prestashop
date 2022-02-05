@@ -30,7 +30,10 @@ class PaynowOrderStateProcessor
         $new_status
     ) {
         $order = new Order($id_order);
-        if ($order && $order->module == $this->module->name && $this->canProcessStatusChange($old_status, $new_status)) {
+        if (Validate::isLoadedObject($order) &&
+            $order->module == $this->module->name &&
+            $this->canProcessStatusChange($old_status, $new_status) &&
+            (int)$order->current_state !== (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE')) {
             if (!$this->isCorrectStatus($old_status, $new_status)) {
                 throw new Exception(
                     'Status transition is incorrect ' . $old_status . ' - ' . $new_status
@@ -45,8 +48,8 @@ class PaynowOrderStateProcessor
                     $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'));
                     break;
                 case Paynow\Model\Payment\Status::STATUS_CONFIRMED:
+                    $order->addOrderPayment($order->total_paid, $this->module->displayName, $id_payment);
                     $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'));
-                    $this->addPaymentIdToOrderPayments($order, $id_payment);
                     break;
                 case Paynow\Model\Payment\Status::STATUS_ERROR:
                     $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'));
@@ -146,18 +149,5 @@ class PaynowOrderStateProcessor
         $previous_status_exists = isset($payment_status_flow[$previous_status]);
         $is_change_possible = in_array($next_status, $payment_status_flow[$previous_status]);
         return $previous_status_exists && $is_change_possible;
-    }
-
-    private function addPaymentIdToOrderPayments($order, $id_payment)
-    {
-        if ($id_payment === null) {
-            return;
-        }
-
-        $payments = $order->getOrderPaymentCollection()->getResults();
-        if (count($payments) > 0) {
-            $payments[0]->transaction_id = $id_payment;
-            $payments[0]->update();
-        }
     }
 }

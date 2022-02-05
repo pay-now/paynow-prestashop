@@ -41,7 +41,9 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.6.3';
+        $this->version = '1.6.4';        $this->name = 'paynow';
+        $this->tab = 'payments_gateways';
+        $this->version = '1.6.4';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -475,7 +477,7 @@ class Paynow extends PaymentModule
     public function hookActionOrderSlipAdd($params)
     {
         if ((int)Configuration::get('PAYNOW_REFUNDS_ENABLED') === 1 && Tools::isSubmit('makeRefundViaPaynow') &&
-            $this->name = $params['order']->module) {
+            $this->name == $params['order']->module) {
                 (new PaynowRefundProcessor($this->getPaynowClient(), $this->displayName))
                     ->processFromOrderSlip($params['order']);
         }
@@ -485,6 +487,9 @@ class Paynow extends PaymentModule
      * Handle status change to make a refund
      *
      * @param $params
+     *
+     * @throws PrestaShopDatabaseException
+     * @throws PrestaShopException
      */
     public function hookActionOrderStatusPostUpdate($params)
     {

@@ -92,19 +92,23 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             $payment_data = (new PaynowPaymentProcessor($this->context, $this->module))->process();
             Tools::redirect($this->getRedirectUrl($payment_data));
         } catch (PaynowPaymentAuthorizeException $exception) {
-            PaynowLogger::error(
-                $exception->getMessage() . '{externalId={}}',
-                [
-                    $exception->getExternalId()
-                ]
-            );
-            foreach ($exception->getPrevious()->getErrors() as $error) {
+            $errors = $exception->getPrevious()->getErrors();
+            if ( ! empty($errors)) {
+                foreach ($errors as $error) {
+                    PaynowLogger::error(
+                        $exception->getMessage() . ' {externalId={}, error={}, message={}}',
+                        [
+                            $exception->getExternalId(),
+                            $error->getType(),
+                            $error->getMessage()
+                        ]
+                    );
+                }
+            } else {
                 PaynowLogger::error(
-                    $exception->getMessage() . '{externalId={}, error={}, message={}}',
+                    $exception->getMessage() . ' {externalId={}}',
                     [
-                        $exception->getExternalId(),
-                        $error->getType(),
-                        $error->getMessage()
+                        $exception->getExternalId()
                     ]
                 );
             }
