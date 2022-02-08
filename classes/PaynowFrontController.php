@@ -91,7 +91,15 @@ class PaynowFrontController extends ModuleFrontControllerCore
                 $new_status
             );
         } catch (Exception $e) {
-            PaynowLogger::error($e->getMessage() . ' {paymentId={}}', [$id_payment]);
+            PaynowLogger::error(
+                'An error occurred during updating state {paymentId={}, externalId={}, status={}, message={}}',
+                [
+                    $id_payment,
+                    $external_id,
+                    $new_status,
+                    $e->getMessage()
+                ]
+            );
         }
     }
 

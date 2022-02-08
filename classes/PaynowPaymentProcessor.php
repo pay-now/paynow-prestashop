@@ -54,7 +54,7 @@ class PaynowPaymentProcessor
      */
     public function process(): array
     {
-        if (PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') && !empty($this->module->currentOrder)) {
+        if (PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') && ! empty($this->module->currentOrder)) {
             $order       = new Order($this->module->currentOrder);
             $external_id = $order->reference;
             $payment     = $this->processFromOrder($order, $external_id);
@@ -94,10 +94,10 @@ class PaynowPaymentProcessor
         );
 
         return [
-            'payment_id' => $payment->getPaymentId(),
-            'status' => $payment->getStatus(),
+            'payment_id'   => $payment->getPaymentId(),
+            'status'       => $payment->getStatus(),
             'redirect_url' => $payment->getRedirectUrl() ?? null,
-            'external_id' => $external_id
+            'external_id'  => $external_id
         ];
     }
 
@@ -106,6 +106,13 @@ class PaynowPaymentProcessor
      */
     private function processFromOrder($order, $external_id): ?Authorize
     {
+        PaynowLogger::info(
+            'Processing payment for order {externalId={}, orderReference={}}',
+            [
+                $external_id,
+                $order->reference
+            ]
+        );
         $idempotency_key      = $this->generateIdempotencyKey($external_id);
         $payment_request_data = $this->paymentDataBuilder->fromOrder($order);
 
@@ -117,6 +124,13 @@ class PaynowPaymentProcessor
      */
     private function processFromCart($cart, $external_id): ?Authorize
     {
+        PaynowLogger::info(
+            'Processing payment for cart {externalId={}, cartId={}}',
+            [
+                $external_id,
+                $cart->id
+            ]
+        );
         $idempotency_key      = $this->generateIdempotencyKey($external_id);
         $payment_request_data = $this->paymentDataBuilder->fromCart($cart, $external_id);
 
@@ -140,7 +154,11 @@ class PaynowPaymentProcessor
         try {
             return $this->paymentClient->authorize($payment_request_data, $idempotency_key);
         } catch (PaynowException $exception) {
-            throw new PaynowPaymentAuthorizeException($exception->getMessage(), $payment_request_data['externalId'], $exception);
+            throw new PaynowPaymentAuthorizeException(
+                $exception->getMessage(),
+                $payment_request_data['externalId'],
+                $exception
+            );
         }
     }
 }

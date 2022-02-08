@@ -70,38 +70,42 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                     $response['message'] = $this->translations['An error occurred during the payment process'];
                 }
             } catch (PaynowPaymentAuthorizeException $exception) {
-                PaynowLogger::error(
-                    $exception->getMessage() . '{externalId={}}',
-                    [
-                        $exception->getExternalId()
-                    ]
-                );
-
-                foreach ($exception->getPrevious()->getErrors() as $error) {
+                $errors = $exception->getPrevious()->getErrors();
+                if (! empty($errors)) {
+                    foreach ($errors as $error) {
+                        PaynowLogger::error(
+                            $exception->getMessage() . ' {externalId={}, error={}, message={}}',
+                            [
+                                $exception->getExternalId(),
+                                $error->getType(),
+                                $error->getMessage()
+                            ]
+                        );
+                    }
+                    if (reset($errors)) {
+                        PaynowLogger::error($exception->getMessage());
+                        switch (reset($errors)->getType()) {
+                            case 'AUTHORIZATION_CODE_INVALID':
+                                $response['message'] = $this->translations['Wrong BLIK code'];
+                                break;
+                            case 'AUTHORIZATION_CODE_EXPIRED':
+                                $response['message'] = $this->translations['BLIK code has expired'];
+                                break;
+                            case 'AUTHORIZATION_CODE_USED':
+                                $response['message'] = $this->translations['BLIK code already used'];
+                                break;
+                            default:
+                                $response['message'] = $this->translations['An error occurred during the payment process'];
+                        }
+                    }
+                } else {
                     PaynowLogger::error(
-                        $exception->getMessage() . '{externalId={}, error={}, message={}}',
+                        $exception->getMessage() . ' {externalId={}}',
                         [
-                            $exception->getExternalId(),
-                            $error->getType(),
-                            $error->getMessage()
+                            $exception->getExternalId()
                         ]
                     );
-                }
-                if ($exception->getPrevious()->getErrors() && $exception->getPrevious()->getErrors()[0]) {
-                    PaynowLogger::error($exception->getMessage());
-                    switch ($exception->getPrevious()->getErrors()[0]->getType()) {
-                        case 'AUTHORIZATION_CODE_INVALID':
-                            $response['message'] = $this->translations['Wrong BLIK code'];
-                            break;
-                        case 'AUTHORIZATION_CODE_EXPIRED':
-                            $response['message'] = $this->translations['BLIK code has expired'];
-                            break;
-                        case 'AUTHORIZATION_CODE_USED':
-                            $response['message'] = $this->translations['BLIK code already used'];
-                            break;
-                        default:
-                            $response['message'] = $this->translations['An error occurred during the payment process'];
-                    }
+                    $response['message'] = $this->translations['An error occurred during the payment process'];
                 }
             }
         } else {

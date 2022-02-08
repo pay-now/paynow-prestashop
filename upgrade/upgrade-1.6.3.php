@@ -23,7 +23,6 @@ function upgrade_module_1_6_3($module)
                AFTER `status`"
         );
     } catch (PrestaShopDatabaseException $exception) {
-
     }
 
     return true;
