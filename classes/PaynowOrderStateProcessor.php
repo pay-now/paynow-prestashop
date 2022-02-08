@@ -30,11 +30,11 @@ class PaynowOrderStateProcessor
         $new_status
     ) {
         PaynowLogger::info(
-            'Processing order update state {paymentId={}, orderReference={}, externalId={}, orderId={}, cartId={}}',
+            'Processing order update state {paymentId={}, externalId={}, orderReference={}, orderId={}, cartId={}}',
             [
                 $id_payment,
-                $order_reference,
                 $external_id,
+                $order_reference,
                 $id_order,
                 $id_cart
             ]
