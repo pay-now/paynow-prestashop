@@ -154,8 +154,11 @@ class PaynowPaymentProcessor
         try {
             return $this->paymentClient->authorize($payment_request_data, $idempotency_key);
         } catch (PaynowException $exception) {
-            throw new PaynowPaymentAuthorizeException($exception->getMessage(), $payment_request_data['externalId'],
-                $exception);
+            throw new PaynowPaymentAuthorizeException(
+                $exception->getMessage(),
+                $payment_request_data['externalId'],
+                $exception
+            );
         }
     }
 }

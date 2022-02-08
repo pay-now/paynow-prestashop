@@ -93,7 +93,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             Tools::redirect($this->getRedirectUrl($payment_data));
         } catch (PaynowPaymentAuthorizeException $exception) {
             $errors = $exception->getPrevious()->getErrors();
-            if ( ! empty($errors)) {
+            if (! empty($errors)) {
                 foreach ($errors as $error) {
                     PaynowLogger::error(
                         $exception->getMessage() . ' {externalId={}, error={}, message={}}',

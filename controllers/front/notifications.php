@@ -116,9 +116,9 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             }
 
             (new PaynowOrderStateProcessor())->updateState(
-                $filtered_payment->id_order,
+                (int)$filtered_payment->id_order,
                 $notification_data['paymentId'],
-                $filtered_payment->id_cart,
+                (int)$filtered_payment->id_cart,
                 $filtered_payment->order_reference,
                 $filtered_payment->external_id,
                 $filtered_payment->status,
@@ -131,7 +131,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                     $notification_data['paymentId'],
                     $notification_data['externalId'],
                     $notification_data['status'],
-                    $exception->getMessage() . ' ' . $exception->getTraceAsString()
+                    $exception->getMessage()
                 ]
             );
             header('HTTP/1.1 400 Bad Request', true, 400);

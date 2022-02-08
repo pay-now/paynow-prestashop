@@ -29,11 +29,39 @@ class PaynowOrderStateProcessor
         $old_status,
         $new_status
     ) {
+        PaynowLogger::info(
+            'Processing order update state {paymentId={}, orderReference={}, externalId={}, orderId={}, cartId={}}',
+            [
+                $id_payment,
+                $order_reference,
+                $external_id,
+                $id_order,
+                $id_cart
+            ]
+        );
         $order = new Order($id_order);
-        if (Validate::isLoadedObject($order) &&
-            $order->module == $this->module->name &&
-            $this->canProcessStatusChange($old_status, $new_status) &&
-            (int)$order->current_state !== (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE')) {
+        if (!Validate::isLoadedObject($order)) {
+            throw new Exception('An order does not exists with ID ' . $id_order);
+        }
+
+        if ($order->module !== $this->module->name) {
+            throw new Exception('Another payment method is selected for order');
+        }
+
+        if (!$this->canProcessStatusChange($old_status, $new_status)) {
+            throw new Exception('Can\'t process order status change for payment');
+        }
+
+        if ($order->current_state === (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE')) {
+            PaynowLogger::info(
+                'The order has already paid status. Skipping order state update {paymentId={}, orderReference={}, externalId={}}',
+                [
+                    $id_payment,
+                    $order_reference,
+                    $external_id
+                ]
+            );
+        } else {
             if (!$this->isCorrectStatus($old_status, $new_status)) {
                 throw new Exception(
                     'Status transition is incorrect ' . $old_status . ' - ' . $new_status
