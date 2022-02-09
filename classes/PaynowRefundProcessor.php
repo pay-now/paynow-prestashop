@@ -96,12 +96,13 @@ class PaynowRefundProcessor
             } catch (Paynow\Exception\PaynowException $exception) {
                 foreach ($exception->getErrors() as $error) {
                     PaynowLogger::error(
-                        'An error occurred during processing refund request {orderReference={}, paymentId={}, type={}, message={}}',
+                        'An error occurred during refund request process {orderReference={}, paymentId={}, type={}, message={}, code={}}',
                         [
                             $payment->order_reference,
                             $payment->transaction_id,
                             $error->getType(),
-                            $error->getMessage()
+                            $error->getMessage(),
+                            $exception->getCode()
                         ]
                     );
                 }
