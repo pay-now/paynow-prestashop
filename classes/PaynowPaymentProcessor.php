@@ -85,10 +85,11 @@ class PaynowPaymentProcessor
         }
 
         PaynowLogger::info(
-            'Payment has been successfully created {paymentId={}, externalId={}, status={}}',
+            'Payment has been successfully created {paymentId={}, externalId={}, cartId={}, status={}}',
             [
                 $payment->getPaymentId(),
                 $external_id,
+                $this->context->cart->id,
                 $payment->getStatus()
             ]
         );
@@ -107,10 +108,11 @@ class PaynowPaymentProcessor
     private function processFromOrder($order, $external_id): ?Authorize
     {
         PaynowLogger::info(
-            'Processing payment for order {externalId={}, orderReference={}}',
+            'Processing payment for order {externalId={}, orderReference={}, cartId={}}',
             [
                 $external_id,
-                $order->reference
+                $order->reference,
+                $order->id_cart
             ]
         );
         $idempotency_key      = $this->generateIdempotencyKey($external_id);

@@ -30,13 +30,15 @@ class PaynowOrderStateProcessor
         $new_status
     ) {
         PaynowLogger::info(
-            'Processing order update state {paymentId={}, externalId={}, orderReference={}, orderId={}, cartId={}}',
+            'Processing order\'s state update {paymentId={}, orderReference={}, externalId={}, orderId={}, cartId={}, fromStatus={}, toStatus={}}',
             [
                 $id_payment,
                 $external_id,
                 $order_reference,
                 $id_order,
-                $id_cart
+                $id_cart,
+                $old_status,
+                $new_status
             ]
         );
         $order = new Order($id_order);
@@ -48,13 +50,9 @@ class PaynowOrderStateProcessor
             throw new Exception('Another payment method is selected for order');
         }
 
-        if (!$this->canProcessStatusChange($old_status, $new_status)) {
-            throw new Exception('Can\'t process order status change for payment');
-        }
-
         if ($order->current_state === (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE')) {
             PaynowLogger::info(
-                'The order has already paid status. Skipping order state update {paymentId={}, orderReference={}, externalId={}}',
+                'The order has already paid status. Skipping order\'s state update {paymentId={}, orderReference={}, externalId={}}',
                 [
                     $id_payment,
                     $order_reference,
@@ -91,7 +89,7 @@ class PaynowOrderStateProcessor
             }
 
             try {
-                if ($new_status === Paynow\Model\Payment\Status::STATUS_NEW) {
+                if ($new_status === Paynow\Model\Payment\Status::STATUS_NEW && !PaynowPaymentData::findByPaymentId($id_payment)) {
                     $last_payment = PaynowPaymentData::findLastByExternalId($external_id);
                     PaynowPaymentData::create(
                         $id_payment,
@@ -110,7 +108,7 @@ class PaynowOrderStateProcessor
             }
 
             PaynowLogger::info(
-                'Changed order status {paymentId={}, externalId={}, orderReference={}, status={}}',
+                'Changed order\'s state {paymentId={}, externalId={}, orderReference={}, status={}}',
                 [
                     $id_payment,
                     $external_id,
@@ -123,7 +121,7 @@ class PaynowOrderStateProcessor
 
     private function canProcessStatusChange($old_status, $new_status): bool
     {
-        return $old_status !== $new_status && $old_status !== Paynow\Model\Payment\Status::STATUS_CONFIRMED;
+        return $old_status !== $new_status;
     }
 
     private function changeState($order, $new_order_state_id)

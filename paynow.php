@@ -25,6 +25,7 @@ include_once(dirname(__FILE__) . '/classes/PaynowRefundProcessor.php');
 include_once(dirname(__FILE__) . '/classes/PaynowGDPRHelper.php');
 include_once(dirname(__FILE__) . '/classes/PaynowLinkHelper.php');
 include_once(dirname(__FILE__) . '/classes/PaynowAdminFormHelper.php');
+include_once(dirname(__FILE__) . '/classes/PaynowOrderCreateProcessor.php');
 include_once(dirname(__FILE__) . '/classes/PaynowOrderStateProcessor.php');
 include_once(dirname(__FILE__) . '/models/PaynowPaymentData.php');
 include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
@@ -553,7 +554,8 @@ class Paynow extends PaymentModule
         try {
             $last_payment_data = PaynowPaymentData::findLastByOrderId($order->id);
 
-            return $last_payment_data->status !== \Paynow\Model\Payment\Status::STATUS_CONFIRMED &&
+            return empty($last_payment_data) ||
+                   $last_payment_data->status !== \Paynow\Model\Payment\Status::STATUS_CONFIRMED ||
                    in_array(
                        (int)$order->current_state,
                        [
@@ -627,7 +629,13 @@ class Paynow extends PaymentModule
                 PaynowLinkHelper::getNotificationUrl()
             );
         } catch (Paynow\Exception\PaynowException $exception) {
-            PaynowLogger::error('Could not properly configure shop urls {message={}}', [$exception->getMessage()]);
+            PaynowLogger::error(
+                'An error occurred during shop urls configuration {message={}, code={}}',
+                [
+                    $exception->getPrevious()->getMessage(),
+                    $exception->getCode()
+                ]
+            );
             if ($exception->getCode() == 401) {
                 $this->html .= $this->displayError($this->l('Wrong configuration for API credentials'));
             } else {

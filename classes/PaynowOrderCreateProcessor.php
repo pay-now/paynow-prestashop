@@ -1,0 +1,66 @@
+<?php
+
+class PaynowOrderCreateProcessor
+{
+    /** @var Module */
+    public $module;
+
+    public function __construct()
+    {
+        $this->module = Module::getInstanceByName(Tools::getValue('module'));
+    }
+
+    /**
+     * @param $cart
+     * @param $external_id
+     *
+     * @return Order|null
+     */
+    public function process($cart, $external_id): ?Order
+    {
+        PaynowLogger::info(
+            "Creating an order from cart {externalId={}, cartId={}}",
+            [
+                $external_id,
+                $cart->id
+            ]
+        );
+
+        try {
+            $this->module->validateOrder(
+                (int)$cart->id,
+                Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
+                (float)$cart->getOrderTotal(),
+                $this->module->displayName,
+                null,
+                null,
+                (int)$cart->id_currency,
+                false,
+                $cart->secure_key
+            );
+
+            $order = new Order($this->module->currentOrder);
+
+            PaynowLogger::info(
+                "An order has been successfully created {externalId={}, orderReference={}, cartId={}, orderId={}}",
+                [
+                    $external_id,
+                    $order->reference,
+                    $cart->id,
+                    $order->id
+                ]
+            );
+
+            return $order;
+        } catch (Exception $exception) {
+            PaynowLogger::error(
+                $exception->getMessage() . ' {externalId={}}',
+                [
+                    $external_id
+                ]
+            );
+
+            return null;
+        }
+    }
+}

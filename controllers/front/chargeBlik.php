@@ -33,19 +33,24 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
         if ($this->isTokenValid()) {
             $cart = new Cart(Context::getContext()->cart->id);
             if (empty($cart) || ! $cart->id) {
+                PaynowLogger::warning(
+                    'Can\'t process charge BLIK payment due wrong cart {cartId={}}',
+                    [
+                        Context::getContext()->cart->id
+                    ]
+                );
                 $this->ajaxRender(json_encode($response));
                 exit;
             }
 
             try {
                 $payment_data = (new PaynowPaymentProcessor($this->context, $this->module))->process();
-
                 if ($payment_data['status'] && in_array($payment_data['status'], [
                         Paynow\Model\Payment\Status::STATUS_NEW,
                         Paynow\Model\Payment\Status::STATUS_PENDING
                     ])) {
                     if (PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE')) {
-                        $order = $this->createOrder($cart);
+                        $order = (new PaynowOrderCreateProcessor())->process($cart, $payment_data['external_id']);
                     }
                     $response = array_merge($response, [
                         'success'      => true,
@@ -59,7 +64,7 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                         ])
                     ]);
 
-                    if (!empty($order) && $order->id) {
+                    if (! empty($order) && $order->id) {
                         PaynowPaymentData::updateOrderIdAndOrderReferenceByPaymentId(
                             $order->id,
                             $order->reference,
@@ -74,16 +79,25 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                 if (! empty($errors)) {
                     foreach ($errors as $error) {
                         PaynowLogger::error(
-                            $exception->getMessage() . ' {externalId={}, error={}, message={}}',
+                            'An error occurred during payment request process {externalId={}, error={}, message={}, code={}}',
+                            [
+                                $exception->getExternalId(),
+                                $error->getType(),
+                                $error->getMessage(),
+                                $exception->getPrevious()->getCode()
+                            ]
+                        );
+                    }
+                    $error = reset($errors)->getMessage();
+                    if ($error) {
+                        PaynowLogger::error(
+                            $error->getMessage(),
                             [
                                 $exception->getExternalId(),
                                 $error->getType(),
                                 $error->getMessage()
                             ]
                         );
-                    }
-                    if (reset($errors)) {
-                        PaynowLogger::error($exception->getMessage());
                         switch (reset($errors)->getType()) {
                             case 'AUTHORIZATION_CODE_INVALID':
                                 $response['message'] = $this->translations['Wrong BLIK code'];
@@ -100,9 +114,11 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                     }
                 } else {
                     PaynowLogger::error(
-                        $exception->getMessage() . ' {externalId={}}',
+                        'An error occurred during sending payment request {externalId={}, message={}, code={}}',
                         [
-                            $exception->getExternalId()
+                            $exception->getExternalId(),
+                            $exception->getPrevious()->getMessage(),
+                            $exception->getCode()
                         ]
                     );
                     $response['message'] = $this->translations['An error occurred during the payment process'];
@@ -114,25 +130,5 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
 
         $this->ajaxRender(json_encode($response));
         exit;
-    }
-
-    private function createOrder($cart): Order
-    {
-        $currency = $this->context->currency;
-        $customer = new Customer($cart->id_customer);
-
-        $this->module->validateOrder(
-            (int)$cart->id,
-            Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
-            (float)$cart->getOrderTotal(),
-            $this->module->displayName,
-            null,
-            null,
-            (int)$currency->id,
-            false,
-            $customer->secure_key
-        );
-
-        return new Order($this->module->currentOrder);
     }
 }

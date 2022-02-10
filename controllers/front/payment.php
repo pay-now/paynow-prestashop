@@ -65,19 +65,8 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     {
         $this->validateCart();
 
-        $total = (float)$this->context->cart->getOrderTotal();
         if (PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE')) {
-            $this->module->validateOrder(
-                (int)$this->context->cart->id,
-                Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
-                $total,
-                $this->module->displayName,
-                null,
-                null,
-                (int)$this->context->currency->id,
-                false,
-                $this->context->cart->secure_key
-            );
+            $this->order = (new PaynowOrderCreateProcessor())->process($this->context->cart, null);
         }
 
         $this->sendPaymentRequest();
@@ -96,7 +85,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             if (! empty($errors)) {
                 foreach ($errors as $error) {
                     PaynowLogger::error(
-                        $exception->getMessage() . ' {externalId={}, error={}, message={}}',
+                        'An error occurred during sending payment request {externalId={}, error={}, message={}}',
                         [
                             $exception->getExternalId(),
                             $error->getType(),
@@ -106,9 +95,11 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
                 }
             } else {
                 PaynowLogger::error(
-                    $exception->getMessage() . ' {externalId={}}',
+                    $exception->getMessage() . ' {externalId={}, message={}, code={}}',
                     [
-                        $exception->getExternalId()
+                        $exception->getExternalId(),
+                        $exception->getMessage(),
+                        $exception->getCode()
                     ]
                 );
             }
