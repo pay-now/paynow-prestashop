@@ -33,8 +33,8 @@ class PaynowOrderStateProcessor
             'Processing order\'s state update {paymentId={}, orderReference={}, externalId={}, orderId={}, cartId={}, fromStatus={}, toStatus={}}',
             [
                 $id_payment,
-                $order_reference,
                 $external_id,
+                $order_reference,
                 $id_order,
                 $id_cart,
                 $old_status,
