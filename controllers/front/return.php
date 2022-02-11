@@ -44,23 +44,43 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         }
 
         $this->order = new Order($this->payment['id_order']);
-
-        if (!Validate::isLoadedObject($this->order)) {
+        if (!Validate::isLoadedObject($this->order) && PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE')) {
             $this->redirectToOrderHistory();
         }
 
-        if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')
-            && Status::STATUS_CONFIRMED !== $this->payment['status']) {
-            $payment_status = $this->getPaymentStatus($this->payment['id_payment']);
-            $this->updateOrderState(
-                $this->payment['id_order'],
-                $this->payment['id_payment'],
-                $this->payment['id_cart'],
-                $this->payment['order_reference'],
-                $this->payment['external_id'],
-                $this->payment['status'],
-                $payment_status
-            );
+        if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')) {
+            $payment_status_from_api = $this->getPaymentStatus($this->payment['id_payment']);
+            if (PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
+                Status::STATUS_CONFIRMED === $payment_status_from_api &&
+                (int)$this->payment['id_order'] === 0) {
+                $cart        = new Cart($this->payment['id_cart']);
+                $this->order = (new PaynowOrderCreateProcessor())->process($cart, $this->payment['external_id']);
+                $this->updateOrderState(
+                    $this->order->id,
+                    $this->payment['id_payment'],
+                    $this->order->id_cart,
+                    $this->order->reference,
+                    $this->payment['external_id'],
+                    $this->payment['status'],
+                    $payment_status_from_api
+                );
+                PaynowPaymentData::updateOrderIdAndOrderReferenceByPaymentId(
+                    $this->order->id,
+                    $this->order->reference,
+                    $this->payment['id_payment']
+                );
+            } else {
+                $this->updateOrderState(
+                    $this->payment['id_order'],
+                    $this->payment['id_payment'],
+                    $this->payment['id_cart'],
+                    $this->payment['order_reference'],
+                    $this->payment['external_id'],
+                    $this->payment['status'],
+                    $payment_status_from_api
+                );
+            }
+
             Tools::redirectLink(PaynowLinkHelper::getContinueUrl(
                 $this->order->id_cart,
                 $this->module->id,

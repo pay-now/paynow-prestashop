@@ -27,7 +27,7 @@ class PaynowOrderCreateProcessor
         );
 
         try {
-            $this->module->validateOrder(
+            $order_created = $this->module->validateOrder(
                 (int)$cart->id,
                 Configuration::get('PAYNOW_ORDER_INITIAL_STATE'),
                 (float)$cart->getOrderTotal(),
@@ -38,20 +38,28 @@ class PaynowOrderCreateProcessor
                 false,
                 $cart->secure_key
             );
-
-            $order = new Order($this->module->currentOrder);
-
-            PaynowLogger::info(
-                "An order has been successfully created {externalId={}, orderReference={}, cartId={}, orderId={}}",
-                [
-                    $external_id,
-                    $order->reference,
-                    $cart->id,
-                    $order->id
-                ]
-            );
-
-            return $order;
+            if ($order_created && $this->module->currentOrder) {
+                $order = new Order($this->module->currentOrder);
+                PaynowLogger::info(
+                    "An order has been successfully created {externalId={}, orderReference={}, cartId={}, orderId={}}",
+                    [
+                        $external_id,
+                        $order->reference,
+                        $cart->id,
+                        $order->id
+                    ]
+                );
+                return $order;
+            } else {
+                PaynowLogger::info(
+                    "An order has not been created {externalId={}, cartId={}}",
+                    [
+                        $external_id,
+                        $cart->id
+                    ]
+                );
+                return null;
+            }
         } catch (Exception $exception) {
             PaynowLogger::error(
                 $exception->getMessage() . ' {externalId={}}',
