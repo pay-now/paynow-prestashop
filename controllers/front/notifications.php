@@ -72,7 +72,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 );
                 $cart = new Cart((int)$filtered_payment->id_cart);
                 if ((float)$filtered_payment->total === $cart->getCartTotalPrice()) {
-                    $order = (new PaynowOrderCreateProcessor())->process($cart, $notification_data['externalId']);
+                    $order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $notification_data['externalId']);
                     PaynowPaymentData::updateOrderIdAndOrderReferenceByPaymentId(
                         $order->id,
                         $order->reference,
@@ -114,7 +114,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 }
             }
 
-            (new PaynowOrderStateProcessor())->updateState(
+            (new PaynowOrderStateProcessor($this->module))->updateState(
                 (int)$filtered_payment->id_order,
                 $notification_data['paymentId'],
                 (int)$filtered_payment->id_cart,

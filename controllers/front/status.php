@@ -31,7 +31,7 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
                     Status::STATUS_CONFIRMED === $payment_status_from_api &&
                     (int)$payment->id_order === 0) {
                     $cart        = new Cart($payment->id_cart);
-                    $this->order = (new PaynowOrderCreateProcessor())->process($cart, $payment->external_id);
+                    $this->order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $payment->external_id);
                     $this->updateOrderState(
                         $this->order->id,
                         $payment->id_payment,
