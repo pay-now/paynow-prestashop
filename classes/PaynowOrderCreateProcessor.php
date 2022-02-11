@@ -5,9 +5,9 @@ class PaynowOrderCreateProcessor
     /** @var Module */
     public $module;
 
-    public function __construct()
+    public function __construct($module)
     {
-        $this->module = Module::getInstanceByName(Tools::getValue('module'));
+        $this->module = $module;
     }
 
     /**
@@ -36,7 +36,8 @@ class PaynowOrderCreateProcessor
                 null,
                 (int)$cart->id_currency,
                 false,
-                $cart->secure_key
+                $cart->secure_key,
+                new Shop($cart->id_shop)
             );
             if ($order_created && $this->module->currentOrder) {
                 $order = new Order($this->module->currentOrder);

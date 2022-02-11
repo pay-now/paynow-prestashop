@@ -15,9 +15,9 @@ class PaynowOrderStateProcessor
     /** @var Module */
     public $module;
 
-    public function __construct()
+    public function __construct($module)
     {
-        $this->module = Module::getInstanceByName(Tools::getValue('module'));
+        $this->module = $module;
     }
 
     public function updateState(
