@@ -33,7 +33,7 @@ class PaynowOrderCreateProcessor
                 (float)$cart->getOrderTotal(),
                 $this->module->displayName,
                 null,
-                null,
+                [],
                 (int)$cart->id_currency,
                 false,
                 $cart->secure_key,
