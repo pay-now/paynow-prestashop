@@ -42,10 +42,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.6.4';
-        $this->name = 'paynow';
-        $this->tab = 'payments_gateways';
-        $this->version = '1.6.4';
+        $this->version = '1.6.5';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
