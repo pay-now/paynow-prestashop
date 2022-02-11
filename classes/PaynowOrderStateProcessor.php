@@ -30,7 +30,7 @@ class PaynowOrderStateProcessor
         $new_status
     ) {
         PaynowLogger::info(
-            'Processing order\'s state update {paymentId={}, orderReference={}, externalId={}, orderId={}, cartId={}, fromStatus={}, toStatus={}}',
+            'Processing order\'s state update {paymentId={}, externalId={}, orderReference={}, orderId={}, cartId={}, fromStatus={}, toStatus={}}',
             [
                 $id_payment,
                 $external_id,
@@ -68,23 +68,23 @@ class PaynowOrderStateProcessor
 
             switch ($new_status) {
                 case Paynow\Model\Payment\Status::STATUS_NEW:
-                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_INITIAL_STATE'));
+                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_INITIAL_STATE'), $new_status, $id_payment, $external_id);
                     break;
                 case Paynow\Model\Payment\Status::STATUS_REJECTED:
-                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'));
+                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'), $new_status, $id_payment, $external_id);
                     break;
                 case Paynow\Model\Payment\Status::STATUS_CONFIRMED:
                     $order->addOrderPayment($order->total_paid, $this->module->displayName, $id_payment);
-                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'));
+                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'), $new_status, $id_payment, $external_id);
                     break;
                 case Paynow\Model\Payment\Status::STATUS_ERROR:
-                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'));
+                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'), $new_status, $id_payment, $external_id);
                     break;
                 case Paynow\Model\Payment\Status::STATUS_ABANDONED:
-                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_ABANDONED_STATE'));
+                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_ABANDONED_STATE'), $new_status, $id_payment, $external_id);
                     break;
                 case Paynow\Model\Payment\Status::STATUS_EXPIRED:
-                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_EXPIRED_STATE'));
+                    $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_EXPIRED_STATE'), $new_status, $id_payment, $external_id);
                     break;
             }
 
@@ -119,21 +119,37 @@ class PaynowOrderStateProcessor
         }
     }
 
-    private function canProcessStatusChange($old_status, $new_status): bool
-    {
-        return $old_status !== $new_status;
-    }
-
-    private function changeState($order, $new_order_state_id)
+    private function changeState($order, $new_order_state_id, $payment_status, $id_payment, $external_id)
     {
         $history = new OrderHistory();
         $history->id_order = $order->id;
         if ($order->current_state != $new_order_state_id) {
+            PaynowLogger::info(
+                'Adding new state to order\'s history {paymentId={}, externalId={}, orderReference={}, paymentStatus={}, state={}}',
+                [
+                    $id_payment,
+                    $external_id,
+                    $order->reference,
+                    $payment_status,
+                    $new_order_state_id
+                ]
+            );
             $history->changeIdOrderState(
                 $new_order_state_id,
                 $order->id
             );
             $history->addWithemail(true);
+            PaynowLogger::info(
+                'Added new state to order\'s history {paymentId={}, externalId={}, orderReference={}, paymentStatus={}, state={}, historyId={}}',
+                [
+                    $id_payment,
+                    $external_id,
+                    $order->reference,
+                    $payment_status,
+                    $new_order_state_id,
+                    $history->id
+                ]
+            );
         }
     }
 
