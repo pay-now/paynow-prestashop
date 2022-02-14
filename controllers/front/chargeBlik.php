@@ -88,17 +88,12 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                             ]
                         );
                     }
-                    $error = reset($errors)->getMessage();
+                    /**
+                     * @var \Paynow\Exception\Error $error
+                     */
+                    $error = reset($errors);
                     if ($error) {
-                        PaynowLogger::error(
-                            $error->getMessage(),
-                            [
-                                $exception->getExternalId(),
-                                $error->getType(),
-                                $error->getMessage()
-                            ]
-                        );
-                        switch (reset($errors)->getType()) {
+                        switch ($error->getType()) {
                             case 'AUTHORIZATION_CODE_INVALID':
                                 $response['message'] = $this->translations['Wrong BLIK code'];
                                 break;
