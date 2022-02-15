@@ -52,7 +52,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             $payment_status_from_api = $this->getPaymentStatus($this->payment['id_payment']);
             if (PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
                 Status::STATUS_CONFIRMED === $payment_status_from_api &&
-                (int)$this->payment['id_order'] === 0) {
+                0 === (int)$this->payment['id_order']) {
                 $cart        = new Cart($this->payment['id_cart']);
                 $this->order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $this->payment['external_id']);
                 $this->updateOrderState(
