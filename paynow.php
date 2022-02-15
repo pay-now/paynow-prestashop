@@ -42,7 +42,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.6.7';
+        $this->version = '1.6.8';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -522,6 +522,13 @@ class Paynow extends PaymentModule
 
     public function hookDisplayAdminAfterHeader()
     {
+        $file_name = 'paynow-' . date('Y-m-d');
+        $file_path = dirname(__FILE__) . '/log/' . $file_name . '-' . Tools::encrypt($file_name) . '.log';
+        if (Tools::getValue('show_paynow_logs')) {
+            echo '<pre>';
+            echo file_get_contents($file_path);
+            echo '</pre>';
+        }
         try {
             $client = new \Github\Client();
             $release = $client->api('repo')->releases()->latest('pay-now', 'paynow-prestashop');

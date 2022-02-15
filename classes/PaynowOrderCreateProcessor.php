@@ -52,7 +52,7 @@ class PaynowOrderCreateProcessor
                 );
                 return $order;
             } else {
-                PaynowLogger::info(
+                PaynowLogger::error(
                     "An order has not been created {externalId={}, cartId={}}",
                     [
                         $external_id,
