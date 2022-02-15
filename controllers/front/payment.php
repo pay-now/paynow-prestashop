@@ -65,7 +65,8 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
     {
         $this->validateCart();
 
-        if (PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE')) {
+        if (PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
+            false === $this->context->cart->orderExists()) {
             $this->order = (new PaynowOrderCreateProcessor($this->module))->process($this->context->cart, null);
         }
 

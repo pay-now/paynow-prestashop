@@ -27,10 +27,12 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
             $payment_status_from_db = $payment->status;
             if (Status::STATUS_CONFIRMED !== $payment->status) {
                 $payment_status_from_api = $this->getPaymentStatus($payment->id_payment);
+                $cart                    = new Cart($payment->id_cart);
                 if (PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
                     Status::STATUS_CONFIRMED === $payment_status_from_api &&
-                    0 === (int)$payment->id_order) {
-                    $cart        = new Cart($payment->id_cart);
+                    0 === (int)$payment->id_order &&
+                    false === $cart->orderExists()
+                ) {
                     $this->order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $payment->external_id);
                     $this->updateOrderState(
                         $this->order->id,
@@ -62,10 +64,16 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
                 }
             }
 
-            $current_state = $this->order->getCurrentStateFull($this->context->language->id);
+            if ($this->order) {
+                $current_state      = $this->order->getCurrentStateFull($this->context->language->id);
+                $current_state_name = $current_state['name'];
+            } else {
+                $order_state        = new OrderState(Configuration::get('PAYNOW_ORDER_INITIAL_STATE'));
+                $current_state_name = $order_state->name[$this->context->language->id];
+            }
 
             $response = [
-                'order_status'   => $current_state['name'],
+                'order_status'   => $current_state_name,
                 'payment_status' => $payment_status_from_db
             ];
 
