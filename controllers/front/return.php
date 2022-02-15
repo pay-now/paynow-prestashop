@@ -56,7 +56,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
                 $cart        = new Cart($this->payment['id_cart']);
                 $this->order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $this->payment['external_id']);
                 $this->updateOrderState(
-                    $this->order->id,
+                    $this->order ? $this->order->id : 0,
                     $this->payment['id_payment'],
                     $this->order->id_cart,
                     $this->order->reference,

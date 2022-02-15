@@ -61,7 +61,8 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 exit;
             }
 
-            if ($this->canProcessCreateOrder($filtered_payments, $notification_data['status'])) {
+            $cart = new Cart((int)$filtered_payment->id_cart);
+            if ($this->canProcessCreateOrder($filtered_payments, $notification_data['status'], $cart)) {
                 PaynowLogger::info(
                     'Processing new order from cart {paymentId={}, externalId={}, cartId={}}',
                     [
@@ -70,7 +71,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                         $filtered_payment->id_cart
                     ]
                 );
-                $cart = new Cart((int)$filtered_payment->id_cart);
+
                 if ((float)$filtered_payment->total === $cart->getCartTotalPrice()) {
                     $order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $notification_data['externalId']);
                     PaynowPaymentData::updateOrderIdAndOrderReferenceByPaymentId(
@@ -153,11 +154,12 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         return $headers;
     }
 
-    private function canProcessCreateOrder($filtered_ayments, $payment_notification_status): bool
+    private function canProcessCreateOrder($filtered_ayments, $payment_notification_status, Cart $cart): bool
     {
         return 1 <= count($filtered_ayments) &&
-        PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
-        Paynow\Model\Payment\Status::STATUS_CONFIRMED === $payment_notification_status;
+               PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
+               Paynow\Model\Payment\Status::STATUS_CONFIRMED === $payment_notification_status &&
+               $cart->orderExists() === false;
     }
 
     private function getFilteredPayments($external_id, $payment_id, $payment_status): array

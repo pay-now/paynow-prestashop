@@ -63,9 +63,10 @@ class PaynowOrderCreateProcessor
             }
         } catch (Exception $exception) {
             PaynowLogger::error(
-                $exception->getMessage() . ' {externalId={}}',
+                $exception->getMessage() . ' {externalId={}, cartId={}}',
                 [
-                    $external_id
+                    $external_id,
+                    $cart->id
                 ]
             );
 
