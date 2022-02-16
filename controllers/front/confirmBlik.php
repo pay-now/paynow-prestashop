@@ -40,7 +40,13 @@ class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
             $payment_status
         );
 
-        $current_state = $this->order->getCurrentStateFull($this->context->language->id);
+        if ($this->order) {
+            $current_state = $this->order->getCurrentStateFull($this->context->language->id);
+            $current_state_name = $current_state['name'];
+        } else {
+            $order_state = new OrderState(Configuration::get('PAYNOW_ORDER_INITIAL_STATE'));
+            $current_state_name = $order_state->name[$this->context->language->id];
+        }
 
         if (version_compare(_PS_VERSION_, '1.7', 'gt')) {
             $this->registerJavascript(
@@ -55,14 +61,9 @@ class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
             $this->addJS('modules/'.$this->module->name.'/views/js/confirm-blik.js');
         }
 
-        if (!is_array($current_state)) {
-            $order_state = new OrderState(Configuration::get('PAYNOW_ORDER_INITIAL_STATE'));
-            $current_state_name = $order_state->name[$this->context->language->id];
-        }
-
         $this->context->smarty->assign([
             'module_dir' => $this->module->getPathUri(),
-            'order_status' => is_array($current_state) ? $current_state['name'] : $current_state_name,
+            'order_status' => $current_state_name,
             'order_reference' => $this->order->reference
         ]);
 

@@ -72,7 +72,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                     ]
                 );
 
-                if ((float)$filtered_payment->total === $cart->getCartTotalPrice()) {
+                if ((float)$filtered_payment->total === $cart->getCartTotalPrice() && false === $cart->orderExists()) {
                     $order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $notification_data['externalId']);
                     PaynowPaymentData::updateOrderIdAndOrderReferenceByPaymentId(
                         $order->id,
@@ -159,7 +159,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         return 1 <= count($filtered_ayments) &&
                PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
                Paynow\Model\Payment\Status::STATUS_CONFIRMED === $payment_notification_status &&
-               $cart->orderExists() === false;
+               false === $cart->orderExists();
     }
 
     private function getFilteredPayments($external_id, $payment_id, $payment_status): array

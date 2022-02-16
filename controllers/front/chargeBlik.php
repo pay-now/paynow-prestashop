@@ -49,7 +49,8 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                         Paynow\Model\Payment\Status::STATUS_NEW,
                         Paynow\Model\Payment\Status::STATUS_PENDING
                     ])) {
-                    if (PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE')) {
+                    if (PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
+                        false === $cart->orderExists()) {
                         $order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $payment_data['external_id']);
                     }
                     $response = array_merge($response, [

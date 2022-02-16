@@ -50,10 +50,8 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
 
         if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')) {
             $payment_status_from_api = $this->getPaymentStatus($this->payment['id_payment']);
-            if (PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
-                Status::STATUS_CONFIRMED === $payment_status_from_api &&
-                0 === (int)$this->payment['id_order']) {
-                $cart        = new Cart($this->payment['id_cart']);
+            $cart        = new Cart($this->payment['id_cart']);
+            if ($this->canProcessCreateOrder((int)$this->payment['id_cart'], $payment_status_from_api, $cart)) {
                 $this->order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $this->payment['external_id']);
                 $this->updateOrderState(
                     $this->order ? $this->order->id : 0,
@@ -105,6 +103,14 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         ]);
 
         $this->renderTemplate('return.tpl');
+    }
+
+    private function canProcessCreateOrder(int $id_order, string $status, Cart $cart)
+    {
+        return PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
+               Status::STATUS_CONFIRMED === $status &&
+               0 === $id_order &&
+               false === $cart->orderExists();
     }
 
     private function displayOrderConfirmation()
