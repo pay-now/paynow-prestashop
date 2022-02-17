@@ -10,8 +10,6 @@
  * @license   MIT License
  */
 
-use Paynow\Model\Payment\Status;
-
 class PaynowReturnModuleFrontController extends PaynowFrontController
 {
     public function initContent()
@@ -51,7 +49,8 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')) {
             $payment_status_from_api = $this->getPaymentStatus($this->payment['id_payment']);
             $cart        = new Cart($this->payment['id_cart']);
-            if ($this->canProcessCreateOrder((int)$this->payment['id_cart'], $payment_status_from_api, $cart)) {
+            if ($this->canProcessCreateOrder((int)$this->payment['id_order'], $payment_status_from_api,
+                (int)$this->payment['locked'], $cart->orderExists())) {
                 $this->order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $this->payment['external_id']);
                 $this->updateOrderState(
                     $this->order ? $this->order->id : 0,
@@ -103,14 +102,6 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         ]);
 
         $this->renderTemplate('return.tpl');
-    }
-
-    private function canProcessCreateOrder(int $id_order, string $status, Cart $cart)
-    {
-        return PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
-               Status::STATUS_CONFIRMED === $status &&
-               0 === $id_order &&
-               false === $cart->orderExists();
     }
 
     private function displayOrderConfirmation()

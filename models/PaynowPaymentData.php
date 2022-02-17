@@ -32,6 +32,8 @@ class PaynowPaymentData extends ObjectModel
 
     public $total;
 
+    public $locked;
+
     public $created_at;
 
     public $modified_at;
@@ -48,6 +50,7 @@ class PaynowPaymentData extends ObjectModel
             'external_id'     => ['type' => self::TYPE_STRING, 'required' => true],
             'status'          => ['type' => self::TYPE_STRING, 'required' => true],
             'total'           => ['type' => self::TYPE_FLOAT, 'validate' => 'isPrice', 'required' => false],
+            'locked'           => ['type' => self::TYPE_INT, 'required' => false],
             'created_at'      => ['type' => self::TYPE_DATE, 'required' => true],
             'modified_at'     => ['type' => self::TYPE_DATE, 'required' => true]
         ]
@@ -62,7 +65,7 @@ class PaynowPaymentData extends ObjectModel
         $external_id,
         $total = null
     ) {
-        $now      = (new DateTime())->format('Y-m-d H:i:s');
+        $now                    = (new DateTime())->format('Y-m-d H:i:s');
         $model                  = new PaynowPaymentData();
         $model->id_order        = $id_order;
         $model->id_cart         = $id_cart;
@@ -73,8 +76,9 @@ class PaynowPaymentData extends ObjectModel
         if ($total) {
             $model->total = $total;
         }
-        $model->created_at      = $now;
-        $model->modified_at     = $now;
+        $model->locked      = 0;
+        $model->created_at  = $now;
+        $model->modified_at = $now;
         $model->add(false);
     }
 
@@ -207,6 +211,22 @@ class PaynowPaymentData extends ObjectModel
         $data->id_order        = $id_order;
         $data->order_reference = $order_reference;
         $data->modified_at     = (new DateTime())->format('Y-m-d H:i:s');
+        $data->update();
+    }
+
+    public static function setOptimisticLockByExternalId($external_id)
+    {
+        $data              = PaynowPaymentData::findLastByExternalId($external_id);
+        $data->locked      = 1;
+        $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
+        $data->update();
+    }
+
+    public static function unsetOptimisticLockByExternalId($external_id)
+    {
+        $data              = PaynowPaymentData::findLastByExternalId($external_id);
+        $data->locked      = 0;
+        $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
         $data->update();
     }
 }

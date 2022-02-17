@@ -26,6 +26,10 @@ class PaynowOrderCreateProcessor
             ]
         );
 
+        if ($external_id) {
+            PaynowPaymentData::setOptimisticLockByExternalId($external_id);
+        }
+
         try {
             $order_created = $this->module->validateOrder(
                 (int)$cart->id,
@@ -50,6 +54,9 @@ class PaynowOrderCreateProcessor
                         $order->id
                     ]
                 );
+                if ($external_id) {
+                    PaynowPaymentData::unsetOptimisticLockByExternalId($external_id);
+                }
                 return $order;
             } else {
                 PaynowLogger::error(

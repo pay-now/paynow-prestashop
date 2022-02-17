@@ -11,6 +11,7 @@
  */
 
 use Paynow\Exception\PaynowException;
+use Paynow\Model\Payment\Status;
 
 class PaynowFrontController extends ModuleFrontControllerCore
 {
@@ -112,5 +113,36 @@ class PaynowFrontController extends ModuleFrontControllerCore
         } else {
             echo $value;
         }
+    }
+
+    /**
+     * @param int $id_order
+     * @param string $payment_status
+     * @param int $payment_data_locked
+     * @param bool $orders_exists
+     *
+     * @return bool
+     */
+    protected function canProcessCreateOrder(int $id_order, string $payment_status, int $payment_data_locked, bool $orders_exists): bool
+    {
+        return PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
+               Status::STATUS_CONFIRMED === $payment_status &&
+               0 === $id_order &&
+               0 === $payment_data_locked &&
+               false === $orders_exists;
+    }
+
+    protected function getOrderCurrentState($order) {
+        if ($order) {
+            $current_state      = $order->getCurrentStateFull($this->context->language->id);
+            return is_array($current_state) ? $current_state['name'] : $this->getDefaultOrderStatus();
+        }
+
+        return $this->getDefaultOrderStatus();
+    }
+
+    private function getDefaultOrderStatus() {
+        $order_state = new OrderState(Configuration::get('PAYNOW_ORDER_INITIAL_STATE'));
+        return $order_state->name[$this->context->language->id];
     }
 }

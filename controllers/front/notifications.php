@@ -35,7 +35,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             );
 
             $filtered_payment = reset($filtered_payments);
-            if (Paynow\Model\Payment\Status::STATUS_CONFIRMED === $filtered_payment->status) {
+            if ($filtered_payment && Paynow\Model\Payment\Status::STATUS_CONFIRMED === $filtered_payment->status) {
                 PaynowLogger::info(
                     'An order already has a paid status. Skipped notification processing {paymentId={}, externalId={}, status={}}',
                     [
@@ -62,17 +62,19 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             }
 
             $cart = new Cart((int)$filtered_payment->id_cart);
-            if ($this->canProcessCreateOrder($filtered_payments, $notification_data['status'], $cart)) {
+            if (1 <= count($filtered_payments) && $this->canProcessCreateOrder((int)$filtered_payment->id_order,
+                    $notification_data['status'], (int)$filtered_payment->locked, $cart->orderExists())) {
                 PaynowLogger::info(
-                    'Processing new order from cart {paymentId={}, externalId={}, cartId={}}',
+                    'Processing new order from cart {paymentId={}, externalId={}, cartId={}, locked={}}',
                     [
                         $notification_data['paymentId'],
                         $notification_data['externalId'],
-                        $filtered_payment->id_cart
+                        $filtered_payment->id_cart,
+                        $filtered_payment->locked
                     ]
                 );
 
-                if ((float)$filtered_payment->total === $cart->getCartTotalPrice() && false === $cart->orderExists()) {
+                if ((float)$filtered_payment->total === $cart->getCartTotalPrice()) {
                     $order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $notification_data['externalId']);
                     PaynowPaymentData::updateOrderIdAndOrderReferenceByPaymentId(
                         $order->id,
@@ -152,14 +154,6 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             }
         }
         return $headers;
-    }
-
-    private function canProcessCreateOrder($filtered_ayments, $payment_notification_status, Cart $cart): bool
-    {
-        return 1 <= count($filtered_ayments) &&
-               PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
-               Paynow\Model\Payment\Status::STATUS_CONFIRMED === $payment_notification_status &&
-               false === $cart->orderExists();
     }
 
     private function getFilteredPayments($external_id, $payment_id, $payment_status): array
