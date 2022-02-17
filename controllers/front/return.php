@@ -51,21 +51,18 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             $cart        = new Cart($this->payment['id_cart']);
             if ($this->canProcessCreateOrder((int)$this->payment['id_order'], $payment_status_from_api,
                 (int)$this->payment['locked'], $cart->orderExists())) {
-                $this->order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $this->payment['external_id']);
-                $this->updateOrderState(
-                    $this->order ? $this->order->id : 0,
-                    $this->payment['id_payment'],
-                    $this->order->id_cart,
-                    $this->order->reference,
-                    $this->payment['external_id'],
-                    $this->payment['status'],
-                    $payment_status_from_api
-                );
-                PaynowPaymentData::updateOrderIdAndOrderReferenceByPaymentId(
-                    $this->order->id,
-                    $this->order->reference,
-                    $this->payment['id_payment']
-                );
+                $this->order = $this->createOrder($cart, $external_id, $this->payment['id_payment']);
+                if ($this->order) {
+                    $this->updateOrderState(
+                        $this->order->id,
+                        $this->payment['id_payment'],
+                        $this->order->id_cart,
+                        $this->order->reference,
+                        $this->payment['external_id'],
+                        $this->payment['status'],
+                        $payment_status_from_api
+                    );
+                }
             } else {
                 $this->updateOrderState(
                     $this->payment['id_order'],

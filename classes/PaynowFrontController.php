@@ -132,6 +132,30 @@ class PaynowFrontController extends ModuleFrontControllerCore
                false === $orders_exists;
     }
 
+    /**
+     * @param $cart
+     * @param $external_id
+     * @param $payment_id
+     *
+     * @return Order|null
+     */
+    protected function createOrder($cart, $external_id, $payment_id): ?Order
+    {
+        $order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $external_id);
+
+        if ( ! $order) {
+            return null;
+        }
+
+        PaynowPaymentData::updateOrderIdAndOrderReferenceByPaymentId(
+            $order->id,
+            $order->reference,
+            $payment_id
+        );
+
+        return $order;
+    }
+
     protected function getOrderCurrentState($order) {
         if ($order) {
             $current_state      = $order->getCurrentStateFull($this->context->language->id);

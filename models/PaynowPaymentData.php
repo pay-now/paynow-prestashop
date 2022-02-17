@@ -222,9 +222,25 @@ class PaynowPaymentData extends ObjectModel
         $data->update();
     }
 
+    public static function setOptimisticLockByCartId($cart_id)
+    {
+        $data              = PaynowPaymentData::findLastByCartId($cart_id);
+        $data->locked      = 1;
+        $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
+        $data->update();
+    }
+
     public static function unsetOptimisticLockByExternalId($external_id)
     {
         $data              = PaynowPaymentData::findLastByExternalId($external_id);
+        $data->locked      = 0;
+        $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
+        $data->update();
+    }
+
+    public static function unsetOptimisticLockByCartId($cart_id)
+    {
+        $data              = PaynowPaymentData::findLastByCartId($cart_id);
         $data->locked      = 0;
         $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
         $data->update();

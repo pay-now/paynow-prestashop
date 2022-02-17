@@ -37,10 +37,7 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
                 $cart                    = new Cart($payment->id_cart);
                 if ($this->canProcessCreateOrder((int)$payment->id_order, $payment_status_from_api,
                     (int)$payment->locked, $cart->orderExists())) {
-                    $this->order = (new PaynowOrderCreateProcessor($this->module))->process(
-                        $cart,
-                        $payment->external_id
-                    );
+                    $this->order = $this->createOrder($cart, $external_id, $payment->id_payment);
                     if ($this->order) {
                         $this->updateOrderState(
                             $this->order->id,
@@ -50,11 +47,6 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
                             $payment->external_id,
                             $payment_status,
                             $payment_status_from_api
-                        );
-                        PaynowPaymentData::updateOrderIdAndOrderReferenceByPaymentId(
-                            $this->order->id,
-                            $this->order->reference,
-                            $payment->id_payment
                         );
                     }
                 } else {
