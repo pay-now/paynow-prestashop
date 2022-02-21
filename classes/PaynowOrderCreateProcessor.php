@@ -136,19 +136,47 @@ class PaynowOrderCreateProcessor
 
     private function setOptimisticLock($cart_id, $external_id = null)
     {
+        PaynowLogger::debug(
+            'Setting optimistic lock on paynow data {cartId={}, externalId={}}',
+            [
+                $cart_id,
+                $external_id
+            ]
+        );
         if ($external_id) {
             PaynowPaymentData::setOptimisticLockByExternalId($external_id);
         } else {
             PaynowPaymentData::setOptimisticLockByCartId($cart_id);
         }
+        PaynowLogger::debug(
+            'Set up optimistic lock on paynow data {cartId={}, externalId={}}',
+            [
+                $cart_id,
+                $external_id
+            ]
+        );
     }
 
     private function unsetOptimisticLock($cart_id, $external_id = null)
     {
+        PaynowLogger::debug(
+            'Unsetting optimistic lock on paynow data {cartId={}, externalId={}}',
+            [
+                $cart_id,
+                $external_id
+            ]
+        );
         if ($external_id) {
             PaynowPaymentData::unsetOptimisticLockByExternalId($external_id);
         } else {
             PaynowPaymentData::unsetOptimisticLockByCartId($cart_id);
         }
+        PaynowLogger::debug(
+            'Unset optimistic lock on paynow data {cartId={}, externalId={}}',
+            [
+                $cart_id,
+                $external_id
+            ]
+        );
     }
 }
