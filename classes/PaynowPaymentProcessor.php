@@ -77,7 +77,7 @@ class PaynowPaymentProcessor
                 $payment->getPaymentId(),
                 Paynow\Model\Payment\Status::STATUS_NEW,
                 null,
-                $external_id,
+                $cart->id,
                 null,
                 $external_id,
                 $cart->getOrderTotal()

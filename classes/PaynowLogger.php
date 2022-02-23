@@ -45,7 +45,7 @@ class PaynowLogger
             $result_message .= $messagePart;
         }
 
-        return self::getTimestamp() . ' ' . Tools::strtoupper($type) . ' ' . $result_message . PHP_EOL;
+        return self::getTimestamp() . ' ' . substr(hash('sha256', $_SERVER['REMOTE_ADDR']), 0, 32) . ' ' . Tools::strtoupper($type) . ' ' . $result_message . PHP_EOL;
     }
 
     public static function getTimestamp()

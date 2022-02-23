@@ -141,9 +141,9 @@ class PaynowFrontController extends ModuleFrontControllerCore
      */
     protected function createOrder($cart, $external_id, $payment_id): ?Order
     {
-        $order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $external_id);
+        $order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $external_id, $payment_id);
 
-        if ( ! $order) {
+        if (! $order) {
             return null;
         }
 
@@ -156,7 +156,8 @@ class PaynowFrontController extends ModuleFrontControllerCore
         return $order;
     }
 
-    protected function getOrderCurrentState($order) {
+    protected function getOrderCurrentState($order)
+    {
         if ($order) {
             $current_state      = $order->getCurrentStateFull($this->context->language->id);
             return is_array($current_state) ? $current_state['name'] : $this->getDefaultOrderStatus();
@@ -165,7 +166,8 @@ class PaynowFrontController extends ModuleFrontControllerCore
         return $this->getDefaultOrderStatus();
     }
 
-    private function getDefaultOrderStatus() {
+    private function getDefaultOrderStatus()
+    {
         $order_state = new OrderState(Configuration::get('PAYNOW_ORDER_INITIAL_STATE'));
         return $order_state->name[$this->context->language->id];
     }

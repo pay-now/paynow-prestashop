@@ -49,8 +49,12 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')) {
             $payment_status_from_api = $this->getPaymentStatus($this->payment['id_payment']);
             $cart        = new Cart($this->payment['id_cart']);
-            if ($this->canProcessCreateOrder((int)$this->payment['id_order'], $payment_status_from_api,
-                (int)$this->payment['locked'], $cart->orderExists())) {
+            if ($this->canProcessCreateOrder(
+                (int)$this->payment['id_order'],
+                $payment_status_from_api,
+                (int)$this->payment['locked'],
+                $cart->orderExists()
+            )) {
                 $this->order = $this->createOrder($cart, $external_id, $this->payment['id_payment']);
                 if ($this->order) {
                     $this->updateOrderState(

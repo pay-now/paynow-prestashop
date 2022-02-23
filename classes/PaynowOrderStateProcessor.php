@@ -74,8 +74,8 @@ class PaynowOrderStateProcessor
                     $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE'), $new_status, $id_payment, $external_id);
                     break;
                 case Paynow\Model\Payment\Status::STATUS_CONFIRMED:
-                    $order->addOrderPayment($order->total_paid, $this->module->displayName, $id_payment);
                     $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE'), $new_status, $id_payment, $external_id);
+                    $this->addOrderPayment($order, $id_payment);
                     break;
                 case Paynow\Model\Payment\Status::STATUS_ERROR:
                     $this->changeState($order, (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'), $new_status, $id_payment, $external_id);
@@ -191,5 +191,18 @@ class PaynowOrderStateProcessor
         $previous_status_exists = isset($payment_status_flow[$previous_status]);
         $is_change_possible = in_array($next_status, $payment_status_flow[$previous_status]);
         return $previous_status_exists && $is_change_possible;
+    }
+
+    /**
+     * @param $order
+     * @param $id_payment
+     */
+    private function addOrderPayment($order, $id_payment)
+    {
+        $payments = $order->getOrderPaymentCollection()->getResults();
+        if (count($payments) > 0) {
+            $payments[0]->transaction_id = $id_payment;
+            $payments[0]->update();
+        }
     }
 }

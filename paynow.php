@@ -524,6 +524,7 @@ class Paynow extends PaymentModule
     {
         $file_name = 'paynow-' . date('Y-m-d');
         $file_path = dirname(__FILE__) . '/log/' . $file_name . '-' . Tools::encrypt($file_name) . '.log';
+
         if (Tools::getValue('show_paynow_logs')) {
             echo '<pre>';
             echo file_get_contents($file_path);

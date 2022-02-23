@@ -13,12 +13,13 @@ class PaynowOrderCreateProcessor
     /**
      * @param $cart
      * @param $external_id
+     * @param $payment_id
      *
      * @return Order|null
      */
-    public function process($cart, $external_id): ?Order
+    public function process($cart, $external_id, $payment_id = null): ?Order
     {
-        if ( ! $this->canProcess($cart->id, $external_id)) {
+        if (! $this->canProcess($cart->id, $external_id)) {
             PaynowLogger::warning(
                 'Can\'t create and order due optimistic lock on paynow\'s payment data {cartId={}, externalId={}}',
                 [
@@ -40,7 +41,7 @@ class PaynowOrderCreateProcessor
         );
 
         try {
-            return $this->createOrder($cart, $external_id);
+            return $this->createOrder($cart, $external_id, $payment_id);
         } catch (Exception $exception) {
             PaynowLogger::error(
                 'An order has not been created {externalId={}, cartId={}, message={}}',
@@ -58,12 +59,13 @@ class PaynowOrderCreateProcessor
     /**
      * @param Cart $cart
      * @param $external_id
+     * @param $payment_id
      *
      * @return Order|null
      * @throws PrestaShopDatabaseException
      * @throws PrestaShopException
      */
-    private function createOrder(Cart $cart, $external_id): ?Order
+    private function createOrder(Cart $cart, $external_id, $payment_id = null): ?Order
     {
         $order_created = $this->module->validateOrder(
             (int)$cart->id,
@@ -71,14 +73,14 @@ class PaynowOrderCreateProcessor
             (float)$cart->getOrderTotal(),
             $this->module->displayName,
             null,
-            [],
+            $payment_id ? ['transaction_id' => $payment_id] : [],
             (int)$cart->id_currency,
             false,
             $cart->secure_key,
             new Shop($cart->id_shop)
         );
 
-        if ( ! $order_created && ! $this->module->currentOrder) {
+        if (! $order_created && ! $this->module->currentOrder) {
             PaynowLogger::error(
                 'An order has not been created {externalId={}, cartId={}}',
                 [
@@ -119,8 +121,7 @@ class PaynowOrderCreateProcessor
             } else {
                 $payment_data = PaynowPaymentData::findLastByCartId($cart_id);
             }
-
-            return 0 === (int)$payment_data->locked;
+            return $payment_data === false || ($payment_data && 0 === (int)$payment_data->locked);
         } catch (PrestaShopException $exception) {
             PaynowLogger::error(
                 'An error occurred during check can process create order {cartId={}, externalId={}}',
@@ -148,13 +149,6 @@ class PaynowOrderCreateProcessor
         } else {
             PaynowPaymentData::setOptimisticLockByCartId($cart_id);
         }
-        PaynowLogger::debug(
-            'Set up optimistic lock on paynow data {cartId={}, externalId={}}',
-            [
-                $cart_id,
-                $external_id
-            ]
-        );
     }
 
     private function unsetOptimisticLock($cart_id, $external_id = null)
@@ -171,12 +165,5 @@ class PaynowOrderCreateProcessor
         } else {
             PaynowPaymentData::unsetOptimisticLockByCartId($cart_id);
         }
-        PaynowLogger::debug(
-            'Unset optimistic lock on paynow data {cartId={}, externalId={}}',
-            [
-                $cart_id,
-                $external_id
-            ]
-        );
     }
 }

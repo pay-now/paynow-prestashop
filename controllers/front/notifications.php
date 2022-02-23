@@ -62,8 +62,12 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             }
 
             $cart = new Cart((int)$filtered_payment->id_cart);
-            if (1 <= count($filtered_payments) && $this->canProcessCreateOrder((int)$filtered_payment->id_order,
-                    $notification_data['status'], (int)$filtered_payment->locked, $cart->orderExists())) {
+            if (1 <= count($filtered_payments) && $this->canProcessCreateOrder(
+                (int)$filtered_payment->id_order,
+                $notification_data['status'],
+                (int)$filtered_payment->locked,
+                $cart->orderExists()
+            )) {
                 PaynowLogger::info(
                     'Processing notification to create new order from cart {paymentId={}, externalId={}, cartId={}, locked={}}',
                     [

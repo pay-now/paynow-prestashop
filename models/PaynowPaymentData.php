@@ -50,7 +50,7 @@ class PaynowPaymentData extends ObjectModel
             'external_id'     => ['type' => self::TYPE_STRING, 'required' => true],
             'status'          => ['type' => self::TYPE_STRING, 'required' => true],
             'total'           => ['type' => self::TYPE_FLOAT, 'validate' => 'isPrice', 'required' => false],
-            'locked'           => ['type' => self::TYPE_INT, 'required' => false],
+            'locked'          => ['type' => self::TYPE_INT, 'required' => false],
             'created_at'      => ['type' => self::TYPE_DATE, 'required' => true],
             'modified_at'     => ['type' => self::TYPE_DATE, 'required' => true]
         ]
@@ -79,7 +79,23 @@ class PaynowPaymentData extends ObjectModel
         $model->locked      = 0;
         $model->created_at  = $now;
         $model->modified_at = $now;
-        $model->add(false);
+        if ($model->add(false)) {
+            PaynowLogger::debug(
+                'Created paynow data entry {cartId={}, externalId={}}',
+                [
+                    $id_cart,
+                    $external_id
+                ]
+            );
+        } else {
+            PaynowLogger::warning(
+                'Can\'t create paynow data entry {cartId={}, externalId={}}',
+                [
+                    $id_cart,
+                    $external_id
+                ]
+            );
+        }
     }
 
     /**
@@ -196,10 +212,36 @@ class PaynowPaymentData extends ObjectModel
 
     public static function updateStatus($id_payment, $status)
     {
-        $data              = PaynowPaymentData::findByPaymentId($id_payment);
-        $data->status      = $status;
-        $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
-        $data->update();
+        $data = PaynowPaymentData::findByPaymentId($id_payment);
+        if ($data) {
+            $data->status      = $status;
+            $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
+            if ($data->update()) {
+                PaynowLogger::debug(
+                    'Successfully updated payment data {paymentId={}, status={}}',
+                    [
+                        $id_payment,
+                        $status
+                    ]
+                );
+            } else {
+                PaynowLogger::warning(
+                    'Can\'t update payment data due update error {paymentId={}, status={}}',
+                    [
+                        $id_payment,
+                        $status
+                    ]
+                );
+            }
+        } else {
+            PaynowLogger::warning(
+                'Can\'t update payment data due empty data {paymentId={}, status={}}',
+                [
+                    $id_payment,
+                    $status
+                ]
+            );
+        }
     }
 
     public static function updateOrderIdAndOrderReferenceByPaymentId(
@@ -207,42 +249,163 @@ class PaynowPaymentData extends ObjectModel
         $order_reference,
         $id_payment
     ) {
-        $data                  = PaynowPaymentData::findByPaymentId($id_payment);
-        $data->id_order        = $id_order;
-        $data->order_reference = $order_reference;
-        $data->modified_at     = (new DateTime())->format('Y-m-d H:i:s');
-        $data->update();
+        $data = PaynowPaymentData::findByPaymentId($id_payment);
+        if ($data) {
+            $data->id_order        = $id_order;
+            $data->order_reference = $order_reference;
+            $data->modified_at     = (new DateTime())->format('Y-m-d H:i:s');
+            if ($data->update()) {
+                PaynowLogger::debug(
+                    'Successfully updated payment data {orderId={}, orderReference={}, paymentId={}}',
+                    [
+                        $id_order,
+                        $order_reference,
+                        $id_payment
+                    ]
+                );
+            } else {
+                PaynowLogger::warning(
+                    'Can\'t update payment data due update error {orderId={}, orderReference={}, paymentId={}}',
+                    [
+                        $id_order,
+                        $order_reference,
+                        $id_payment
+                    ]
+                );
+            }
+        } else {
+            PaynowLogger::warning(
+                'Can\'t update payment data due empty data {orderId={}, orderReference={}, paymentId={}}',
+                [
+                    $id_order,
+                    $order_reference,
+                    $id_payment
+                ]
+            );
+        }
     }
 
     public static function setOptimisticLockByExternalId($external_id)
     {
-        $data              = PaynowPaymentData::findLastByExternalId($external_id);
-        $data->locked      = 1;
-        $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
-        $data->update();
+        $data = PaynowPaymentData::findLastByExternalId($external_id);
+        if ($data) {
+            $data->locked      = 1;
+            $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
+            if ($data->update()) {
+                PaynowLogger::debug(
+                    'Successfully set up optimistic lock on paynow data {externalId={}}',
+                    [
+                        $external_id
+                    ]
+                );
+            } else {
+                PaynowLogger::warning(
+                    'Can\'t set optimistic lock due update error {externalId={}}',
+                    [
+                        $external_id
+                    ]
+                );
+            }
+        } else {
+            PaynowLogger::warning(
+                'Can\'t set optimistic lock due empty payment data {externalId={}}',
+                [
+                    $external_id
+                ]
+            );
+        }
     }
 
     public static function setOptimisticLockByCartId($cart_id)
     {
-        $data              = PaynowPaymentData::findLastByCartId($cart_id);
-        $data->locked      = 1;
-        $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
-        $data->update();
+        $data = PaynowPaymentData::findLastByCartId($cart_id);
+        if ($data) {
+            $data->locked      = 1;
+            $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
+            if ($data->update()) {
+                PaynowLogger::debug(
+                    'Successfully set up optimistic lock on paynow data {cartId={}}',
+                    [
+                        $cart_id
+                    ]
+                );
+            } else {
+                PaynowLogger::warning(
+                    'Can\'t set optimistic lock due update error {cartId={}}',
+                    [
+                        $cart_id
+                    ]
+                );
+            }
+        } else {
+            PaynowLogger::warning(
+                'Can\'t set optimistic lock due empty payment data {cartId={}}',
+                [
+                    $cart_id
+                ]
+            );
+        }
     }
 
     public static function unsetOptimisticLockByExternalId($external_id)
     {
-        $data              = PaynowPaymentData::findLastByExternalId($external_id);
-        $data->locked      = 0;
-        $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
-        $data->update();
+        $data = PaynowPaymentData::findLastByExternalId($external_id);
+        if ($data) {
+            $data->locked      = 0;
+            $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
+            if ($data->update()) {
+                PaynowLogger::debug(
+                    'Successfully unset optimistic lock on paynow data {externalId={}}',
+                    [
+                        $external_id
+                    ]
+                );
+            } else {
+                PaynowLogger::warning(
+                    'Can\'t unset optimistic lock due update error {externalId={}}',
+                    [
+                        $external_id
+                    ]
+                );
+            }
+        } else {
+            PaynowLogger::warning(
+                'Can\'t unset optimistic lock due empty payment data {externalId={}}',
+                [
+                    $external_id
+                ]
+            );
+        }
     }
 
     public static function unsetOptimisticLockByCartId($cart_id)
     {
-        $data              = PaynowPaymentData::findLastByCartId($cart_id);
-        $data->locked      = 0;
-        $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
-        $data->update();
+        $data = PaynowPaymentData::findLastByCartId($cart_id);
+        if ($data) {
+            $data->locked      = 0;
+            $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
+            if ($data->update()) {
+                PaynowLogger::debug(
+                    'Successfully unset optimistic lock on paynow data {cartId={}}',
+                    [
+                        $cart_id
+                    ]
+                );
+            } else {
+                PaynowLogger::warning(
+                    'Can\'t unset optimistic lock due update error {cartId={}}',
+                    [
+                        $cart_id
+                    ]
+                );
+            }
+        } else {
+            PaynowLogger::warning(
+                'Can\'t unset optimistic lock due empty payment data {cartId={}}',
+                [
+                    $cart_id
+                ]
+            );
+        }
     }
 }

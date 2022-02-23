@@ -51,7 +51,11 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                     ])) {
                     if (PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
                         false === $cart->orderExists()) {
-                        $order = (new PaynowOrderCreateProcessor($this->module))->process($cart, $payment_data['external_id']);
+                        $order = (new PaynowOrderCreateProcessor($this->module))->process(
+                            $cart,
+                            $payment_data['external_id'],
+                            $payment_data['payment_id']
+                        );
                     }
                     $response = array_merge($response, [
                         'success'      => true,
