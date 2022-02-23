@@ -635,10 +635,10 @@ class Paynow extends PaymentModule
             );
         } catch (Paynow\Exception\PaynowException $exception) {
             PaynowLogger::error(
-                'An error occurred during shop urls configuration {message={}, code={}}',
+                'An error occurred during shop urls configuration {code={}, message={}}',
                 [
-                    $exception->getPrevious()->getMessage(),
-                    $exception->getCode()
+                    $exception->getCode(),
+                    $exception->getPrevious()->getMessage()
                 ]
             );
             if ($exception->getCode() == 401) {

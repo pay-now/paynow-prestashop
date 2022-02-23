@@ -48,10 +48,10 @@ class PaynowPaymentMethodsHelper
             return $this->payment_client->getPaymentMethods($currency_iso_code, $total);
         } catch (PaynowException $exception) {
             PaynowLogger::error(
-                'An error occurred during payment methods retrieve {message={}, code={}}',
+                'An error occurred during payment methods retrieve {code={}, message={}}',
                 [
-                    $exception->getPrevious()->getMessage(),
-                    $exception->getCode()
+                    $exception->getCode(),
+                    $exception->getPrevious()->getMessage()
                 ]
             );
         }

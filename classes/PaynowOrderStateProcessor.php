@@ -30,13 +30,13 @@ class PaynowOrderStateProcessor
         $new_status
     ) {
         PaynowLogger::info(
-            'Processing order\'s state update {paymentId={}, externalId={}, orderReference={}, orderId={}, cartId={}, fromStatus={}, toStatus={}}',
+            'Processing order\'s state update {cartId={}, externalId={}, orderId={}, orderReference={}, paymentId={}, fromStatus={}, toStatus={}}',
             [
-                $id_payment,
-                $external_id,
-                $order_reference,
-                $id_order,
                 $id_cart,
+                $external_id,
+                $id_order,
+                $order_reference,
+                $id_payment,
                 $old_status,
                 $new_status
             ]
@@ -52,11 +52,13 @@ class PaynowOrderStateProcessor
 
         if ($order->current_state === (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE')) {
             PaynowLogger::info(
-                'The order has already paid status. Skipping order\'s state update {paymentId={}, orderReference={}, externalId={}}',
+                'The order has already paid status. Skipping order\'s state update {cartId={}, externalId={}, orderId={}, orderReference={}, paymentId={}}',
                 [
-                    $id_payment,
+                    $id_cart,
+                    $external_id,
+                    $id_order,
                     $order_reference,
-                    $external_id
+                    $id_payment
                 ]
             );
         } else {
@@ -104,15 +106,22 @@ class PaynowOrderStateProcessor
                     PaynowPaymentData::updateStatus($id_payment, $new_status);
                 }
             } catch (PrestaShopDatabaseException $exception) {
-                PaynowLogger::error($exception->getMessage() . ' {orderReference={}}', [$order_reference]);
+                PaynowLogger::error(
+                    $exception->getMessage() . ' {cartId={}, orderReference={}}',
+                    [
+                        $id_cart,
+                        $order_reference
+                    ]
+                );
             }
 
             PaynowLogger::info(
-                'Changed order\'s state {paymentId={}, externalId={}, orderReference={}, status={}}',
+                'Changed order\'s state {cartId={}, externalId={}, orderReference={}, paymentId={}, status={}}',
                 [
-                    $id_payment,
+                    $id_cart,
                     $external_id,
                     $order_reference,
+                    $id_payment,
                     $new_status
                 ]
             );
@@ -125,11 +134,12 @@ class PaynowOrderStateProcessor
         $history->id_order = $order->id;
         if ($order->current_state != $new_order_state_id) {
             PaynowLogger::info(
-                'Adding new state to order\'s history {paymentId={}, externalId={}, orderReference={}, paymentStatus={}, state={}}',
+                'Adding new state to order\'s history {externalId={}, orderId={}, orderReference={}, paymentId={}, paymentStatus={}, state={}}',
                 [
-                    $id_payment,
                     $external_id,
+                    $order->id,
                     $order->reference,
+                    $id_payment,
                     $payment_status,
                     $new_order_state_id
                 ]
@@ -140,11 +150,12 @@ class PaynowOrderStateProcessor
             );
             $history->addWithemail(true);
             PaynowLogger::info(
-                'Added new state to order\'s history {paymentId={}, externalId={}, orderReference={}, paymentStatus={}, state={}, historyId={}}',
+                'Added new state to order\'s history {externalId={}, orderId={}, orderReference={},  paymentId={}, paymentStatus={}, state={}, historyId={}}',
                 [
-                    $id_payment,
                     $external_id,
+                    $order->id,
                     $order->reference,
+                    $id_payment,
                     $payment_status,
                     $new_order_state_id,
                     $history->id

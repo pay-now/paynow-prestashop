@@ -33,10 +33,10 @@ class PaynowOrderCreateProcessor
 
         $this->setOptimisticLock($cart->id, $external_id);
         PaynowLogger::info(
-            'Creating an order from cart {externalId={}, cartId={}}',
+            'Creating an order from cart {cartId={}, externalId={}}',
             [
+                $cart->id,
                 $external_id,
-                $cart->id
             ]
         );
 
@@ -44,10 +44,10 @@ class PaynowOrderCreateProcessor
             return $this->createOrder($cart, $external_id, $payment_id);
         } catch (Exception $exception) {
             PaynowLogger::error(
-                'An order has not been created {externalId={}, cartId={}, message={}}',
+                'An order has not been created {cartId={}, externalId={}, message={}}',
                 [
-                    $external_id,
                     $cart->id,
+                    $external_id,
                     $exception->getMessage()
                 ]
             );
@@ -82,10 +82,11 @@ class PaynowOrderCreateProcessor
 
         if (! $order_created && ! $this->module->currentOrder) {
             PaynowLogger::error(
-                'An order has not been created {externalId={}, cartId={}}',
+                'An order has not been created {cartId={}, externalId={}, paymentId={}}',
                 [
+                    $cart->id,
                     $external_id,
-                    $cart->id
+                    $payment_id
                 ]
             );
 
@@ -94,12 +95,13 @@ class PaynowOrderCreateProcessor
 
         $order = new Order($this->module->currentOrder);
         PaynowLogger::info(
-            'An order has been successfully created {externalId={}, orderReference={}, cartId={}, orderId={}}',
+            'An order has been successfully created {cartId={}, externalId={}, orderId={}, orderReference={}, paymentId={}}',
             [
-                $external_id,
-                $order->reference,
                 $cart->id,
-                $order->id
+                $external_id,
+                $order->id,
+                $order->reference,
+                $payment_id
             ]
         );
         $this->unsetOptimisticLock($cart->id, $external_id);

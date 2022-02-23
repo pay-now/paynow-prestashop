@@ -69,16 +69,23 @@ class PaynowRefundProcessor
     private function process($order, $payments, $amount)
     {
         if (! empty($payments)) {
-            PaynowLogger::info('Processing refund request {orderReference={}}', [$order->reference]);
+            PaynowLogger::info(
+                'Processing refund request {orderId={}, orderReference={}}',
+                [
+                    $order->id,
+                    $order->reference
+                ]
+            );
             $payment = $payments[0];
             $refund_amount = number_format($amount * 100, 0, '', '');
             try {
                 PaynowLogger::info(
-                    'Found transaction to make a refund {orderReference={}, paymentId={}, amount={}}',
+                    'Found transaction to make a refund {amount={}, orderId={}, orderReference={}, paymentId={}}',
                     [
+                        $refund_amount,
+                        $order->id,
                         $order->reference,
-                        $payment->transaction_id,
-                        $refund_amount
+                        $payment->transaction_id
                     ]
                 );
                 $response = (new Paynow\Service\Refund($this->client))->create(
@@ -87,8 +94,9 @@ class PaynowRefundProcessor
                     $refund_amount
                 );
                 PaynowLogger::info(
-                    'Refund has been created successfully {orderReference={}, refundId={}}',
+                    'Refund has been created successfully {orderId={}, orderReference={}, refundId={}}',
                     [
+                        $payment->id_order,
                         $payment->order_reference,
                         $response->getRefundId()
                     ]
@@ -96,13 +104,14 @@ class PaynowRefundProcessor
             } catch (Paynow\Exception\PaynowException $exception) {
                 foreach ($exception->getErrors() as $error) {
                     PaynowLogger::error(
-                        'An error occurred during refund request process {orderReference={}, paymentId={}, type={}, message={}, code={}}',
+                        'An error occurred during refund request process {code={}, orderId={}, orderReference={}, paymentId={}, type={}, message={}}',
                         [
+                            $exception->getCode(),
+                            $payment->id_order,
                             $payment->order_reference,
                             $payment->transaction_id,
                             $error->getType(),
-                            $error->getMessage(),
-                            $exception->getCode()
+                            $error->getMessage()
                         ]
                     );
                 }

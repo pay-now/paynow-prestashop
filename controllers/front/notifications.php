@@ -18,10 +18,10 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         $headers = $this->getRequestHeaders();
         $notification_data = json_decode($payload, true);
         PaynowLogger::info(
-            'Incoming notification {paymentId={}, externalId={}, status={}}',
+            'Incoming notification {externalId={}, paymentId={}, status={}}',
             [
-                $notification_data['paymentId'],
                 $notification_data['externalId'],
+                $notification_data['paymentId'],
                 $notification_data['status']
             ]
         );
@@ -37,10 +37,10 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             $filtered_payment = reset($filtered_payments);
             if ($filtered_payment && Paynow\Model\Payment\Status::STATUS_CONFIRMED === $filtered_payment->status) {
                 PaynowLogger::info(
-                    'An order already has a paid status. Skipped notification processing {paymentId={}, externalId={}, status={}}',
+                    'An order already has a paid status. Skipped notification processing {externalId={}, paymentId={}, status={}}',
                     [
-                        $notification_data['paymentId'],
                         $notification_data['externalId'],
+                        $notification_data['paymentId'],
                         $notification_data['status']
                     ]
                 );
@@ -50,10 +50,10 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
 
             if (empty($filtered_payments)) {
                 PaynowLogger::warning(
-                    'Payment for order or cart not exists {paymentId={}, externalId={}, status={}}',
+                    'Payment for order or cart not exists {externalId={}, paymentId={}, status={}}',
                     [
-                        $notification_data['paymentId'],
                         $notification_data['externalId'],
+                        $notification_data['paymentId'],
                         $notification_data['status']
                     ]
                 );
@@ -69,11 +69,11 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 $cart->orderExists()
             )) {
                 PaynowLogger::info(
-                    'Processing notification to create new order from cart {paymentId={}, externalId={}, cartId={}, locked={}}',
+                    'Processing notification to create new order from cart {cartId={}, externalId={},, paymentId={}, locked={}}',
                     [
-                        $notification_data['paymentId'],
-                        $notification_data['externalId'],
                         $filtered_payment->id_cart,
+                        $notification_data['externalId'],
+                        $notification_data['paymentId'],
                         $filtered_payment->locked
                     ]
                 );
@@ -88,12 +88,13 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                     $filtered_payment = reset($filtered_payments);
                 } else {
                     PaynowLogger::warning(
-                        'Inconsistent payment and cart amount {paymentId={}, externalId={}, paymentAmount={}, cartAmount={}}',
+                        'Inconsistent payment and cart amount {cartAmount={}, cartId={}, externalId={}, paymentId={}, paymentAmount={}}',
                         [
-                            $notification_data['paymentId'],
+                            $cart->getCartTotalPrice(),
+                            $cart->id,
                             $notification_data['externalId'],
-                            $filtered_payment->total,
-                            $cart->getCartTotalPrice()
+                            $notification_data['paymentId'],
+                            $filtered_payment->total
                         ]
                     );
                 }
@@ -127,10 +128,10 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             );
         } catch (Exception $exception) {
             PaynowLogger::error(
-                'An error occurred during processing notification {paymentId={}, externalId={}, status={}, message={}}',
+                'An error occurred during processing notification {externalId={}, paymentId={}, status={}, message={}}',
                 [
-                    $notification_data['paymentId'],
                     $notification_data['externalId'],
+                    $notification_data['paymentId'],
                     $notification_data['status'],
                     $exception->getMessage()
                 ]

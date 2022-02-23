@@ -80,10 +80,10 @@ class PaynowGDPRHelper
             return (new Paynow\Service\DataProcessing($this->client))->getNotices($locale)->getAll();
         } catch (PaynowException $exception) {
             PaynowLogger::error(
-                'An error occurred during GDPR notices retrieve {message={}, code={}}',
+                'An error occurred during GDPR notices retrieve {code={}, message={}}',
                 [
-                    $exception->getPrevious()->getMessage(),
-                    $exception->getCode()
+                    $exception->getCode(),
+                    $exception->getPrevious()->getMessage()
                 ]
             );
         }

@@ -84,12 +84,12 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                 if (! empty($errors)) {
                     foreach ($errors as $error) {
                         PaynowLogger::error(
-                            'An error occurred during payment request process {externalId={}, error={}, message={}, code={}}',
+                            'An error occurred during payment request process {code={}, errorType={}, externalId={}, message={}}',
                             [
-                                $exception->getExternalId(),
+                                $exception->getPrevious()->getCode(),
                                 $error->getType(),
-                                $error->getMessage(),
-                                $exception->getPrevious()->getCode()
+                                $exception->getExternalId(),
+                                $error->getMessage()
                             ]
                         );
                     }
@@ -114,11 +114,11 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                     }
                 } else {
                     PaynowLogger::error(
-                        'An error occurred during sending payment request {externalId={}, message={}, code={}}',
+                        'An error occurred during sending payment request {code={}, externalId={}, message={},}',
                         [
+                            $exception->getCode(),
                             $exception->getExternalId(),
-                            $exception->getPrevious()->getMessage(),
-                            $exception->getCode()
+                            $exception->getPrevious()->getMessage()
                         ]
                     );
                     $response['message'] = $this->translations['An error occurred during the payment process'];
