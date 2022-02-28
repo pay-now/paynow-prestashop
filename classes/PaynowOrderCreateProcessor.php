@@ -21,7 +21,7 @@ class PaynowOrderCreateProcessor
     {
         if (! $this->canProcess($cart->id, $external_id)) {
             PaynowLogger::warning(
-                'Can\'t create and order due optimistic lock on paynow\'s payment data {cartId={}, externalId={}}',
+                'Can\'t create an order due optimistic lock on paynow\'s payment data {cartId={}, externalId={}}',
                 [
                     $cart->id,
                     $external_id
