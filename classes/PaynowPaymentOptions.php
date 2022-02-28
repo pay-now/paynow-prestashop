@@ -71,15 +71,17 @@ class PaynowPaymentOptions
                                 'module:paynow/views/templates/front/1.7/payment_form.tpl'
                             ));
                         } else {
-                            $this->setUpAdditionalTemplateVariables($payment_method);
-                            array_push($payment_options, $this->getPaymentOption(
-                                $this->module->getPaymentMethodTitle($payment_method->getType()),
-                                $payment_method->getImage(),
-                                PaynowLinkHelper::getPaymentUrl([
-                                    'paymentMethodId' => $payment_method->getId()
-                                ]),
-                                $this->getForm($payment_method)
-                            ));
+                            if ($payment_method->isEnabled()) {
+                                $this->setUpAdditionalTemplateVariables($payment_method);
+                                array_push($payment_options, $this->getPaymentOption(
+                                    $this->module->getPaymentMethodTitle($payment_method->getType()),
+                                    $payment_method->getImage(),
+                                    PaynowLinkHelper::getPaymentUrl([
+                                        'paymentMethodId' => $payment_method->getId()
+                                    ]),
+                                    $this->getForm($payment_method)
+                                ));
+                            }
                         }
                         $list[$payment_method->getType()] = $payment_method->getId();
                     }

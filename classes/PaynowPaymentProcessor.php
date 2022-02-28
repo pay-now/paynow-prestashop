@@ -77,7 +77,7 @@ class PaynowPaymentProcessor
                 $payment->getPaymentId(),
                 Paynow\Model\Payment\Status::STATUS_NEW,
                 null,
-                $external_id,
+                $cart->id,
                 null,
                 $external_id,
                 $cart->getOrderTotal()
@@ -85,11 +85,11 @@ class PaynowPaymentProcessor
         }
 
         PaynowLogger::info(
-            'Payment has been successfully created {paymentId={}, externalId={}, cartId={}, status={}}',
+            'Payment has been successfully created {cartId={}, externalId={}, paymentId={}, status={}}',
             [
-                $payment->getPaymentId(),
-                $external_id,
                 $this->context->cart->id,
+                $external_id,
+                $payment->getPaymentId(),
                 $payment->getStatus()
             ]
         );
@@ -108,11 +108,12 @@ class PaynowPaymentProcessor
     private function processFromOrder($order, $external_id): ?Authorize
     {
         PaynowLogger::info(
-            'Processing payment for order {externalId={}, orderReference={}, cartId={}}',
+            'Processing payment for order {cartId={}, externalId={}, orderId={}, orderReference={}}',
             [
+                $order->id_cart,
                 $external_id,
-                $order->reference,
-                $order->id_cart
+                $order->id,
+                $order->reference
             ]
         );
         $idempotency_key      = $this->generateIdempotencyKey($external_id);
@@ -127,10 +128,10 @@ class PaynowPaymentProcessor
     private function processFromCart($cart, $external_id): ?Authorize
     {
         PaynowLogger::info(
-            'Processing payment for cart {externalId={}, cartId={}}',
+            'Processing payment for cart {cartId={}, externalId={}}',
             [
-                $external_id,
-                $cart->id
+                $cart->id,
+                $external_id
             ]
         );
         $idempotency_key      = $this->generateIdempotencyKey($external_id);

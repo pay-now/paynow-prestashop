@@ -28,7 +28,6 @@ class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
         }
 
         $this->order = new Order($this->payment->id_order);
-
         $payment_status = $this->getPaymentStatus($this->payment->id_payment);
         $this->updateOrderState(
             $this->payment->id_order,
@@ -39,14 +38,6 @@ class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
             $this->payment->status,
             $payment_status
         );
-
-        if ($this->order) {
-            $current_state = $this->order->getCurrentStateFull($this->context->language->id);
-            $current_state_name = $current_state['name'];
-        } else {
-            $order_state = new OrderState(Configuration::get('PAYNOW_ORDER_INITIAL_STATE'));
-            $current_state_name = $order_state->name[$this->context->language->id];
-        }
 
         if (version_compare(_PS_VERSION_, '1.7', 'gt')) {
             $this->registerJavascript(
@@ -63,7 +54,7 @@ class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
 
         $this->context->smarty->assign([
             'module_dir' => $this->module->getPathUri(),
-            'order_status' => $current_state_name,
+            'order_status' => $this->getOrderCurrentState($this->order),
             'order_reference' => $this->order->reference
         ]);
 

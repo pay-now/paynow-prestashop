@@ -86,21 +86,21 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
             if (! empty($errors)) {
                 foreach ($errors as $error) {
                     PaynowLogger::error(
-                        'An error occurred during sending payment request {externalId={}, error={}, message={}}',
+                        'An error occurred during sending payment request {errorType={}, externalId={}, message={}}',
                         [
-                            $exception->getExternalId(),
                             $error->getType(),
+                            $exception->getExternalId(),
                             $error->getMessage()
                         ]
                     );
                 }
             } else {
                 PaynowLogger::error(
-                    $exception->getMessage() . ' {externalId={}, message={}, code={}}',
+                    $exception->getMessage() . ' {code={}, externalId={}, message={}}',
                     [
+                        $exception->getCode(),
                         $exception->getExternalId(),
                         $exception->getMessage(),
-                        $exception->getCode()
                     ]
                 );
             }

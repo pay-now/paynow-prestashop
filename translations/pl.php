@@ -91,6 +91,4 @@ $_MODULE['<{paynow}prestashop>account_e81c4e4f2b7b93b481e13a8553c2ae1b'] = 'lub 
 $_MODULE['<{paynow}prestashop>account_2652eec977dcb2a5aea85f5bec235b05'] = 'z testowego';
 $_MODULE['<{paynow}prestashop>account_e900e40bc91d3f9f7f0a99fed68a2e96'] = 'środowiska';
 $_MODULE['<{paynow}prestashop>account_be11de1ab431efc5d058e52e68667abb'] = 'Klucze uwierzytelniające dostępne są w zakładce Paynow -> Ustawienia -> Sklepy i punkty płatności -> Dane uwierzytelniające w bankowości internetowej mBanku.';
-$_MODULE['<{paynow}prestashop>info_38696c91c1214c41db13673ff994a459'] = 'Moduł umożliwia dokonywanie automatycznego zwrotu środków z salda dla płatności zrealizowanych przez paynow.pl. Aby skorzystać z tej opcji musisz wybrać dzienną częstotliwość wypłat w panelu paynow. Aby to zrobić wejdź w `Ustawienia -> Harmonogram wypłat` a następnie wybierz ustawienie dla odpowiedniego sklepu.';
-$_MODULE['<{paynow}prestashop>payment_e2b7dec8fa4b498156dfee6e4c84b156'] = 'Wybrana metoda płatności nie jest dostępna.';
-$_MODULE['<{paynow}prestashop>payment_074a66386a715de41da17d2e9c9eb8ac'] = 'Moduł paynow jest nieaktywny';
+$_MODULE['<{paynow}prestashop>info_37050ea474edaaacb565cbec9d64bea3'] = 'Moduł umożliwia dokonywanie automatycznego zwrotu środków z salda dla płatności zrealizowanych przez paynow.pl. Aby skorzystać z tej opcji musisz wybrać dzienną częstotliwość wypłat w panelu paynow. Aby to zrobić wejdź w `Ustawienia / Harmonogram wypłat` a następnie wybierz ustawienie dla odpowiedniego sklepu.';
