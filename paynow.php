@@ -42,7 +42,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.6.11';
+        $this->version = '1.6.12';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -100,6 +100,7 @@ class Paynow extends PaymentModule
             `external_id` varchar(50)  NOT NULL,
             `status` varchar(64) NOT NULL,
             `total` DECIMAL(20,6) NOT NULL DEFAULT \'0.000000\',
+            `locked` TINYINT(1) NOT NULL DEFAULT 0,
             `created_at` datetime,
             `modified_at` datetime,
             UNIQUE (`id_payment`, `status`),
