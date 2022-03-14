@@ -69,7 +69,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                 $cart->orderExists()
             )) {
                 PaynowLogger::info(
-                    'Processing notification to create new order from cart {cartId={}, externalId={},, paymentId={}, locked={}}',
+                    'Processing notification to create new order from cart {cartId={}, externalId={}, paymentId={}, locked={}}',
                     [
                         $filtered_payment->id_cart,
                         $notification_data['externalId'],
