@@ -31,6 +31,7 @@ include_once(dirname(__FILE__) . '/models/PaynowPaymentData.php');
 include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
 include_once(dirname(__FILE__) . '/classes/PaynowPaymentProcessor.php');
 include_once(dirname(__FILE__) . '/classes/PaynowPaymentDataBuilder.php');
+include_once(dirname(__FILE__) . '/classes/PaynowGithubClient.php');
 
 class Paynow extends PaymentModule
 {
@@ -531,19 +532,16 @@ class Paynow extends PaymentModule
             echo file_get_contents($file_path);
             echo '</pre>';
         }
-        try {
-            $client = new \Github\Client();
-            $release = $client->api('repo')->releases()->latest('pay-now', 'paynow-prestashop');
 
-            if ($release && version_compare($this->version, $release['tag_name'], '<')) {
-                $this->context->smarty->assign([
-                    'download_url' => $release['assets'][0]['browser_download_url'],
-                    'version_name' => $release['name'],
-                    'changelog_url' => $release['html_url']
-                ]);
-                return $this->fetchTemplate('/views/templates/admin/_partials/upgrade.tpl');
-            }
-        } catch (Exception $exception) {
+        $client = new PaynowGithubClient();
+        $latest_release = $client->latest('pay-now', 'paynow-prestashop');
+        if ($latest_release && version_compare($this->version, $latest_release->tag_name, '<')) {
+            $this->context->smarty->assign([
+                'download_url' => $latest_release->assets[0]['browser_download_url'],
+                'version_name' => $latest_release->name,
+                'changelog_url' => $latest_release->html_url
+            ]);
+            return $this->fetchTemplate('/views/templates/admin/_partials/upgrade.tpl');
         }
 
         return null;
