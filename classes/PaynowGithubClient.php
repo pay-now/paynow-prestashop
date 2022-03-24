@@ -17,9 +17,6 @@ class PaynowGithubClient
     /** @var RequestFactoryInterface */
     protected $messageFactory;
 
-    /** @var StreamFactoryInterface */
-    protected $streamFactory;
-
     /** @var \Psr\Http\Message\UriInterface */
     private $url;
 
@@ -31,7 +28,6 @@ class PaynowGithubClient
             $this->client = HttpClientDiscovery::find();
         }
         $this->messageFactory = Psr17FactoryDiscovery::findRequestFactory();
-        $this->streamFactory = Psr17FactoryDiscovery::findStreamFactory();
         $this->url = Psr17FactoryDiscovery::findUrlFactory()->createUri('https://api.github.com');
     }
 
@@ -43,7 +39,7 @@ class PaynowGithubClient
         );
 
         try {
-            return json_decode($this->client->sendRequest($request)->getBody());
+            return json_decode($this->client->sendRequest($request)->getBody()->getContents());
         } catch (ClientExceptionInterface $exception) {
             PaynowLogger::error("Error occurred during retrieving github latest release information {message={}}", $exception->getMessage());
         }
