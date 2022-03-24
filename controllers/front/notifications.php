@@ -158,11 +158,15 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
 
     private function getFilteredPayments($external_id, $payment_id, $payment_status): array
     {
-        $payments = PaynowPaymentData::findAllByExternalId($external_id)->getResults();
+        $payments = PaynowPaymentData::findAllByExternalIdAndPaymentId($external_id, $payment_id)->getResults();
+        if (!$payments) {
+            $payments = PaynowPaymentData::findAllByExternalId($external_id)->getResults();
 
-        return array_filter($payments, function ($payment) use ($payment_id, $payment_status) {
-            return $payment->id_payment === $payment_id ||
-                   $payment_status === Paynow\Model\Payment\Status::STATUS_NEW;
-        });
+            return array_filter($payments, function ($payment) use ($payment_id, $payment_status) {
+                return $payment->id_payment === $payment_id ||
+                    $payment_status === Paynow\Model\Payment\Status::STATUS_NEW;
+            });
+        }
+        return $payments;
     }
 }

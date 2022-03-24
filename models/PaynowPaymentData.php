@@ -65,7 +65,7 @@ class PaynowPaymentData extends ObjectModel
         $external_id,
         $total = null
     ) {
-        $now                    = (new DateTime())->format('Y-m-d H:i:s');
+        $now                    = (new DateTime('now', new DateTimeZone(Configuration::get('PS_TIMEZONE'))))->format('Y-m-d H:i:s');
         $model                  = new PaynowPaymentData();
         $model->id_order        = $id_order;
         $model->id_cart         = $id_cart;
@@ -132,6 +132,24 @@ class PaynowPaymentData extends ObjectModel
 
     /**
      * @param $external_id
+     * @param $payment_id
+     *
+     * @return PrestaShopCollection
+     * @throws PrestaShopException
+     */
+    public static function findAllByExternalIdAndPaymentId($external_id, $payment_id)
+    {
+        $queryBuilder = new PrestaShopCollection(self::class);
+
+        return $queryBuilder
+            ->where('external_id', '=', $external_id)
+            ->where('id_payment', '=', $payment_id)
+            ->orderBy('created_at', 'desc')
+            ->getAll();
+    }
+
+    /**
+     * @param $external_id
      *
      * @return false|ObjectModel
      * @throws PrestaShopException
@@ -158,22 +176,6 @@ class PaynowPaymentData extends ObjectModel
 
         return $queryBuilder
             ->where('order_reference', '=', $order_reference)
-            ->orderBy('created_at', 'desc')
-            ->getFirst();
-    }
-
-    /**
-     * @param $id_payment
-     *
-     * @return false|ObjectModel
-     * @throws PrestaShopException
-     */
-    public static function findLastByPaymentId($id_payment)
-    {
-        $queryBuilder = new PrestaShopCollection(self::class);
-
-        return $queryBuilder
-            ->where('id_payment', '=', $id_payment)
             ->orderBy('created_at', 'desc')
             ->getFirst();
     }
@@ -215,7 +217,7 @@ class PaynowPaymentData extends ObjectModel
         $data = PaynowPaymentData::findByPaymentId($id_payment);
         if ($data) {
             $data->status      = $status;
-            $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
+            $data->modified_at = (new DateTime('now', new DateTimeZone(Configuration::get('PS_TIMEZONE'))))->format('Y-m-d H:i:s');
             if ($data->update()) {
                 PaynowLogger::debug(
                     'Successfully updated payment data {paymentId={}, status={}}',

@@ -43,7 +43,13 @@ class PaynowOrderStateProcessor
         );
         $order = new Order($id_order);
         if (!Validate::isLoadedObject($order)) {
-            throw new Exception('An order does not exists with ID ' . $id_order);
+            PaynowLogger::warning(
+                'An order does not exists {orderId={}}',
+                [
+                    $id_order
+                ]
+            );
+            exit;
         }
 
         if ($order->module !== $this->module->name) {
@@ -91,7 +97,8 @@ class PaynowOrderStateProcessor
             }
 
             try {
-                if ($new_status === Paynow\Model\Payment\Status::STATUS_NEW && !PaynowPaymentData::findByPaymentId($id_payment)) {
+                if (Paynow\Model\Payment\Status::STATUS_NEW  === $new_status &&
+                    !PaynowPaymentData::findByPaymentId($id_payment)) {
                     $last_payment = PaynowPaymentData::findLastByExternalId($external_id);
                     PaynowPaymentData::create(
                         $id_payment,
