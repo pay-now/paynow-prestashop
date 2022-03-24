@@ -537,7 +537,7 @@ class Paynow extends PaymentModule
         $latest_release = $client->latest('pay-now', 'paynow-prestashop');
         if ($latest_release && version_compare($this->version, $latest_release->tag_name, '<')) {
             $this->context->smarty->assign([
-                'download_url' => $latest_release->assets[0]['browser_download_url'],
+                'download_url' => $latest_release->assets[0]->browser_download_url,
                 'version_name' => $latest_release->name,
                 'changelog_url' => $latest_release->html_url
             ]);
