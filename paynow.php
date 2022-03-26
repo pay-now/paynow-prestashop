@@ -43,7 +43,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.6.14';
+        $this->version = '1.6.15';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -535,7 +535,8 @@ class Paynow extends PaymentModule
 
         $client = new PaynowGithubClient();
         $latest_release = $client->latest('pay-now', 'paynow-prestashop');
-        if ($latest_release && version_compare($this->version, $latest_release->tag_name, '<')) {
+        if ($latest_release && isset($latest_release->tag_name) &&
+            version_compare($this->version, $latest_release->tag_name, '<')) {
             $this->context->smarty->assign([
                 'download_url' => $latest_release->assets[0]->browser_download_url,
                 'version_name' => $latest_release->name,
