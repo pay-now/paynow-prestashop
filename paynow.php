@@ -43,7 +43,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.6.15';
+        $this->version = '1.6.16';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -270,18 +270,14 @@ class Paynow extends PaymentModule
             Configuration::get('PAYNOW_PROD_API_SIGNATURE_KEY');
     }
 
-    public function isSandboxEnabled()
+    public function isSandboxEnabled(): bool
     {
         return (int)Configuration::get('PAYNOW_SANDBOX_ENABLED') === 1;
     }
 
     private function isActive(): bool
     {
-        if (!$this->active || !$this->isConfigured()) {
-            return false;
-        }
-
-        return true;
+        return $this->active && $this->isConfigured();
     }
 
     private function isConfigured(): bool
@@ -306,8 +302,8 @@ class Paynow extends PaymentModule
 
     public function hookHeader()
     {
-        $this->context->controller->addCSS(($this->_path) . 'views/css/front.css', 'all');
-        $this->context->controller->addJs(($this->_path) . 'views/js/front.js', 'all');
+        ContextCore::getContext()->controller->addCSS(($this->_path) . 'views/css/front.css', 'all');
+        ContextCore::getContext()->controller->addJs(($this->_path) . 'views/js/front.js', 'all');
     }
 
     public function getPaymentMethodTitle($payment_method_type): string
@@ -330,7 +326,7 @@ class Paynow extends PaymentModule
      * @return \Paynow\Response\PaymentMethods\PaymentMethods|null
      * @throws Exception
      */
-    private function getPaymentMethods(): ?\Paynow\Response\PaymentMethods\PaymentMethods
+    private function getPaymentMethods()
     {
         $total = number_format($this->context->cart->getOrderTotal() * 100, 0, '', '');
         $currency = new Currency($this->context->cart->id_currency);
@@ -479,8 +475,8 @@ class Paynow extends PaymentModule
     {
         if ((int)Configuration::get('PAYNOW_REFUNDS_ENABLED') === 1 && Tools::isSubmit('makeRefundViaPaynow') &&
             $this->name == $params['order']->module) {
-                (new PaynowRefundProcessor($this->getPaynowClient(), $this->displayName))
-                    ->processFromOrderSlip($params['order']);
+            (new PaynowRefundProcessor($this->getPaynowClient(), $this->displayName))
+                ->processFromOrderSlip($params['order']);
         }
     }
 
@@ -550,8 +546,10 @@ class Paynow extends PaymentModule
 
     public function hookActionAdminControllerSetMedia($params)
     {
-        $this->context->controller->addJquery();
-        $this->context->controller->addJS(($this->_path) . '/views/js/admin.js', 'all');
+        if (Tools::getValue("configure") && Tools::getValue("configure") == "paynow") {
+            ContextCore::getContext()->controller->addJquery();
+            ContextCore::getContext()->controller->addJS(($this->_path) . '/views/js/admin.js', 'all');
+        }
     }
 
     public function canOrderPaymentBeRetried($order): bool
@@ -560,14 +558,14 @@ class Paynow extends PaymentModule
             $last_payment_data = PaynowPaymentData::findLastByOrderId($order->id);
 
             return empty($last_payment_data) ||
-                   $last_payment_data->status !== \Paynow\Model\Payment\Status::STATUS_CONFIRMED ||
-                   in_array(
-                       (int)$order->current_state,
-                       [
-                           (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
-                           (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE')
-                       ]
-                   );
+                $last_payment_data->status !== \Paynow\Model\Payment\Status::STATUS_CONFIRMED ||
+                in_array(
+                    (int)$order->current_state,
+                    [
+                        (int)Configuration::get('PAYNOW_ORDER_ERROR_STATE'),
+                        (int)Configuration::get('PAYNOW_ORDER_REJECTED_STATE')
+                    ]
+                );
         } catch (PrestaShopException $exception) {
             PaynowLogger::error($exception->getMessage());
         }
@@ -606,14 +604,14 @@ class Paynow extends PaymentModule
         }
     }
 
-    private function validateValidityTime()
+    private function validateValidityTime(): bool
     {
         if ((int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED') == 0) {
             return false;
         }
 
         return (int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') > 86400 &&
-               (int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') < 60;
+            (int)Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME') < 60;
     }
 
     private function postProcess()

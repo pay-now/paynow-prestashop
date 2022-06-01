@@ -44,9 +44,13 @@ class PaynowOrderStateProcessor
         $order = new Order($id_order);
         if (!Validate::isLoadedObject($order)) {
             PaynowLogger::warning(
-                'An order does not exists {orderId={}}',
+                'An order does not exists {cartId={}, externalId={}, orderId={}, orderReference={}, paymentId={}}',
                 [
-                    $id_order
+                    $id_cart,
+                    $external_id,
+                    $id_order,
+                    $order_reference,
+                    $id_payment
                 ]
             );
             exit;
