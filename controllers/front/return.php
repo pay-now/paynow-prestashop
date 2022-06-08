@@ -19,7 +19,6 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         $order_reference = Tools::getValue('order_reference');
         $id_cart = Tools::getValue('id_cart');
         $external_id = Tools::getValue('external_id');
-        $token = Tools::getValue('token');
 
         if ((! $order_reference || ! $id_cart) && !$this->isTokenValid()) {
             $this->redirectToOrderHistory();
@@ -93,7 +92,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             'details_url' => PaynowLinkHelper::getOrderUrl($this->order),
             'order_status' => $currentState['name'],
             'order_reference' => $this->order->reference,
-            'show_details_button' => $token == Tools::encrypt($order_reference),
+            'show_details_button' => $this->isTokenValid(),
             'show_retry_button' => $this->module->canOrderPaymentBeRetried($this->order),
             'HOOK_ORDER_CONFIRMATION' => $this->displayOrderConfirmation(),
             'retry_url' => PaynowLinkHelper::getPaymentUrl([
