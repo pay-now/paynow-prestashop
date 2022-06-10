@@ -99,9 +99,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                     );
                 }
             } else {
-                if (PaynowPaymentData::findByPaymentId($notification_data['paymentId'])) {
-                    PaynowPaymentData::updateStatus($notification_data['paymentId'], $notification_data['status']);
-                } else {
+                if (!PaynowPaymentData::findByPaymentId($notification_data['paymentId'])) {
                     $previous_payment_data = PaynowPaymentData::findLastByExternalId($notification_data['externalId']);
                     if ($previous_payment_data) {
                         PaynowPaymentData::create(
