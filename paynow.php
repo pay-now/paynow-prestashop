@@ -43,7 +43,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.6.18';
+        $this->version = '1.6.19';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -285,6 +285,11 @@ class Paynow extends PaymentModule
         return !empty($this->getApiKey()) && !empty($this->getSignatureKey());
     }
 
+    private function showRetryButton(): bool
+    {
+        return (int)Configuration::get('PAYNOW_RETRY_PAYMENT_BUTTON') === 1;
+    }
+
     public function checkCurrency($cart): bool
     {
         $currency_order = new Currency($cart->id_currency);
@@ -445,7 +450,7 @@ class Paynow extends PaymentModule
 
     public function hookDisplayOrderDetail($params)
     {
-        if (!$this->isActive()) {
+        if (!$this->isActive() || !$this->showRetryButton()) {
             return;
         }
 
@@ -736,7 +741,9 @@ class Paynow extends PaymentModule
             'You have to accept terms and conditions'                                                                                                                                           => $this->l('You have to accept terms and conditions'),
             'Moment of creating order'                                                                                                                                                          => $this->l('Moment of creating order'),
             'On clicking the Place order'                                                                                                                                                       => $this->l('On clicking the Place order'),
-            'After the successful Paynow payment'                                                                                                                                               => $this->l('After the successful Paynow payment')
+            'After the successful Paynow payment'                                                                                                                                               => $this->l('After the successful Paynow payment'),
+            'Show retry payment button'                                                                                                                                                         => $this->l('Show retry payment button'),
+            'The button appears on the order details screen.'                                                                                                                                   => $this->l('The button appears on the order details screen.'),
         ];
     }
 }

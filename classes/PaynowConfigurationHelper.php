@@ -105,5 +105,9 @@ class PaynowConfigurationHelper
             'PAYNOW_CREATE_ORDER_STATE',
             Tools::getValue('PAYNOW_CREATE_ORDER_STATE')
         );
+        Configuration::updateValue(
+            'PAYNOW_RETRY_PAYMENT_BUTTON',
+            Tools::getValue('PAYNOW_RETRY_PAYMENT_BUTTON')
+        );
     }
 }
