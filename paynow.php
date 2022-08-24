@@ -285,6 +285,11 @@ class Paynow extends PaymentModule
         return !empty($this->getApiKey()) && !empty($this->getSignatureKey());
     }
 
+    private function showRetryButton(): bool
+    {
+        return (int)Configuration::get('PAYNOW_RETRY_PAYMENT_BUTTON') === 1;
+    }
+
     public function checkCurrency($cart): bool
     {
         $currency_order = new Currency($cart->id_currency);
@@ -445,7 +450,7 @@ class Paynow extends PaymentModule
 
     public function hookDisplayOrderDetail($params)
     {
-        if (!$this->isActive()) {
+        if (!$this->isActive() || !$this->showRetryButton()) {
             return;
         }
 
