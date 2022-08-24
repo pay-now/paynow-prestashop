@@ -736,7 +736,9 @@ class Paynow extends PaymentModule
             'You have to accept terms and conditions'                                                                                                                                           => $this->l('You have to accept terms and conditions'),
             'Moment of creating order'                                                                                                                                                          => $this->l('Moment of creating order'),
             'On clicking the Place order'                                                                                                                                                       => $this->l('On clicking the Place order'),
-            'After the successful Paynow payment'                                                                                                                                               => $this->l('After the successful Paynow payment')
+            'After the successful Paynow payment'                                                                                                                                               => $this->l('After the successful Paynow payment'),
+            'Show retry payment button'                                                                                                                                                         => $this->l('Show retry payment button'),
+            'The button appears on the order details screen.'                                                                                                                                   => $this->l('The button appears on the order details screen.'),
         ];
     }
 }
