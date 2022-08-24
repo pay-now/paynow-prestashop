@@ -54,7 +54,7 @@ class PaynowAdminFormHelper
 
         return $helper->generateForm($this->getForm());
     }
-    
+
     private function getForm(): array
     {
         $form = [];
@@ -325,6 +325,24 @@ class PaynowAdminFormHelper
                     ],
                     [
                         'type' => 'switch',
+                        'label' => $this->translations['Show retry payment button'],
+                        'desc' => $this->translations['The button appears on the order details screen.'],
+                        'name' => 'PAYNOW_RETRY_PAYMENT_BUTTON',
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->translations['Yes']
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->translations['No']
+                            ]
+                        ],
+                    ],
+                    [
+                        'type' => 'switch',
                         'label' => $this->translations['Use order-confirmation page as shop\'s return URL'],
                         'desc' => $this->translations['Buyer will be redirected to order-confirmation page after payment.'],
                         'name' => 'PAYNOW_USE_CLASSIC_RETURN_URL',
@@ -407,10 +425,10 @@ class PaynowAdminFormHelper
                 ]
             ]
         ];
-        
+
         return $form;
     }
-    
+
     private function getConfigFieldsValues(): array
     {
         return [
@@ -435,7 +453,8 @@ class PaynowAdminFormHelper
             'PAYNOW_PAYMENT_VALIDITY_TIME' => Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME'),
             'PAYNOW_ORDER_ABANDONED_STATE' => Configuration::get('PAYNOW_ORDER_ABANDONED_STATE'),
             'PAYNOW_ORDER_EXPIRED_STATE' => Configuration::get('PAYNOW_ORDER_EXPIRED_STATE'),
-            'PAYNOW_CREATE_ORDER_STATE' => Configuration::get('PAYNOW_CREATE_ORDER_STATE')
+            'PAYNOW_CREATE_ORDER_STATE' => Configuration::get('PAYNOW_CREATE_ORDER_STATE'),
+            'PAYNOW_RETRY_PAYMENT_BUTTON' => Configuration::get('PAYNOW_RETRY_PAYMENT_BUTTON'),
         ];
     }
 }
