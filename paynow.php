@@ -287,7 +287,7 @@ class Paynow extends PaymentModule
 
     private function showRetryButton(): bool
     {
-        return (int)Configuration::get('PAYNOW_RETRY_PAYMENT_BUTTON') === 1;
+        return (int)Configuration::get('PAYNOW_RETRY_PAYMENT_BUTTON_ENABLED') === 1;
     }
 
     public function checkCurrency($cart): bool

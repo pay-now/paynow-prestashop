@@ -327,7 +327,7 @@ class PaynowAdminFormHelper
                         'type' => 'switch',
                         'label' => $this->translations['Show retry payment button'],
                         'desc' => $this->translations['The button appears on the order details screen.'],
-                        'name' => 'PAYNOW_RETRY_PAYMENT_BUTTON',
+                        'name' => 'PAYNOW_RETRY_PAYMENT_BUTTON_ENABLED',
                         'values' => [
                             [
                                 'id' => 'active_on',
@@ -454,7 +454,7 @@ class PaynowAdminFormHelper
             'PAYNOW_ORDER_ABANDONED_STATE' => Configuration::get('PAYNOW_ORDER_ABANDONED_STATE'),
             'PAYNOW_ORDER_EXPIRED_STATE' => Configuration::get('PAYNOW_ORDER_EXPIRED_STATE'),
             'PAYNOW_CREATE_ORDER_STATE' => Configuration::get('PAYNOW_CREATE_ORDER_STATE'),
-            'PAYNOW_RETRY_PAYMENT_BUTTON' => Configuration::get('PAYNOW_RETRY_PAYMENT_BUTTON'),
+            'PAYNOW_RETRY_PAYMENT_BUTTON_ENABLED' => Configuration::get('PAYNOW_RETRY_PAYMENT_BUTTON_ENABLED'),
         ];
     }
 }
