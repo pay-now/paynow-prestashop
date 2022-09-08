@@ -43,7 +43,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.6.19';
+        $this->version = '1.6.18';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -174,7 +174,9 @@ class Paynow extends PaymentModule
             Configuration::updateValue('PAYNOW_PAYMENT_VALIDITY_TIME', 86400) &&
             Configuration::updateValue('PAYNOW_ORDER_ABANDONED_STATE', Configuration::get('PAYNOW_ORDER_INITIAL_STATE')) &&
             Configuration::updateValue('PAYNOW_ORDER_EXPIRED_STATE', Configuration::get('PAYNOW_ORDER_INITIAL_STATE')) &&
-            Configuration::updateValue('PAYNOW_CREATE_ORDER_STATE', 1);
+            Configuration::updateValue('PAYNOW_CREATE_ORDER_STATE', 1) &&
+            Configuration::updateValue('PAYNOW_RETRY_PAYMENT_BUTTON_ENABLED', 1) &&
+            Configuration::updateValue('PAYNOW_RETRY_BUTTON_ORDER_STATE', join(',', [8,20,12]));
     }
 
     private function deleteModuleSettings()
@@ -199,7 +201,9 @@ class Paynow extends PaymentModule
             Configuration::deleteByName('PAYNOW_PAYMENT_VALIDITY_TIME') &&
             Configuration::deleteByName('PAYNOW_ORDER_ABANDONED_STATE') &&
             Configuration::deleteByName('PAYNOW_ORDER_EXPIRED_STATE') &&
-            Configuration::deleteByName('PAYNOW_CREATE_ORDER_STATE');
+            Configuration::deleteByName('PAYNOW_CREATE_ORDER_STATE') &&
+            Configuration::deleteByName('PAYNOW_RETRY_PAYMENT_BUTTON_ENABLED') &&
+            Configuration::deleteByName('PAYNOW_RETRY_BUTTON_ORDER_STATE');
     }
 
     public function createOrderInitialState()
@@ -285,9 +289,25 @@ class Paynow extends PaymentModule
         return !empty($this->getApiKey()) && !empty($this->getSignatureKey());
     }
 
-    private function showRetryButton(): bool
+    private function showRetryButton(array $params): bool
     {
-        return (int)Configuration::get('PAYNOW_RETRY_PAYMENT_BUTTON_ENABLED') === 1;
+        if ((int)Configuration::get('PAYNOW_RETRY_PAYMENT_BUTTON_ENABLED') === 0) {
+            return false;
+        }
+
+        /** @var \PrestaShop\PrestaShop\Adapter\Entity\Order $order */
+        $order             = $params['order'] ?? null;
+        if ($order === null) {
+            return false;
+        }
+        $paynowPaymentData = PaynowPaymentData::findLastByOrderId($order->id);
+        if ($paynowPaymentData === false) {
+            return false;
+        }
+
+        $retryBtnOrderStates = explode(',', Configuration::get('PAYNOW_RETRY_BUTTON_ORDER_STATE'));
+
+        return in_array($order->getCurrentState(), $retryBtnOrderStates);
     }
 
     public function checkCurrency($cart): bool
@@ -450,7 +470,7 @@ class Paynow extends PaymentModule
 
     public function hookDisplayOrderDetail($params)
     {
-        if (!$this->isActive() || !$this->showRetryButton()) {
+        if (!$this->isActive() || !$this->showRetryButton($params)) {
             return;
         }
 
@@ -744,6 +764,7 @@ class Paynow extends PaymentModule
             'After the successful Paynow payment'                                                                                                                                               => $this->l('After the successful Paynow payment'),
             'Show retry payment button'                                                                                                                                                         => $this->l('Show retry payment button'),
             'The button appears on the order details screen.'                                                                                                                                   => $this->l('The button appears on the order details screen.'),
+            'Show retry payment button on selected statuses'                                                                                                                                    => $this->l('Show retry payment button on selected statuses'),
         ];
     }
 }
