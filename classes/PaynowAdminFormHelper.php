@@ -191,7 +191,18 @@ class PaynowAdminFormHelper
                             'id' => 'id_order_state',
                             'name' => 'name'
                         ]
-                    ]
+                    ],
+                    [ // Show retry payment button
+                        'type' => 'select',
+                        'label' => $this->translations['Show retry payment button on selected statuses'],
+                        'name' => 'PAYNOW_RETRY_BUTTON_ORDER_STATE[]',
+                        'multiple' => true,
+                        'options' => [
+                            'query' => $order_states,
+                            'id' => 'id_order_state',
+                            'name' => 'name'
+                        ]
+                    ],
                 ],
                 'submit' => [
                     'title' => $this->translations['Save']
@@ -455,6 +466,7 @@ class PaynowAdminFormHelper
             'PAYNOW_ORDER_EXPIRED_STATE' => Configuration::get('PAYNOW_ORDER_EXPIRED_STATE'),
             'PAYNOW_CREATE_ORDER_STATE' => Configuration::get('PAYNOW_CREATE_ORDER_STATE'),
             'PAYNOW_RETRY_PAYMENT_BUTTON_ENABLED' => Configuration::get('PAYNOW_RETRY_PAYMENT_BUTTON_ENABLED'),
+            'PAYNOW_RETRY_BUTTON_ORDER_STATE[]' => explode(',', Configuration::get('PAYNOW_RETRY_BUTTON_ORDER_STATE')),
         ];
     }
 }

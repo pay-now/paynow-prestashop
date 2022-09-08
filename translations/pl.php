@@ -45,6 +45,7 @@ $_MODULE['<{paynow}prestashop>paynow_e128ece85361c066ea30a503fb868121'] = 'Dodat
 $_MODULE['<{paynow}prestashop>paynow_5c2c5c1ab84b763f09cd2ab6bd5720a3'] = 'Wyświetl metody płatności';
 $_MODULE['<{paynow}prestashop>paynow_ecd133189898f0bb5c22929d945b5a16'] = 'Pokaż przycisk ponów płatność';
 $_MODULE['<{paynow}prestashop>paynow_f80582610895a112b5bd6be72a44b0eb'] = 'Przycisk pokazywany jest na ekranie szczegółów zamówienia.';
+$_MODULE['<{paynow}prestashop>paynow_f073bd1fb850d58894658439ac926d45'] = 'Pokaż przycisk ponów płatność dla wybranych statusów';
 $_MODULE['<{paynow}prestashop>paynow_b5c4d3273e029a1ab33c3ef315a00916'] = 'Użyj strony potwierdzenie-zamówienia jako strony powrotu do sklepu';
 $_MODULE['<{paynow}prestashop>paynow_a6cd1dd6e1c5c70b936136dc687f793e'] = 'Po płatności kupujący zostanie przekierowany do klasycznej strony potwierdzenia zamówienia.';
 $_MODULE['<{paynow}prestashop>paynow_33d2b4361184679164c34a538c362744'] = 'Wysyłaj informację o produktach';
