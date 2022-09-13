@@ -30,6 +30,7 @@ $jscomp.polyfill=function(a,n,f,p){if(n){f=$jscomp.global;a=a.split(".");for(p=0
 $(function () {
     $('input[name="payment-option"]').on("change", function () {
         setTimeout(function () {
+            enableBlikFormSupport();
             enableBlikSupport();
             enablePblSupport();
         }, 200);
@@ -38,11 +39,14 @@ $(function () {
 
 function enableBlikFormSupport()
 {
-    var $paynow_blik_form = $('.paynow-blik-form'), $paynow_blik_error_span = $('#paynow_blik_code').next('span');
+    $('.paynow-blik-form button').off('click');
     $('.paynow-blik-form button').on('click', function (e) {
         e.preventDefault();
-        let $blik_pay_button = $($paynow_blik_form).find('button');
-        if ($('#conditions_to_approve\\[terms-and-conditions\\], #cgv').length == 0 || $('#conditions_to_approve\\[terms-and-conditions\\], #cgv').length && $('#conditions_to_approve\\[terms-and-conditions\\], #cgv').is(':checked')) {
+        var $blik_pay_button = $($paynow_blik_form).find('button');
+        var $paynow_blik_form = $('.paynow-blik-form');
+        var $paynow_blik_error_span = $('#paynow_blik_code').next('span');
+
+      if ($('#conditions_to_approve\\[terms-and-conditions\\], #cgv').length == 0 || $('#conditions_to_approve\\[terms-and-conditions\\], #cgv').length && $('#conditions_to_approve\\[terms-and-conditions\\], #cgv').is(':checked')) {
             $blik_pay_button.prop('disabled', true);
             $.ajax($paynow_blik_form.data('action'), {
                 method: 'POST', type: 'POST',
@@ -71,7 +75,6 @@ function enableBlikFormSupport()
 
 function enableBlikSupport()
 {
-    enableBlikFormSupport();
     let $paynow_blik_code_input = $('#paynow_blik_code'), $payment_button = $('#payment-confirmation button')
     $paynow_blik_code_input.mask('000 000', {placeholder: "___ ___"});
     if ($paynow_blik_code_input.is(':visible')) {
