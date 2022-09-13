@@ -60,7 +60,7 @@ class PaynowOrderStateProcessor
             throw new Exception('Another payment method is selected for order');
         }
 
-        if ($order->current_state === (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE')) {
+        if ((int)$order->current_state === (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE')) {
             PaynowLogger::info(
                 'The order has already paid status. Skipping order\'s state update {cartId={}, externalId={}, orderId={}, orderReference={}, paymentId={}}',
                 [
