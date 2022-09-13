@@ -53,7 +53,7 @@ class PaynowOrderStateProcessor
                     $id_payment
                 ]
             );
-            exit;
+            throw new Exception('An order does not exists');
         }
 
         if ($order->module !== $this->module->name) {
