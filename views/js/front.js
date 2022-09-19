@@ -116,6 +116,5 @@ function validateBlikCode(blik_code_value)
     } else {
         $payment_button.prop('disabled', true);
         $paynow_blik_payment_button.prop('disabled', true);
-        $('#paynow_blik_code').focus();
     }
 }
