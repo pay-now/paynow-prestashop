@@ -36,10 +36,9 @@ $(function () {
     });
 });
 
-function enableBlikFormSupport()
-{
+function enableBlikFormSupport() {
     var $paynow_blik_form = $('.paynow-blik-form'), $paynow_blik_error_span = $('#paynow_blik_code').next('span');
-    $('.paynow-blik-form button').on('click', function (e) {
+    $('.paynow-blik-form button').off('click').on('click', function (e) {
         e.preventDefault();
         let $blik_pay_button = $($paynow_blik_form).find('button');
         if ($('#conditions_to_approve\\[terms-and-conditions\\], #cgv').length == 0 || $('#conditions_to_approve\\[terms-and-conditions\\], #cgv').length && $('#conditions_to_approve\\[terms-and-conditions\\], #cgv').is(':checked')) {
@@ -69,8 +68,7 @@ function enableBlikFormSupport()
     })
 }
 
-function enableBlikSupport()
-{
+function enableBlikSupport() {
     enableBlikFormSupport();
     let $paynow_blik_code_input = $('#paynow_blik_code'), $payment_button = $('#payment-confirmation button')
     $paynow_blik_code_input.mask('000 000', {placeholder: "___ ___"});
@@ -89,19 +87,25 @@ function enableBlikSupport()
     });
 }
 
-function enablePblSupport()
-{
-    var $payment_button = $('#payment-confirmation button');
+function enablePblSupport() {
     if ($('.paynow-payment-pbls').is(':visible')) {
-        $payment_button.prop('disabled', $('input[name="paymentMethodId"]:checked').length === 0)
+        paynowPblPaymentBtnCheck();
     }
-    $('input[name="paymentMethodId"]').on('change', function () {
-        $payment_button.prop('disabled', $('input[name="paymentMethodId"]:checked').length === 0)
-    })
+    $('input[name="paymentMethodId"]').off('change').on('change', paynowPblPaymentBtnCheck);
 }
 
-function validateBlikCode(blik_code_value)
-{
+function paynowPblPaymentBtnCheck() {
+    var $payment_button = $('#payment-confirmation button'),
+        $regulations = $('#conditions_to_approve\\[terms-and-conditions\\], #cgv');
+
+    if ($('input[name="paymentMethodId"]:checked').length != 0 && $regulations.is(':checked')) {
+        $payment_button.prop('disabled', false).removeClass('disabled');
+    } else {
+        $payment_button.prop('disabled', true).addClass('disabled');
+    }
+}
+
+function validateBlikCode(blik_code_value) {
     blik_code_value = blik_code_value.replace(/\s/g, '');
     var $payment_button = $('#payment-confirmation button'),
         $paynow_blik_payment_button = $('.paynow-blik-form button'),
@@ -113,6 +117,8 @@ function validateBlikCode(blik_code_value)
     } else {
         $payment_button.prop('disabled', true);
         $paynow_blik_payment_button.prop('disabled', true);
-        $('#paynow_blik_code').focus();
+        if ($('.paynow-blik-form').data('blik-autofocus') == '1') {
+            $('#paynow_blik_code').focus();
+        }
     }
 }

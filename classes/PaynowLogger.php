@@ -45,6 +45,11 @@ class PaynowLogger
             $result_message .= $messagePart;
         }
 
+        if (strpos($message, '{}') === false && is_array($context) && !empty($context)) {
+            $strContext = json_encode($context);
+            $result_message = $message . " {$strContext}";
+        }
+
         return self::getTimestamp() . ' ' . substr(hash('sha256', $_SERVER['REMOTE_ADDR']), 0, 32) . ' ' . Tools::strtoupper($type) . ' ' . $result_message . PHP_EOL;
     }
 

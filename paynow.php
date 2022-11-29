@@ -17,6 +17,9 @@ if (!defined('_PS_VERSION_')) {
 include_once(dirname(__FILE__) . '/vendor/autoload.php');
 include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
 include_once(dirname(__FILE__) . '/classes/PaynowLogger.php');
+include_once(dirname(__FILE__) . '/classes/PaynowHelper.php');
+include_once(dirname(__FILE__) . '/classes/PaynowNotificationRetryProcessing.php');
+include_once(dirname(__FILE__) . '/classes/PaynowNotificationStopProcessing.php');
 include_once(dirname(__FILE__) . '/classes/PaynowConfigurationHelper.php');
 include_once(dirname(__FILE__) . '/classes/PaynowPaymentMethodsHelper.php');
 include_once(dirname(__FILE__) . '/classes/PaynowPaymentAuthorizeException.php');
@@ -43,7 +46,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.6.19';
+        $this->version = '1.6.21';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -102,6 +105,9 @@ class Paynow extends PaymentModule
             `status` varchar(64) NOT NULL,
             `total` DECIMAL(20,6) NOT NULL DEFAULT \'0.000000\',
             `locked` TINYINT(1) NOT NULL DEFAULT 0,
+            `active` tinyint(1) NOT NULL DEFAULT 0,
+            `counter` tinyint(1) NOT NULL DEFAULT 0,
+            `sent_at` datetime DEFAULT NULL,
             `created_at` datetime,
             `modified_at` datetime,
             UNIQUE (`id_payment`, `status`),
@@ -136,8 +142,9 @@ class Paynow extends PaymentModule
     {
         $registerStatus = $this->unregisterHook('header') &&
             $this->unregisterHook('displayOrderDetail') &&
+            $this->unregisterHook('actionOrderStatusPostUpdate') &&
             $this->unregisterHook('actionOrderSlipAdd') &&
-            $this->unregisterHook('displayAdminOrderTop') &&
+            $this->unregisterHook('displayAdminOrder') &&
             $this->unregisterHook('displayAdminAfterHeader') &&
             $this->unregisterHook('actionAdminControllerSetMedia');
 
@@ -176,7 +183,8 @@ class Paynow extends PaymentModule
             Configuration::updateValue('PAYNOW_ORDER_EXPIRED_STATE', Configuration::get('PAYNOW_ORDER_INITIAL_STATE')) &&
             Configuration::updateValue('PAYNOW_CREATE_ORDER_STATE', 1) &&
             Configuration::updateValue('PAYNOW_RETRY_PAYMENT_BUTTON_ENABLED', 1) &&
-            Configuration::updateValue('PAYNOW_RETRY_BUTTON_ORDER_STATE', join(',', [8,20,12]));
+            Configuration::updateValue('PAYNOW_RETRY_BUTTON_ORDER_STATE', join(',', [8,20,12])) &&
+            Configuration::updateValue('PAYNOW_BLIK_AUTOFOCUS_ENABLED', 1);
     }
 
     private function deleteModuleSettings()
@@ -203,7 +211,8 @@ class Paynow extends PaymentModule
             Configuration::deleteByName('PAYNOW_ORDER_EXPIRED_STATE') &&
             Configuration::deleteByName('PAYNOW_CREATE_ORDER_STATE') &&
             Configuration::deleteByName('PAYNOW_RETRY_PAYMENT_BUTTON_ENABLED') &&
-            Configuration::deleteByName('PAYNOW_RETRY_BUTTON_ORDER_STATE');
+            Configuration::deleteByName('PAYNOW_RETRY_BUTTON_ORDER_STATE') &&
+            Configuration::deleteByName('PAYNOW_BLIK_AUTOFOCUS_ENABLED');
     }
 
     public function createOrderInitialState()
@@ -296,7 +305,7 @@ class Paynow extends PaymentModule
         }
 
         /** @var \PrestaShop\PrestaShop\Adapter\Entity\Order $order */
-        $order             = $params['order'] ?? null;
+        $order = $params['order'] ?? null;
         if ($order === null) {
             return false;
         }
@@ -387,6 +396,7 @@ class Paynow extends PaymentModule
             $this->getPaymentMethods(),
             $this->getGDPRNotices()
         );
+
         return $payment_options->generate();
     }
 
@@ -431,7 +441,8 @@ class Paynow extends PaymentModule
                                     ),
                                     'action_token' => Tools::encrypt($this->context->customer->secure_key),
                                     'error_message' => $this->getTranslationsArray()['An error occurred during the payment process'],
-                                    'terms_message' => $this->getTranslationsArray()['You have to accept terms and conditions']
+                                    'terms_message' => $this->getTranslationsArray()['You have to accept terms and conditions'],
+                                    'blik_autofocus' => Configuration::get('PAYNOW_BLIK_AUTOFOCUS_ENABLED') === '0' ? '0' : '1',
                                 ]);
                             }
                             array_push($payment_options, [
@@ -765,6 +776,8 @@ class Paynow extends PaymentModule
             'Show retry payment button'                                                                                                                                                         => $this->l('Show retry payment button'),
             'The button appears on the order details screen.'                                                                                                                                   => $this->l('The button appears on the order details screen.'),
             'Show retry payment button on selected statuses'                                                                                                                                    => $this->l('Show retry payment button on selected statuses'),
+            'BLIK field autofocus'                                                                                                                                                              => $this->l('BLIK field autofocus'),
+            'Autofocus on checkout form field: BLIK code. Enabled by default. Disabling may be helpful when checkout page is visualy long (e.g. single-page checkout).'                         => $this->l('Autofocus on checkout form field: BLIK code. Enabled by default. Disabling may be helpful when checkout page is visualy long (e.g. single-page checkout).'),
         ];
     }
 }

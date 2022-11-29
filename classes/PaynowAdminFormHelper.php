@@ -414,6 +414,24 @@ class PaynowAdminFormHelper
                     ],
                     [
                         'type' => 'switch',
+                        'label' => $this->translations['BLIK field autofocus'],
+                        'desc' => $this->translations['Autofocus on checkout form field: BLIK code. Enabled by default. Disabling may be helpful when checkout page is visualy long (e.g. single-page checkout).'],
+                        'name' => 'PAYNOW_BLIK_AUTOFOCUS_ENABLED',
+                        'values' => [
+                            [
+                                'id' => 'active_on',
+                                'value' => 1,
+                                'label' => $this->translations['Yes']
+                            ],
+                            [
+                                'id' => 'active_off',
+                                'value' => 0,
+                                'label' => $this->translations['No']
+                            ]
+                        ],
+                    ],
+                    [
+                        'type' => 'switch',
                         'label' => $this->translations['Enable logs'],
                         'desc' => $this->translations['Logs are available in '] . ' ' . $logs_path,
                         'name' => 'PAYNOW_DEBUG_LOGS_ENABLED',
@@ -466,7 +484,8 @@ class PaynowAdminFormHelper
             'PAYNOW_ORDER_EXPIRED_STATE' => Configuration::get('PAYNOW_ORDER_EXPIRED_STATE'),
             'PAYNOW_CREATE_ORDER_STATE' => Configuration::get('PAYNOW_CREATE_ORDER_STATE'),
             'PAYNOW_RETRY_PAYMENT_BUTTON_ENABLED' => Configuration::get('PAYNOW_RETRY_PAYMENT_BUTTON_ENABLED'),
-            'PAYNOW_RETRY_BUTTON_ORDER_STATE[]' => explode(',', Configuration::get('PAYNOW_RETRY_BUTTON_ORDER_STATE')),
+            'PAYNOW_RETRY_BUTTON_ORDER_STATE[]' => explode(',', Configuration::get('PAYNOW_RETRY_BUTTON_ORDER_STATE', [])),
+            'PAYNOW_BLIK_AUTOFOCUS_ENABLED' => Configuration::get('PAYNOW_BLIK_AUTOFOCUS_ENABLED') === '0' ? '0' : '1',
         ];
     }
 }

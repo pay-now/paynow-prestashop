@@ -1,4 +1,7 @@
 <?php
+
+use Paynow\Model\Payment\Status;
+
 /**
  * NOTICE OF LICENSE
  *
@@ -34,6 +37,12 @@ class PaynowPaymentData extends ObjectModel
 
     public $locked;
 
+    public $active;
+
+    public $counter;
+
+    public $sent_at;
+
     public $created_at;
 
     public $modified_at;
@@ -51,6 +60,9 @@ class PaynowPaymentData extends ObjectModel
             'status'          => ['type' => self::TYPE_STRING, 'required' => true],
             'total'           => ['type' => self::TYPE_FLOAT, 'validate' => 'isPrice', 'required' => false],
             'locked'          => ['type' => self::TYPE_INT, 'required' => false],
+            'active'          => ['type' => self::TYPE_INT, 'required' => false],
+            'counter'         => ['type' => self::TYPE_INT, 'required' => false],
+            'sent_at'         => ['type' => self::TYPE_DATE, 'required' => true],
             'created_at'      => ['type' => self::TYPE_DATE, 'required' => true],
             'modified_at'     => ['type' => self::TYPE_DATE, 'required' => true]
         ]
@@ -63,9 +75,13 @@ class PaynowPaymentData extends ObjectModel
         $id_cart,
         $order_reference,
         $external_id,
-        $total = null
+        $total = null,
+        $sent_at = null
     ) {
         $now                    = (new DateTime('now', new DateTimeZone(Configuration::get('PS_TIMEZONE'))))->format('Y-m-d H:i:s');
+        if (!$sent_at) {
+            $sent_at = $now;
+        }
         $model                  = new PaynowPaymentData();
         $model->id_order        = $id_order;
         $model->id_cart         = $id_cart;
@@ -77,25 +93,48 @@ class PaynowPaymentData extends ObjectModel
             $model->total = $total;
         }
         $model->locked      = 0;
+        $model->active      = 1;
+        $model->counter     = 0;
         $model->created_at  = $now;
         $model->modified_at = $now;
-        if ($model->add(false)) {
+        $model->sent_at     = $sent_at;
+
+
+        try {
+            $model->save(false, false);
+            if ($status == Status::STATUS_NEW) {
+                PaynowLogger::debug('Deactivating all payments.', ['external_id' => $external_id]);
+                Db::getInstance()->update(
+                    self::TABLE,
+                    ['active' => 0],
+                    'external_id = "' . pSQL($external_id) . '" AND id != "' . $model->id . '"'
+                );
+            }
             PaynowLogger::debug(
-                'Created paynow data entry {cartId={}, externalId={}}',
+                'Created new paynow data entry',
                 [
-                    $id_cart,
-                    $external_id
+                    'id_order'        => $model->id_order,
+                    'id_cart'         => $model->id_cart,
+                    'id_payment'      => $model->id_payment,
+                    'order_reference' => $model->order_reference,
+                    'external_id'     => $model->external_id,
+                    'status'          => $model->status,
+                    'sent_at'         => $model->sent_at,
                 ]
             );
-        } else {
-            PaynowLogger::warning(
-                'Can\'t create paynow data entry {cartId={}, externalId={}}',
+        } catch (Exception $e) {
+            PaynowLogger::debug(
+                'Can\'t create paynow data entry',
                 [
-                    $id_cart,
-                    $external_id
+                    'model' => (array)$model,
+                    'exception' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getline(),
                 ]
             );
+            throw $e;
         }
+
     }
 
     /**
@@ -210,40 +249,6 @@ class PaynowPaymentData extends ObjectModel
             ->where('id_order', '=', $id_order)
             ->orderBy('created_at', 'desc')
             ->getFirst();
-    }
-
-    public static function updateStatus($id_payment, $status)
-    {
-        $data = PaynowPaymentData::findByPaymentId($id_payment);
-        if ($data) {
-            $data->status      = $status;
-            $data->modified_at = (new DateTime('now', new DateTimeZone(Configuration::get('PS_TIMEZONE'))))->format('Y-m-d H:i:s');
-            if ($data->update()) {
-                PaynowLogger::debug(
-                    'Successfully updated payment data {paymentId={}, status={}}',
-                    [
-                        $id_payment,
-                        $status
-                    ]
-                );
-            } else {
-                PaynowLogger::warning(
-                    'Can\'t update payment data due update error {paymentId={}, status={}}',
-                    [
-                        $id_payment,
-                        $status
-                    ]
-                );
-            }
-        } else {
-            PaynowLogger::warning(
-                'Can\'t update payment data due empty data {paymentId={}, status={}}',
-                [
-                    $id_payment,
-                    $status
-                ]
-            );
-        }
     }
 
     public static function updateOrderIdAndOrderReferenceByPaymentId(
