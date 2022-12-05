@@ -27,7 +27,8 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         );
 
         try {
-            new Notification($this->module->getSignatureKey(), $payload, $headers);
+            new  Paynow\Notification($this->module->getSignatureKey(), $payload, $headers);
+
             $filtered_payments = $this->getFilteredPayments(
                 $notification_data['externalId'],
                 $notification_data['paymentId'],
@@ -57,8 +58,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                         $notification_data['status']
                     ]
                 );
-                header('HTTP/1.1 400 Bad Request', true, 400);
-                exit;
+                $this->badRequestResponse('Order not found');
             }
 
             $cart = new Cart((int)$filtered_payment->id_cart);
@@ -134,8 +134,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
                     $exception->getMessage()
                 ]
             );
-            header('HTTP/1.1 400 Bad Request', true, 400);
-            exit;
+            $this->badRequestResponse($exception->getMessage());
         }
 
         header("HTTP/1.1 202 Accepted");
@@ -146,7 +145,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
     {
         $headers = [];
         foreach ($_SERVER as $key => $value) {
-            if (Tools::substr($key, 0, 5) == 'HTTP_') {
+            if ('HTTP_' === Tools::substr($key, 0, 5)) {
                 $subject = str_replace('_', ' ', Tools::strtolower(Tools::substr($key, 5)));
                 $headers[str_replace(' ', '-', ucwords($subject))] = $value;
             }
@@ -166,5 +165,18 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             });
         }
         return $payments;
+    }
+
+    private function badRequestResponse($reason)
+    {
+        header('Content-Type: application/json');
+        header('HTTP/1.1 400 Bad Request', true, 400);
+        echo json_encode(
+            array(
+                'message' => 'An error occurred during processing notification',
+                'reason'  => $reason,
+            )
+        );
+        exit;
     }
 }
