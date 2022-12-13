@@ -22,6 +22,7 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
 
     public function displayAjax()
     {
+
         if (Tools::getValue('external_id') && $this->isTokenValid()) {
             $external_id = Tools::getValue('external_id');
             PaynowLogger::info(
@@ -30,44 +31,28 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
                     $external_id
                 ]
             );
-            $payment                = PaynowPaymentData::findLastByExternalId($external_id);
+            $payment = PaynowPaymentData::findLastByExternalId($external_id);
             $payment_status = $payment->status;
             if (Status::STATUS_CONFIRMED !== $payment->status) {
                 $payment_status_from_api = $this->getPaymentStatus($payment->id_payment);
-                $cart                    = new Cart($payment->id_cart);
-                if ($this->canProcessCreateOrder(
-                    (int)$payment->id_order,
-                    $payment_status_from_api,
-                    (int)$payment->locked,
-                    $cart->orderExists()
-                )) {
-                    $this->order = $this->createOrder($cart, $external_id, $payment->id_payment);
-                    if ($this->order) {
-                        $this->updateOrderState(
-                            $this->order->id,
-                            $payment->id_payment,
-                            $this->order->id_cart,
-                            $this->order->reference,
-                            $payment->external_id,
-                            $payment_status,
-                            $payment_status_from_api
-                        );
-                    }
-                } else {
-                    $this->updateOrderState(
-                        $payment->id_order,
-                        $payment->id_payment,
-                        $payment->id_cart,
-                        $payment->order_reference,
-                        $payment->external_id,
-                        $payment_status,
-                        $payment_status_from_api
-                    );
-                    $this->order = new Order($payment->id_order);
+                $statusToProcess = [
+                    'status' => $payment_status_from_api,
+                    'externalId' => $this->payment->external_id,
+                    'paymentId' => $this->payment->id_payment
+                ];
+                try {
+                    PaynowLogger::debug('Status: status processing started', $statusToProcess);
+                    (new PaynowOrderStateProcessor($this->module))
+                        ->processNotification($statusToProcess);
+                    PaynowLogger::debug('Status: status processing ended', $statusToProcess);
+                    $payment_status = $payment_status_from_api;
+                } catch (Exception $e) {
+                    $statusToProcess['exception'] = $e->getMessage();
+                    PaynowLogger::debug('Status: status processing failed', $statusToProcess);
                 }
-                $payment_status = $payment_status_from_api;
-            }
 
+                $this->order = new Order($payment->id_order);
+            }
             $response = [
                 'order_status'   => $this->getOrderCurrentState($this->order),
                 'payment_status' => $payment_status

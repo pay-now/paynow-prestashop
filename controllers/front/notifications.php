@@ -1,4 +1,8 @@
 <?php
+
+use Paynow\Exception\SignatureVerificationException;
+use Paynow\Notification;
+
 /**
  * NOTICE OF LICENSE
  *
@@ -14,130 +18,57 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
 {
     public function process()
     {
+        ob_start();
         $payload = trim(Tools::file_get_contents('php://input'));
-        $headers = $this->getRequestHeaders();
         $notification_data = json_decode($payload, true);
-        PaynowLogger::info(
-            'Incoming notification {externalId={}, paymentId={}, status={}}',
-            [
-                $notification_data['externalId'],
-                $notification_data['paymentId'],
-                $notification_data['status']
-            ]
-        );
+        PaynowLogger::debug('Nofification: Incoming notification', $notification_data);
 
         try {
-            new  Paynow\Notification($this->module->getSignatureKey(), $payload, $headers);
-
-            $filtered_payments = $this->getFilteredPayments(
-                $notification_data['externalId'],
-                $notification_data['paymentId'],
-                $notification_data['status']
+            new Notification(
+                $this->module->getSignatureKey(),
+                $payload,
+                $this->getRequestHeaders()
             );
-
-            $filtered_payment = reset($filtered_payments);
-            if ($filtered_payment && Paynow\Model\Payment\Status::STATUS_CONFIRMED === $filtered_payment->status) {
-                PaynowLogger::info(
-                    'An order already has a paid status. Skipped notification processing {externalId={}, paymentId={}, status={}}',
-                    [
-                        $notification_data['externalId'],
-                        $notification_data['paymentId'],
-                        $notification_data['status']
-                    ]
-                );
-                header("HTTP/1.1 202 Accepted");
-                exit;
-            }
-
-            if (empty($filtered_payments)) {
-                PaynowLogger::warning(
-                    'Payment for order or cart not exists {externalId={}, paymentId={}, status={}}',
-                    [
-                        $notification_data['externalId'],
-                        $notification_data['paymentId'],
-                        $notification_data['status']
-                    ]
-                );
-                $this->badRequestResponse('Order not found');
-            }
-
-            $cart = new Cart((int)$filtered_payment->id_cart);
-            if (1 <= count($filtered_payments) && $this->canProcessCreateOrder(
-                (int)$filtered_payment->id_order,
-                $notification_data['status'],
-                (int)$filtered_payment->locked,
-                $cart->orderExists()
-            )) {
-                PaynowLogger::info(
-                    'Processing notification to create new order from cart {cartId={}, externalId={}, paymentId={}, locked={}}',
-                    [
-                        $filtered_payment->id_cart,
-                        $notification_data['externalId'],
-                        $notification_data['paymentId'],
-                        $filtered_payment->locked
-                    ]
-                );
-
-                if ((float)$filtered_payment->total === $cart->getCartTotalPrice()) {
-                    $this->order = $this->createOrder($cart, $notification_data['externalId'], $notification_data['paymentId']);
-                    $filtered_payments = $this->getFilteredPayments(
-                        $notification_data['externalId'],
-                        $notification_data['paymentId'],
-                        $notification_data['status']
-                    );
-                    $filtered_payment = reset($filtered_payments);
-                } else {
-                    PaynowLogger::warning(
-                        'Inconsistent payment and cart amount {cartAmount={}, cartId={}, externalId={}, paymentId={}, paymentAmount={}}',
-                        [
-                            $cart->getCartTotalPrice(),
-                            $cart->id,
-                            $notification_data['externalId'],
-                            $notification_data['paymentId'],
-                            $filtered_payment->total
-                        ]
-                    );
-                }
-            } else {
-                if (!PaynowPaymentData::findByPaymentId($notification_data['paymentId'])) {
-                    $previous_payment_data = PaynowPaymentData::findLastByExternalId($notification_data['externalId']);
-                    if ($previous_payment_data) {
-                        PaynowPaymentData::create(
-                            $notification_data['paymentId'],
-                            $notification_data['status'],
-                            $previous_payment_data->id_order,
-                            $previous_payment_data->id_cart,
-                            $previous_payment_data->order_reference,
-                            $previous_payment_data->external_id,
-                            $previous_payment_data->total
-                        );
-                    }
-                }
-            }
-
-            (new PaynowOrderStateProcessor($this->module))->updateState(
-                (int)$filtered_payment->id_order,
-                $notification_data['paymentId'],
-                (int)$filtered_payment->id_cart,
-                $filtered_payment->order_reference,
-                $filtered_payment->external_id,
-                $filtered_payment->status,
-                $notification_data['status']
+            (new PaynowOrderStateProcessor($this->module))->processNotification($notification_data);
+        } catch (SignatureVerificationException | InvalidArgumentException $e) {
+            $notification_data['exeption'] = $e->getMessage();
+            PaynowLogger::error('Nofification: Signature verification failed', $notification_data);
+            header('HTTP/1.1 400 Bad Request', true, 400);
+            ob_clean();
+            exit;
+        } catch (PaynowNotificationStopProcessing $e) {
+            $e->logContext['responseCode'] = 202;
+            PaynowLogger::debug('Nofification: ' . $e->logMessage, $e->logContext);
+            header('HTTP/1.1 202 OK', true, 202);
+            ob_clean();
+            exit;
+        } catch (PaynowNotificationRetryProcessing $e) {
+            $e->logContext['responseCode'] = 400;
+            PaynowLogger::debug('Nofification: ' . $e->logMessage, $e->logContext);
+            header('HTTP/1.1 400 Bad Request', true, 400);
+            ob_clean();
+            exit;
+        } catch (Exception $e) {
+            $notification_data['responseCode'] = 400;
+            $notification_data['exeption'] = $e->getMessage();
+            $notification_data['file'] = $e->getFile();
+            $notification_data['line'] = $e->getLine();
+            PaynowLogger::error('Nofification: unknown error', $notification_data);
+            header('Content-Type: application/json');
+            header('HTTP/1.1 400 Bad Request', true, 400);
+            ob_clean();
+            echo json_encode(
+                array(
+                    'message' => 'An error occurred during processing notification',
+                    'reason'  => $e->getMessage(),
+                )
             );
-        } catch (Exception $exception) {
-            PaynowLogger::error(
-                'An error occurred during processing notification {externalId={}, paymentId={}, status={}, message={}}',
-                [
-                    $notification_data['externalId'],
-                    $notification_data['paymentId'],
-                    $notification_data['status'],
-                    $exception->getMessage()
-                ]
-            );
-            $this->badRequestResponse($exception->getMessage());
+            ob_flush();
+            exit;
         }
 
-        header("HTTP/1.1 202 Accepted");
+        header("HTTP/1.1 200 OK", true, 200);
+        ob_clean();
         exit;
     }
 
@@ -145,7 +76,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
     {
         $headers = [];
         foreach ($_SERVER as $key => $value) {
-            if ('HTTP_' === Tools::substr($key, 0, 5)) {
+            if (Tools::substr($key, 0, 5) == 'HTTP_') {
                 $subject = str_replace('_', ' ', Tools::strtolower(Tools::substr($key, 5)));
                 $headers[str_replace(' ', '-', ucwords($subject))] = $value;
             }
@@ -153,30 +84,4 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         return $headers;
     }
 
-    private function getFilteredPayments($external_id, $payment_id, $payment_status): array
-    {
-        $payments = PaynowPaymentData::findAllByExternalIdAndPaymentId($external_id, $payment_id)->getResults();
-        if (!$payments) {
-            $payments = PaynowPaymentData::findAllByExternalId($external_id)->getResults();
-
-            return array_filter($payments, function ($payment) use ($payment_id, $payment_status) {
-                return $payment->id_payment === $payment_id ||
-                    $payment_status === Paynow\Model\Payment\Status::STATUS_NEW;
-            });
-        }
-        return $payments;
-    }
-
-    private function badRequestResponse($reason)
-    {
-        header('Content-Type: application/json');
-        header('HTTP/1.1 400 Bad Request', true, 400);
-        echo json_encode(
-            array(
-                'message' => 'An error occurred during processing notification',
-                'reason'  => $reason,
-            )
-        );
-        exit;
-    }
 }

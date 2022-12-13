@@ -10,6 +10,9 @@
  * @license   MIT License
  */
 
+/**
+ * @property PaynowPaymentData $payment
+ */
 class PaynowReturnModuleFrontController extends PaynowFrontController
 {
     public function initContent()
@@ -25,64 +28,49 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         }
 
         if ($order_reference) {
-            $this->payment = (array)PaynowPaymentData::findLastByOrderReference($order_reference);
+            $this->payment = PaynowPaymentData::findLastByOrderReference($order_reference);
         }
 
         if ($id_cart) {
-            $this->payment = (array)PaynowPaymentData::findLastByCartId($id_cart);
+            $this->payment = PaynowPaymentData::findLastByCartId($id_cart);
         }
 
         if ($external_id) {
-            $this->payment = (array)PaynowPaymentData::findLastByExternalId($external_id);
+            $this->payment = PaynowPaymentData::findLastByExternalId($external_id);
         }
 
         if (!$this->payment) {
             $this->redirectToOrderHistory();
         }
 
-        $this->order = new Order($this->payment['id_order']);
+
+        $this->order = new Order($this->payment->id_order);
         if (!Validate::isLoadedObject($this->order) && PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE')) {
             $this->redirectToOrderHistory();
         }
 
-        if (Tools::getValue('paymentId') && Tools::getValue('paymentStatus')) {
-            $payment_status_from_api = $this->getPaymentStatus($this->payment['id_payment']);
-            $cart        = new Cart($this->payment['id_cart']);
-            if ($this->canProcessCreateOrder(
-                (int)$this->payment['id_order'],
-                $payment_status_from_api,
-                (int)$this->payment['locked'],
-                $cart->orderExists()
-            )) {
-                $this->order = $this->createOrder($cart, $external_id, $this->payment['id_payment']);
-                if ($this->order) {
-                    $this->updateOrderState(
-                        $this->order->id,
-                        $this->payment['id_payment'],
-                        $this->order->id_cart,
-                        $this->order->reference,
-                        $this->payment['external_id'],
-                        $this->payment['status'],
-                        $payment_status_from_api
-                    );
-                }
-            } else {
-                $this->updateOrderState(
-                    $this->payment['id_order'],
-                    $this->payment['id_payment'],
-                    $this->payment['id_cart'],
-                    $this->payment['order_reference'],
-                    $this->payment['external_id'],
-                    $this->payment['status'],
-                    $payment_status_from_api
-                );
+        if (Tools::getValue('paymentId')) {
+            $payment_status_from_api = $this->getPaymentStatus($this->payment->id_payment);
+            $statusToProcess = [
+                'status' => $payment_status_from_api,
+                'externalId' => $this->payment->external_id,
+                'paymentId' => $this->payment->id_payment
+            ];
+            try {
+                PaynowLogger::debug('Return: status processing started', $statusToProcess);
+                (new PaynowOrderStateProcessor($this->module))->processNotification($statusToProcess);
+                PaynowLogger::debug('Return: status processing ended', $statusToProcess);
+                $this->payment = PaynowPaymentData::findByPaymentId($this->payment->id_payment);
+            } catch (Exception $e) {
+                $statusToProcess['exception'] = $e->getMessage();
+                PaynowLogger::debug('Return: status processing failed', $statusToProcess);
             }
 
             Tools::redirectLink(PaynowLinkHelper::getContinueUrl(
                 $this->order->id_cart,
                 $this->module->id,
                 $this->order->secure_key,
-                $this->payment['external_id']
+                $this->payment->external_id
             ));
         }
 
@@ -90,6 +78,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         $this->context->smarty->assign([
             'logo' => $this->module->getLogo(),
             'details_url' => PaynowLinkHelper::getOrderUrl($this->order),
+            'payment_status' => $this->payment->status,
             'order_status' => $currentState['name'],
             'order_reference' => $this->order->reference,
             'show_details_button' => $this->isTokenValid(),

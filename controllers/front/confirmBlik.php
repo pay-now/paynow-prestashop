@@ -28,16 +28,21 @@ class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
         }
 
         $this->order = new Order($this->payment->id_order);
-        $payment_status = $this->getPaymentStatus($this->payment->id_payment);
-        $this->updateOrderState(
-            $this->payment->id_order,
-            $this->payment->id_payment,
-            $this->payment->id_cart,
-            $this->payment->order_reference,
-            $this->payment->external_id,
-            $this->payment->status,
-            $payment_status
-        );
+        $payment_status_from_api = $this->getPaymentStatus($this->payment->id_payment);
+        $statusToProcess = [
+            'status' => $payment_status_from_api,
+            'externalId' => $this->payment->external_id,
+            'paymentId' => $this->payment->id_payment
+        ];
+
+        try {
+            PaynowLogger::debug('confirmBlik: status processing started', $statusToProcess);
+            (new PaynowOrderStateProcessor($this->module))->processNotification($statusToProcess);
+            PaynowLogger::debug('confirmBlik: status processing ended', $statusToProcess);
+        } catch (Exception $e) {
+            $statusToProcess['exception'] = $e->getMessage();
+            PaynowLogger::debug('confirmBlik: status processing failed', $statusToProcess);
+        }
 
         if (version_compare(_PS_VERSION_, '1.7', 'gt')) {
             $this->registerJavascript(

@@ -19,8 +19,13 @@
         }, 3000),
 
         checkPaymentStatus = function () {
+            queryStr = window.location.search;
+            urlParams = new URLSearchParams(queryStr);
+            if ( urlParams.get('module') == 'paynow' && urlParams.get('controller') == 'confirmBlik' ) {
+              queryStr = queryStr.replace('confirmBlik', 'status')
+            }
             $.ajax({
-                url: 'status' + window.location.search,
+                url: 'status' + queryStr,
                 dataType: 'json',
                 type: 'get',
                 success: function (message) {

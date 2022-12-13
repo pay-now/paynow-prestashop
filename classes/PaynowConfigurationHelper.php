@@ -113,5 +113,9 @@ class PaynowConfigurationHelper
             'PAYNOW_RETRY_BUTTON_ORDER_STATE',
             join(',', Tools::getValue('PAYNOW_RETRY_BUTTON_ORDER_STATE'))
         );
+        Configuration::updateValue(
+            'PAYNOW_BLIK_AUTOFOCUS_ENABLED',
+            Tools::getValue('PAYNOW_BLIK_AUTOFOCUS_ENABLED')
+        );
     }
 }
