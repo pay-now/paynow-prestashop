@@ -27,6 +27,8 @@ $jscomp.polyfill=function(a,n,f,p){if(n){f=$jscomp.global;a=a.split(".");for(p=0
     "return;"),e="function"===typeof b[a]);return e};a.fn.mask=function(b,d){d=d||{};var e=this.selector,c=a.jMaskGlobals,f=c.watchInterval;c=d.watchInputs||c.watchInputs;var k=function(){if(p(this,b,d))return a(this).data("mask",new n(this,b,d))};a(this).each(k);e&&""!==e&&c&&(clearInterval(a.maskWatchers[e]),a.maskWatchers[e]=setInterval(function(){a(document).find(e).each(k)},f));return this};a.fn.masked=function(a){return this.data("mask").getMaskedVal(a)};a.fn.unmask=function(){clearInterval(a.maskWatchers[this.selector]);
     delete a.maskWatchers[this.selector];return this.each(function(){var b=a(this).data("mask");b&&b.remove().removeData("mask")})};a.fn.cleanVal=function(){return this.data("mask").getCleanVal()};a.applyDataMask=function(b){b=b||a.jMaskGlobals.maskElements;(b instanceof a?b:a(b)).filter(a.jMaskGlobals.dataMaskAttr).each(f)};k={maskElements:"input,td,span,div",dataMaskAttr:"*[data-mask]",dataMask:!0,watchInterval:300,watchInputs:!0,keyStrokeCompensation:10,useInput:!/Chrome\/[2-4][0-9]|SamsungBrowser/.test(window.navigator.userAgent)&&
         k("input"),watchDataMask:!1,byPassKeys:[9,16,17,18,36,37,38,39,40,91],translation:{0:{pattern:/\d/},9:{pattern:/\d/,optional:!0},"#":{pattern:/\d/,recursive:!0},A:{pattern:/[a-zA-Z0-9]/},S:{pattern:/[a-zA-Z]/}}};a.jMaskGlobals=a.jMaskGlobals||{};k=a.jMaskGlobals=a.extend(!0,{},k,a.jMaskGlobals);k.dataMask&&a.applyDataMask();setInterval(function(){a.jMaskGlobals.watchDataMask&&a.applyDataMask()},k.watchInterval)},window.jQuery,window.Zepto);
+
+var useCssClassDisabled = false
 $(function () {
     $('input[name="payment-option"]').on("change", function () {
         setTimeout(function () {
@@ -34,6 +36,7 @@ $(function () {
             enablePblSupport();
         }, 200);
     });
+    useCssClassDisabled = $('#payment-confirmation button').hasClass('disabled');
 });
 
 function enableBlikFormSupport() {
@@ -99,9 +102,15 @@ function paynowPblPaymentBtnCheck() {
         $regulations = $('#conditions_to_approve\\[terms-and-conditions\\], #cgv');
 
     if ($('input[name="paymentMethodId"]:checked').length != 0 && $regulations.is(':checked')) {
-        $payment_button.prop('disabled', false).removeClass('disabled');
+        $payment_button.prop('disabled', false);
+        if (useCssClassDisabled) {
+            $payment_button.removeClass('disabled');
+        }
     } else {
-        $payment_button.prop('disabled', true).addClass('disabled');
+        $payment_button.prop('disabled', true);
+        if (useCssClassDisabled) {
+            $payment_button.addClass('disabled');
+        }
     }
 }
 
