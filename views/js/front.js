@@ -72,8 +72,11 @@ function enableBlikFormSupport() {
 }
 
 function enableBlikSupport() {
-    enableBlikFormSupport();
     let $paynow_blik_code_input = $('#paynow_blik_code'), $payment_button = $('#payment-confirmation button')
+    if ($paynow_blik_code_input.length != 1) {
+        return
+    }
+    enableBlikFormSupport();
     $paynow_blik_code_input.mask('000 000', {placeholder: "___ ___"});
     if ($paynow_blik_code_input.is(':visible')) {
         var $regulations = $('#conditions_to_approve\\[terms-and-conditions\\], #cgv');
