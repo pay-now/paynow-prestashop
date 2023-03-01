@@ -36,5 +36,12 @@
     "cs-fix": [
       "php vendor/bin/phpcbf --standard=PSR2 --ignore=*/vendor/* ."
     ]
+  },
+  "extra": {
+    "hooks": {
+      "pre-commit": [
+        "php vendor/bin/phpcbf --standard=PSR2 --ignore=*/vendor/* ."
+      ]
+    }
   }
 }
