@@ -79,10 +79,6 @@ function enableBlikSupport() {
     enableBlikFormSupport();
     $paynow_blik_code_input.mask('000 000', {placeholder: "___ ___"});
     if ($paynow_blik_code_input.is(':visible')) {
-        var $regulations = $('#conditions_to_approve\\[terms-and-conditions\\], #cgv');
-        if ($regulations.length) {
-            $regulations.prop('checked', true)
-        }
         $payment_button.prop('disabled', true).hide();
         validateBlikCode($paynow_blik_code_input.val())
     } else {
