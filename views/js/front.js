@@ -36,6 +36,13 @@ $(function () {
             enablePblSupport();
         }, 200);
     });
+
+    $('#conditions_to_approve\\[terms-and-conditions\\], #cgv').on("change", function () {
+        setTimeout(function () {
+            enableBlikSupport();
+        }, 10);
+    });
+
     useCssClassDisabled = $('#payment-confirmation button').hasClass('disabled');
 });
 
