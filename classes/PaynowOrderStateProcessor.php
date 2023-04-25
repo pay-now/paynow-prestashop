@@ -37,6 +37,7 @@ class PaynowOrderStateProcessor
         }
 
         $isNew = $data['status'] == Status::STATUS_NEW;
+        $isConfirmed = $data['status'] == Status::STATUS_CONFIRMED;
 
         // Delay NEW status, in case when API sends notifications in bundle,
         // status NEW should finish processing at the very end
@@ -107,7 +108,7 @@ class PaynowOrderStateProcessor
             }
         }
 
-        if ($data['paymentId'] != $payment->id_payment && !$isNew) {
+        if ($data['paymentId'] != $payment->id_payment && !$isNew && !$isConfirmed) {
             $this->retryProcessingNTimes(
                 $payment,
                 'Skipped processing. Order has another active payment.',
@@ -115,7 +116,7 @@ class PaynowOrderStateProcessor
             );
         }
 
-        if (!empty($payment->sent_at) && $payment->sent_at > $data['modifiedAt']) {
+        if (!empty($payment->sent_at) && $payment->sent_at > $data['modifiedAt'] && !$isConfirmed) {
             throw new PaynowNotificationStopProcessing(
                 'Skipped processing. Order has newer status. Time travels are prohibited.',
                 $data
@@ -145,7 +146,7 @@ class PaynowOrderStateProcessor
             );
         }
 
-        if (!$this->isCorrectStatus($payment->status, $data['status'])) {
+        if (!$this->isCorrectStatus($payment->status, $data['status']) && !$isConfirmed  && !$isNew) {
             $this->retryProcessingNTimes(
                 $payment,
                 sprintf(
