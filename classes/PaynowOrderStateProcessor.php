@@ -110,8 +110,8 @@ class PaynowOrderStateProcessor
         if ($data['paymentId'] != $payment->id_payment && !$isNew) {
             $this->retryProcessingNTimes(
                 $payment,
-                $data,
-                'Skipped processing. Order has another active payment.'
+                'Skipped processing. Order has another active payment.',
+                $data
             );
         }
 
