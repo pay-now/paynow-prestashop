@@ -292,6 +292,55 @@ class PaynowPaymentData extends ObjectModel
         }
     }
 
+    /**
+     * @throws PrestaShopException
+     */
+    public static function updateByExternalId(
+        $external_id,
+        $data_to_update
+    )
+    {
+        $context = array_merge(['external_id' => $external_id], $data_to_update);
+        $payment = self::getActiveByExternalId($external_id);
+        if (!$payment) {
+            PaynowLogger::warning('Can\'t update payment data - payment not found', $context);
+            return;
+        }
+        foreach ($data_to_update as $key => $value) {
+            $payment->{$key} = $value;
+        }
+        $payment->modified_at     = (new DateTime())->format('Y-m-d H:i:s');
+        if ($payment->update()) {
+            PaynowLogger::debug('Successfully updated payment data', $context);
+        } else {
+            PaynowLogger::warning('Can\'t update payment data due update error', $context);
+        }
+    }
+
+    /**
+     * @throws PrestaShopException
+     */
+    public static function updatePaymentIdByExternalId(
+        $external_id,
+        $payment_id
+    )
+    {
+        self::updateByExternalId($external_id, ['id_payment' => $payment_id]);
+    }
+
+    /**
+     * @throws PrestaShopException
+     */
+    public static function getActiveByExternalId($external_id) {
+        $payments = self::findAllByExternalId($external_id)->getResults();
+        foreach($payments as $payment) {
+            if ($payment->active == '1') {
+                return $payment;
+            }
+        }
+        return reset($payments);
+    }
+
     public static function setOptimisticLockByExternalId($external_id)
     {
         $data = PaynowPaymentData::findLastByExternalId($external_id);

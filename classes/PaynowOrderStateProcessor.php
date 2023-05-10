@@ -46,7 +46,7 @@ class PaynowOrderStateProcessor
         }
 
         /** @var \PaynowPaymentData $payment */
-        $payment = $this->getActivePayment($data['externalId']);
+        $payment = PaynowPaymentData::getActiveByExternalId($data['externalId']);
 
         if (empty($payment)) {
             throw new PaynowNotificationStopProcessing(
@@ -87,14 +87,17 @@ class PaynowOrderStateProcessor
                 $cart->orderExists()
             );
 
-            if ($canProcessCreateOrder){
+            if ($canProcessCreateOrder) {
+                if ($payment->id_payment != $data['paymentId']) {
+                    PaynowPaymentData::updatePaymentIdByExternalId($data['externalId'], $data['paymentId']);
+                }
+
                 $data['cartId']        = $payment->id_cart;
                 $data['paymentLocked'] = $payment->locked;
                 PaynowLogger::info(
                     'Processing notification to create new order from cart',
                     $data
                 );
-
                 if ((float)$payment->total !== $cart->getCartTotalPrice()) {
                     $data['cartTotalPrice'] = $cart->getCartTotalPrice();
                     $data['paymentTotal'] = (float)$payment->total;
@@ -104,7 +107,7 @@ class PaynowOrderStateProcessor
                     );
                 }
                 PaynowHelper::createOrder($cart, $data['externalId'], $data['paymentId']);
-                $payment = PaynowPaymentData::findByPaymentId($data['paymentId']);
+                $payment = PaynowPaymentData::getActiveByExternalId($data['externalId']);
             }
         }
 
@@ -326,16 +329,6 @@ class PaynowOrderStateProcessor
             $payments[0]->transaction_id = $id_payment;
             $payments[0]->update();
         }
-    }
-
-    private function getActivePayment($external_id) {
-        $payments = PaynowPaymentData::findAllByExternalId($external_id)->getResults();
-        foreach($payments as $payment) {
-            if ($payment->active == '1') {
-                return $payment;
-            }
-        }
-        return reset($payments);
     }
 
     /**

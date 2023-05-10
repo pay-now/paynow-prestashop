@@ -21,7 +21,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
         ob_start();
         $payload = trim(Tools::file_get_contents('php://input'));
         $notification_data = json_decode($payload, true);
-        PaynowLogger::debug('Nofification: Incoming notification', $notification_data);
+        PaynowLogger::debug('Notification: Incoming notification', $notification_data);
 
         try {
             new Notification(
@@ -32,19 +32,19 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             (new PaynowOrderStateProcessor($this->module))->processNotification($notification_data);
         } catch (SignatureVerificationException | InvalidArgumentException $e) {
             $notification_data['exeption'] = $e->getMessage();
-            PaynowLogger::error('Nofification: Signature verification failed', $notification_data);
+            PaynowLogger::error('Notification: Signature verification failed', $notification_data);
             header('HTTP/1.1 400 Bad Request', true, 400);
             ob_clean();
             exit;
         } catch (PaynowNotificationStopProcessing $e) {
             $e->logContext['responseCode'] = 202;
-            PaynowLogger::debug('Nofification: ' . $e->logMessage, $e->logContext);
+            PaynowLogger::debug('Notification: ' . $e->logMessage, $e->logContext);
             header('HTTP/1.1 202 OK', true, 202);
             ob_clean();
             exit;
         } catch (PaynowNotificationRetryProcessing $e) {
             $e->logContext['responseCode'] = 400;
-            PaynowLogger::debug('Nofification: ' . $e->logMessage, $e->logContext);
+            PaynowLogger::debug('Notification: ' . $e->logMessage, $e->logContext);
             header('HTTP/1.1 400 Bad Request', true, 400);
             ob_clean();
             exit;
@@ -53,7 +53,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             $notification_data['exeption'] = $e->getMessage();
             $notification_data['file'] = $e->getFile();
             $notification_data['line'] = $e->getLine();
-            PaynowLogger::error('Nofification: unknown error', $notification_data);
+            PaynowLogger::error('Notification: unknown error', $notification_data);
             header('Content-Type: application/json');
             header('HTTP/1.1 400 Bad Request', true, 400);
             ob_clean();
