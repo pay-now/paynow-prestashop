@@ -47,34 +47,46 @@ $(function () {
 });
 
 function enableBlikFormSupport() {
-    var $paynow_blik_form = $('.paynow-blik-form'), $paynow_blik_error_span = $('#paynow_blik_code').next('span');
+    var $paynow_blik_form = $('.paynow-blik-form');
+    var $paynow_blik_error_span = $('#paynow_blik_code').next('span');
+    var $blik_pay_button = $($paynow_blik_form).find('button');
+    var $term_and_conditions = $('#conditions_to_approve\\[terms-and-conditions\\], #cgv');
+    var $term_and_conditions_label = $('label[for="conditions_to_approve\\[terms-and-conditions\\]"], label[for="cgv"]');
+
+    if ($term_and_conditions.length && $term_and_conditions_label.length && $('#js-paynow-terms-error').length == 0) {
+        $term_and_conditions_label.after('<span id="js-paynow-terms-error" class="paynow-terms-error"></span>');
+    }
+
+    var $paynow_blik_terms_error_span = $('#js-paynow-terms-error');
+
     $('.paynow-blik-form button').off('click').on('click', function (e) {
         e.preventDefault();
-        let $blik_pay_button = $($paynow_blik_form).find('button');
-        if ($('#conditions_to_approve\\[terms-and-conditions\\], #cgv').length == 0 || $('#conditions_to_approve\\[terms-and-conditions\\], #cgv').length && $('#conditions_to_approve\\[terms-and-conditions\\], #cgv').is(':checked')) {
-            $blik_pay_button.prop('disabled', true);
-            $.ajax($paynow_blik_form.data('action'), {
-                method: 'POST', type: 'POST',
-                data: {
-                    'blikCode': $('#paynow_blik_code').val().replace(/\s/g, ""),
-                    'token': $paynow_blik_form.data('token')
-                },
-            }).success(function (response) {
-                $paynow_blik_error_span.text('');
-                if (response.success === true) {
-                    window.location.href = response.redirect_url;
-                } else {
-                    $blik_pay_button.prop('disabled', false);
-                    $paynow_blik_error_span.text(response.message);
-                }
-            }).error(function () {
-                $paynow_blik_error_span.text($paynow_blik_form.data('error-message'))
-            });
-        } else {
-            if ($('#conditions_to_approve\\[terms-and-conditions\\], #cgv').length) {
-                $paynow_blik_error_span.text($paynow_blik_form.data('terms-message'));
-            }
+        $paynow_blik_error_span.text('');
+        $paynow_blik_terms_error_span.text('');
+
+        if ($term_and_conditions.length && !$term_and_conditions.is(':checked')) {
+            $paynow_blik_terms_error_span.text($paynow_blik_form.data('terms-message'));
+            return;
         }
+
+        $blik_pay_button.prop('disabled', true);
+        $.ajax($paynow_blik_form.data('action'), {
+            method: 'POST', type: 'POST',
+            data: {
+                'blikCode': $('#paynow_blik_code').val().replace(/\s/g, ""),
+                'token': $paynow_blik_form.data('token')
+            },
+        }).success(function (response) {
+            if (response.success === true) {
+                window.location.href = response.redirect_url;
+            } else {
+                $blik_pay_button.prop('disabled', false);
+                $paynow_blik_error_span.text(response.message);
+            }
+        }).error(function () {
+            $paynow_blik_error_span.text($paynow_blik_form.data('error-message'))
+        });
+
     })
 }
 

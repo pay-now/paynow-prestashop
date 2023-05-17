@@ -47,52 +47,71 @@ class PaynowPaymentOptions
 
     public function generate(): array
     {
+        if (!Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS') || empty($this->payment_methods)) {
+            return [
+                $this->getPaymentOption(
+                    $this->module->getCallToActionText(),
+                    $this->module->getLogo(),
+                    PaynowLinkHelper::getPaymentUrl()
+                )
+            ];
+        }
+
         $payment_options = [];
 
-        if (Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS')) {
-            if (! empty($this->payment_methods)) {
-                $list = [];
-                $this->context->smarty->assign([
-                    'action' => PaynowLinkHelper::getPaymentUrl(),
-                    'data_processing_notices' => $this->data_processing_notices
-                ]);
+        $this->context->smarty->assign([
+            'action' => PaynowLinkHelper::getPaymentUrl(),
+            'data_processing_notices' => $this->data_processing_notices
+        ]);
 
-                /** @var PaymentMethod $payment_method */
-                foreach ($this->payment_methods->getAll() as $payment_method) {
-                    if (! isset($list[$payment_method->getType()])) {
-                        if (Paynow\Model\PaymentMethods\Type::PBL == $payment_method->getType()) {
-                            $this->context->smarty->assign([
-                                'paynowPbls' => $this->payment_methods->getOnlyPbls(),
-                            ]);
-                            array_push($payment_options, $this->getPaymentOption(
-                                $this->module->getPaymentMethodTitle($payment_method->getType()),
-                                $this->module->getLogo(),
-                                PaynowLinkHelper::getPaymentUrl(),
-                                'module:paynow/views/templates/front/1.7/payment_form.tpl'
-                            ));
-                        } else {
-                            if ($payment_method->isEnabled()) {
-                                $this->setUpAdditionalTemplateVariables($payment_method);
-                                array_push($payment_options, $this->getPaymentOption(
-                                    $this->module->getPaymentMethodTitle($payment_method->getType()),
-                                    $payment_method->getImage(),
-                                    PaynowLinkHelper::getPaymentUrl([
-                                        'paymentMethodId' => $payment_method->getId()
-                                    ]),
-                                    $this->getForm($payment_method)
-                                ));
-                            }
-                        }
-                        $list[$payment_method->getType()] = $payment_method->getId();
-                    }
-                }
+        $isAnyPblEnabled = false;
+        /** @var PaymentMethod $pbl_payment_method */
+        foreach ($this->payment_methods->getOnlyPbls() as $pbl_payment_method) {
+            if ($pbl_payment_method->isEnabled()) {
+                $isAnyPblEnabled = true;
+                break;
             }
-        } else {
-            array_push($payment_options, $this->getPaymentOption(
-                $this->module->getCallToActionText(),
-                $this->module->getLogo(),
-                PaynowLinkHelper::getPaymentUrl()
-            ));
+        }
+
+        $hiddenPaymentTypes = explode(',', Configuration::get('PAYNOW_HIDE_PAYMENT_TYPES'));
+
+        $list = [];
+        /** @var PaymentMethod $payment_method */
+        foreach ($this->payment_methods->getAll() as $payment_method) {
+            if (isset($list[$payment_method->getType()])) {
+                continue;
+            }
+            if (in_array($payment_method->getType(), $hiddenPaymentTypes)) {
+                continue;
+            }
+            if (Paynow\Model\PaymentMethods\Type::PBL == $payment_method->getType()) {
+                if (!$isAnyPblEnabled) {
+                    continue;
+                }
+                $this->context->smarty->assign([
+                    'paynowPbls' => $this->payment_methods->getOnlyPbls(),
+                ]);
+                $payment_options[] = $this->getPaymentOption(
+                    $this->module->getPaymentMethodTitle($payment_method->getType()),
+                    $this->module->getLogo(),
+                    PaynowLinkHelper::getPaymentUrl(),
+                    'module:paynow/views/templates/front/1.7/payment_form.tpl'
+                );
+            } else {
+                if (!$payment_method->isEnabled()) {
+                    continue;
+                }
+                $this->setUpAdditionalTemplateVariables($payment_method);
+                $payment_options[] = $this->getPaymentOption(
+                    $this->module->getPaymentMethodTitle($payment_method->getType()),
+                    $payment_method->getImage(),
+                    PaynowLinkHelper::getPaymentUrl([
+                        'paymentMethodId' => $payment_method->getId()
+                    ]),
+                    $this->getForm($payment_method)
+                );
+            }
+            $list[$payment_method->getType()] = $payment_method->getId();
         }
 
         return $payment_options;
