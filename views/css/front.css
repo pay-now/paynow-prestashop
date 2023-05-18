@@ -38,7 +38,7 @@ p.payment_module .paynow img {
 
 .paynow-payment-option-pbl img {
     max-width: 80px;
-    width: 100%;
+    max-height: 60px;
 }
 
 .paynow-payment-option-pbl button:disabled img, .paynow-payment-option-pbl.disabled img  {
@@ -210,6 +210,12 @@ p.payment_module.paynow button:after {
 
 .paynow-return img {
     float: right;
+}
+
+.paynow-terms-error {
+    color: darkred;
+    font-size: 0.9rem;
+    display: block;
 }
 
 @media (max-width: 768px) {

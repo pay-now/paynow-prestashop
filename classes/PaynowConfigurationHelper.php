@@ -46,6 +46,10 @@ class PaynowConfigurationHelper
             Tools::getValue('PAYNOW_SEPARATE_PAYMENT_METHODS')
         );
         Configuration::updateValue(
+            'PAYNOW_HIDE_PAYMENT_TYPES',
+            join(',', Tools::getValue('PAYNOW_HIDE_PAYMENT_TYPES'))
+        );
+        Configuration::updateValue(
             'PAYNOW_PROD_API_KEY',
             Tools::getValue('PAYNOW_PROD_API_KEY')
         );

@@ -335,6 +335,38 @@ class PaynowAdminFormHelper
                         ],
                     ],
                     [
+                        'type' => 'select',
+                        'label' => $this->translations['Hide payment types'],
+                        'name' => 'PAYNOW_HIDE_PAYMENT_TYPES[]',
+                        'multiple' => true,
+                        'options' => [
+                            'query' => [
+                                [
+                                    'id_option' => 'none',
+                                    'name' => $this->module->l('None')
+                                ],
+                                [
+                                    'id_option' => Paynow\Model\PaymentMethods\Type::BLIK,
+                                    'name' => $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::BLIK)
+                                ],
+                                [
+                                    'id_option' => Paynow\Model\PaymentMethods\Type::PBL,
+                                    'name' => $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::PBL)
+                                ],
+                                [
+                                    'id_option' => Paynow\Model\PaymentMethods\Type::CARD,
+                                    'name' => $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::CARD)
+                                ],
+                                [
+                                    'id_option' => Paynow\Model\PaymentMethods\Type::GOOGLE_PAY,
+                                    'name' => $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::GOOGLE_PAY)
+                                ]
+                            ],
+                            'id'    => 'id_option',
+                            'name'  => 'name'
+                        ]
+                    ],
+                    [
                         'type' => 'switch',
                         'label' => $this->translations['Show retry payment button'],
                         'desc' => $this->translations['The button appears on the order details screen.'],
@@ -467,6 +499,7 @@ class PaynowAdminFormHelper
             'PAYNOW_REFUNDS_WITH_SHIPPING_COSTS' => Configuration::get('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS'),
             'PAYNOW_DEBUG_LOGS_ENABLED' => Configuration::get('PAYNOW_DEBUG_LOGS_ENABLED'),
             'PAYNOW_SEPARATE_PAYMENT_METHODS' => Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS'),
+            'PAYNOW_HIDE_PAYMENT_TYPES[]' => explode(',', Configuration::get('PAYNOW_HIDE_PAYMENT_TYPES')),
             'PAYNOW_USE_CLASSIC_RETURN_URL' => Configuration::get('PAYNOW_USE_CLASSIC_RETURN_URL'),
             'PAYNOW_PROD_API_KEY' => Configuration::get('PAYNOW_PROD_API_KEY'),
             'PAYNOW_PROD_API_SIGNATURE_KEY' => Configuration::get('PAYNOW_PROD_API_SIGNATURE_KEY'),

@@ -46,7 +46,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.6.25';
+        $this->version = '1.6.26';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -167,6 +167,7 @@ class Paynow extends PaymentModule
             Configuration::updateValue('PAYNOW_REFUNDS_ON_STATUS', Configuration::get('PS_OS_REFUND')) &&
             Configuration::updateValue('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS', 0) &&
             Configuration::updateValue('PAYNOW_SEPARATE_PAYMENT_METHODS', 1) &&
+            Configuration::updateValue('PAYNOW_HIDE_PAYMENT_TYPES', '') &&
             Configuration::updateValue('PAYNOW_PROD_API_KEY', '') &&
             Configuration::updateValue('PAYNOW_PROD_API_SIGNATURE_KEY', '') &&
             Configuration::updateValue('PAYNOW_SANDBOX_ENABLED', 0) &&
@@ -196,6 +197,7 @@ class Paynow extends PaymentModule
             Configuration::deleteByName('PAYNOW_REFUNDS_ON_STATUS') &&
             Configuration::deleteByName('PAYNOW_REFUNDS_WITH_SHIPPING_COSTS') &&
             Configuration::deleteByName('PAYNOW_SEPARATE_PAYMENT_METHODS') &&
+            Configuration::deleteByName('PAYNOW_HIDE_PAYMENT_TYPES') &&
             Configuration::deleteByName('PAYNOW_PROD_API_KEY') &&
             Configuration::deleteByName('PAYNOW_PROD_API_SIGNATURE_KEY') &&
             Configuration::deleteByName('PAYNOW_SANDBOX_ENABLED') &&
@@ -346,7 +348,7 @@ class Paynow extends PaymentModule
             default:
                 return '';
             case \Paynow\Model\PaymentMethods\Type::BLIK:
-                return $this->l('Pay by Blik');
+                return $this->l('Pay by BLIK');
             case \Paynow\Model\PaymentMethods\Type::CARD:
                 return $this->l('Pay by card');
             case \Paynow\Model\PaymentMethods\Type::PBL:
@@ -637,6 +639,22 @@ class Paynow extends PaymentModule
                 !Validate::isInt(Tools::getValue('PAYNOW_PAYMENT_VALIDITY_TIME'))) {
                 $this->postErrors[] = $this->l('Payment validity time must be integer');
             }
+
+            $uuv4Fields = [
+                'PAYNOW_SANDBOX_API_KEY' => $this->l('Incorrect API key format (sandbox)'),
+                'PAYNOW_SANDBOX_API_SIGNATURE_KEY' => $this->l('Incorrect API signature key format (sandbox)'),
+                'PAYNOW_PROD_API_KEY' => $this->l('Incorrect API key format (production)'),
+                'PAYNOW_PROD_API_SIGNATURE_KEY' => $this->l('Incorrect API signature key format (production)')
+            ];
+            foreach ($uuv4Fields as $field => $message) {
+                if (empty(Tools::getValue($field))) {
+                    continue;
+                }
+                $regex = '/^[[:xdigit:]]{8}(?:\-[[:xdigit:]]{4}){3}\-[[:xdigit:]]{12}$/i';
+                if (!preg_match($regex, Tools::getValue($field))) {
+                    $this->postErrors[] = $message;
+                }
+            }
         }
     }
 
@@ -753,6 +771,7 @@ class Paynow extends PaymentModule
             'Include shipping costs'                                                                                                                                                            => $this->l('Include shipping costs'),
             'Additional options'                                                                                                                                                                => $this->l('Additional options'),
             'Show separated payment methods'                                                                                                                                                    => $this->l('Show separated payment methods'),
+            'Hide payment types'                                                                                                                                                                => $this->l('Hide payment types'),
             'Use order-confirmation page as shop\'s return URL'                                                                                                                                 => $this->l('Use order-confirmation page as shop\'s return URL'),
             'Buyer will be redirected to order-confirmation page after payment.'                                                                                                                => $this->l('Buyer will be redirected to order-confirmation page after payment.'),
             'Send order items'                                                                                                                                                                  => $this->l('Send order items'),
