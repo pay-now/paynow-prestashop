@@ -348,7 +348,7 @@ class Paynow extends PaymentModule
             default:
                 return '';
             case \Paynow\Model\PaymentMethods\Type::BLIK:
-                return $this->l('Pay by Blik');
+                return $this->l('Pay by BLIK');
             case \Paynow\Model\PaymentMethods\Type::CARD:
                 return $this->l('Pay by card');
             case \Paynow\Model\PaymentMethods\Type::PBL:

@@ -342,6 +342,10 @@ class PaynowAdminFormHelper
                         'options' => [
                             'query' => [
                                 [
+                                    'id_option' => 'none',
+                                    'name' => $this->module->l('None')
+                                ],
+                                [
                                     'id_option' => Paynow\Model\PaymentMethods\Type::BLIK,
                                     'name' => $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::BLIK)
                                 ],

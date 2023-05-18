@@ -8,7 +8,7 @@ $_MODULE['<{paynow}prestashop>paynow_533937acf0e84c92e787614bbb16a7a0'] = 'Jeste
 $_MODULE['<{paynow}prestashop>paynow_9412141d917ab652b2ee4e4476922d65'] = 'BLIK, szybkie przelewy i karty płatnicze';
 $_MODULE['<{paynow}prestashop>paynow_6855a2b93983cdf59c34e46eab95e5e4'] = 'Aby skorzystać z modułu musisz podać klucze do API.';
 $_MODULE['<{paynow}prestashop>paynow_a02758d758e8bec77a33d7f392eb3f8a'] = 'Żadna waluta nie została ustawiona dla tego modułu.';
-$_MODULE['<{paynow}prestashop>paynow_dd92ae0ad75b51e50611ff520d421b5f'] = 'Płatność BLIKIEM';
+$_MODULE['<{paynow}prestashop>paynow_98ab4d4a3d466bd1b61b31c8ae0f094a'] = 'Płatność BLIKIEM';
 $_MODULE['<{paynow}prestashop>paynow_cc21116ce900f38c0691823ab193b9a3'] = 'Płatność kartą';
 $_MODULE['<{paynow}prestashop>paynow_961d23fcb6c49cee1150dba52beb04ca'] = 'Płatność szybkim przelewem';
 $_MODULE['<{paynow}prestashop>paynow_2a34963732b2fea04f1417120be393ae'] = 'Płatność Google Pay';
@@ -102,3 +102,5 @@ $_MODULE['<{paynow}prestashop>paynow_9e900430ecef9d66cd31784b325c89e1'] = 'Niepo
 $_MODULE['<{paynow}prestashop>paynow_28a67914858c1ad4333046e878cdaff2'] = 'Niepoprawny format klucza obliczania podpisu (sandbox)';
 $_MODULE['<{paynow}prestashop>paynow_93b851b08ee6b549ccbed93252ba3e3c'] = 'Niepoprawny format klucza dostępu do API (produkcja)';
 $_MODULE['<{paynow}prestashop>paynow_f78db1f0dc7be32221b1e5a18f23ef8d'] = 'Niepoprawny format klucza obliczania podpisu (produkcja)';
+$_MODULE['<{paynow}prestashop>paynow_6adf97f83acf6453d4a6a4b1070f3754'] = 'Nie ukrywaj';
+
