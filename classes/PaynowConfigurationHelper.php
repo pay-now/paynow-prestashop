@@ -47,7 +47,7 @@ class PaynowConfigurationHelper
         );
         Configuration::updateValue(
             'PAYNOW_HIDE_PAYMENT_TYPES',
-            join(',', Tools::getValue('PAYNOW_HIDE_PAYMENT_TYPES'))
+            join(',', Tools::getValue('PAYNOW_HIDE_PAYMENT_TYPES', []))
         );
         Configuration::updateValue(
             'PAYNOW_PROD_API_KEY',
@@ -115,7 +115,7 @@ class PaynowConfigurationHelper
         );
         Configuration::updateValue(
             'PAYNOW_RETRY_BUTTON_ORDER_STATE',
-            join(',', Tools::getValue('PAYNOW_RETRY_BUTTON_ORDER_STATE'))
+            join(',', Tools::getValue('PAYNOW_RETRY_BUTTON_ORDER_STATE', []))
         );
         Configuration::updateValue(
             'PAYNOW_BLIK_AUTOFOCUS_ENABLED',
