@@ -101,7 +101,10 @@ class PaynowPaymentData extends ObjectModel
 
 
         try {
-            $model->save(false, false);
+            $result = $model->save(false, false);
+            if (!$result) {
+                throw new Exception('Model-save() returned false.');
+            }
             if ($status == Status::STATUS_NEW) {
                 PaynowLogger::debug('Deactivating all payments.', ['external_id' => $external_id]);
                 Db::getInstance()->update(
