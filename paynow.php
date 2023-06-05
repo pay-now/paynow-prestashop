@@ -533,8 +533,14 @@ class Paynow extends PaymentModule
             $this->context->controller instanceof AdminController) {
             $order = new Order($params['id_order']);
             $newOrderStatus = $params['newOrderStatus'];
-
+            $logContext = [
+                'params_id_order' => $params['id_order'],
+                'params_new_order_status' => $params['newOrderStatus'],
+                'order_id' => $order->id,
+            ];
+            PaynowLogger::info('Refunds: after change status triggered.', $logContext);
             if ((int)Configuration::get('PAYNOW_REFUNDS_ON_STATUS') === $newOrderStatus->id) {
+                PaynowLogger::info('Refunds: PaynowRefundProcessor->processFromOrderStatusChange()', $logContext);
                 (new PaynowRefundProcessor($this->getPaynowClient(), $this->displayName))
                     ->processFromOrderStatusChange($order);
             }
