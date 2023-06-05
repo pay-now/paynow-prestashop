@@ -26,6 +26,9 @@ function upgrade_module_1_6_27($module)
             CHANGE `order_reference` `order_reference` varchar(50) NOT NULL AFTER `id_payment`"
         );
 
+        if (!Configuration::get('PAYNOW_HIDE_PAYMENT_TYPES')) {
+            Configuration::updateValue('PAYNOW_HIDE_PAYMENT_TYPES', 'none');
+        }
 
     } catch (PrestaShopDatabaseException $exception) {
         PaynowLogger::error('Fatal error on upgrade: ' . $exception->getMessage() . ' ' . $exception->getTraceAsString());
