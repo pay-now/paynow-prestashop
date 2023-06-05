@@ -37,8 +37,8 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
                 $payment_status_from_api = $this->getPaymentStatus($payment->id_payment);
                 $statusToProcess = [
                     'status' => $payment_status_from_api,
-                    'externalId' => $this->payment->external_id,
-                    'paymentId' => $this->payment->id_payment
+                    'externalId' => $payment->external_id,
+                    'paymentId' => $payment->id_payment
                 ];
                 try {
                     PaynowLogger::debug('Status: status processing started', $statusToProcess);

@@ -101,7 +101,10 @@ class PaynowPaymentData extends ObjectModel
 
 
         try {
-            $model->save(false, false);
+            $result = $model->save(false, false);
+            if (!$result) {
+                throw new Exception('Model-save() returned false.');
+            }
             if ($status == Status::STATUS_NEW) {
                 PaynowLogger::debug('Deactivating all payments.', ['external_id' => $external_id]);
                 Db::getInstance()->update(
@@ -145,6 +148,7 @@ class PaynowPaymentData extends ObjectModel
      */
     public static function findByPaymentId($id_payment)
     {
+        Db::getInstance(_PS_USE_SQL_SLAVE_)->disableCache();
         $queryBuilder = new PrestaShopCollection(self::class);
 
         return $queryBuilder
@@ -161,6 +165,7 @@ class PaynowPaymentData extends ObjectModel
      */
     public static function findAllByExternalId($external_id)
     {
+        Db::getInstance(_PS_USE_SQL_SLAVE_)->disableCache();
         $queryBuilder = new PrestaShopCollection(self::class);
 
         return $queryBuilder
@@ -178,6 +183,7 @@ class PaynowPaymentData extends ObjectModel
      */
     public static function findAllByExternalIdAndPaymentId($external_id, $payment_id)
     {
+        Db::getInstance(_PS_USE_SQL_SLAVE_)->disableCache();
         $queryBuilder = new PrestaShopCollection(self::class);
 
         return $queryBuilder
@@ -195,6 +201,7 @@ class PaynowPaymentData extends ObjectModel
      */
     public static function findLastByExternalId($external_id)
     {
+        Db::getInstance(_PS_USE_SQL_SLAVE_)->disableCache();
         $queryBuilder = new PrestaShopCollection(self::class);
 
         return $queryBuilder
@@ -211,6 +218,7 @@ class PaynowPaymentData extends ObjectModel
      */
     public static function findLastByOrderReference($order_reference)
     {
+        Db::getInstance(_PS_USE_SQL_SLAVE_)->disableCache();
         $queryBuilder = new PrestaShopCollection(self::class);
 
         return $queryBuilder
@@ -227,6 +235,7 @@ class PaynowPaymentData extends ObjectModel
      */
     public static function findLastByCartId($id_cart)
     {
+        Db::getInstance(_PS_USE_SQL_SLAVE_)->disableCache();
         $queryBuilder = new PrestaShopCollection(self::class);
 
         return $queryBuilder
@@ -243,6 +252,7 @@ class PaynowPaymentData extends ObjectModel
      */
     public static function findLastByOrderId($id_order)
     {
+        Db::getInstance(_PS_USE_SQL_SLAVE_)->disableCache();
         $queryBuilder = new PrestaShopCollection(self::class);
 
         return $queryBuilder
@@ -256,6 +266,7 @@ class PaynowPaymentData extends ObjectModel
         $order_reference,
         $id_payment
     ) {
+        Db::getInstance(_PS_USE_SQL_SLAVE_)->disableCache();
         $data = PaynowPaymentData::findByPaymentId($id_payment);
         if ($data) {
             $data->id_order        = $id_order;
