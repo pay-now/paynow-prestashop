@@ -29,7 +29,20 @@ $jscomp.polyfill=function(a,n,f,p){if(n){f=$jscomp.global;a=a.split(".");for(p=0
         k("input"),watchDataMask:!1,byPassKeys:[9,16,17,18,36,37,38,39,40,91],translation:{0:{pattern:/\d/},9:{pattern:/\d/,optional:!0},"#":{pattern:/\d/,recursive:!0},A:{pattern:/[a-zA-Z0-9]/},S:{pattern:/[a-zA-Z]/}}};a.jMaskGlobals=a.jMaskGlobals||{};k=a.jMaskGlobals=a.extend(!0,{},k,a.jMaskGlobals);k.dataMask&&a.applyDataMask();setInterval(function(){a.jMaskGlobals.watchDataMask&&a.applyDataMask()},k.watchInterval)},window.jQuery,window.Zepto);
 
 var useCssClassDisabled = false
-$(function () {
+
+var paynow = {
+    selectors: {
+        confirmation: '#payment-confirmation',
+        termsAndConditions: '#conditions_to_approve\\[terms-and-conditions\\], #cgv',
+        termsAndConditionsLabel: 'label[for="conditions_to_approve\\[terms-and-conditions\\]"], label[for="cgv"]',
+        paymentButton: '#payment-confirmation button',
+        paymentBlikCode: '#paynow_blik_code',
+        paymentBlikButton: '#paynow_blik_submit',
+    },
+};
+
+$(document).ready(function() {
+
     $('input[name="payment-option"]').on("change", function () {
         setTimeout(function () {
             enableBlikSupport();
@@ -37,21 +50,21 @@ $(function () {
         }, 200);
     });
 
-    $('#conditions_to_approve\\[terms-and-conditions\\], #cgv').on("change", function () {
+    $(paynow.selectors.termsAndConditions).on("change", function () {
         setTimeout(function () {
             enableBlikSupport();
         }, 10);
     });
 
-    useCssClassDisabled = $('#payment-confirmation button').hasClass('disabled');
+    useCssClassDisabled = $(paynow.selectors.paymentButton).hasClass('disabled');
 });
 
 function enableBlikFormSupport() {
     var $paynow_blik_form = $('.paynow-blik-form');
-    var $paynow_blik_error_span = $('#paynow_blik_code').next('span');
+    var $paynow_blik_error_span = $(paynow.selectors.paymentBlikCode).next('span');
     var $blik_pay_button = $($paynow_blik_form).find('button');
-    var $term_and_conditions = $('#conditions_to_approve\\[terms-and-conditions\\], #cgv');
-    var $term_and_conditions_label = $('label[for="conditions_to_approve\\[terms-and-conditions\\]"], label[for="cgv"]');
+    var $term_and_conditions = $(paynow.selectors.termsAndConditions);
+    var $term_and_conditions_label = $(paynow.selectors.termsAndConditionsLabel);
 
     if ($term_and_conditions.length && $term_and_conditions_label.length && $('#js-paynow-terms-error').length == 0) {
         $term_and_conditions_label.after('<span id="js-paynow-terms-error" class="paynow-terms-error"></span>');
@@ -73,7 +86,7 @@ function enableBlikFormSupport() {
         $.ajax($paynow_blik_form.data('action'), {
             method: 'POST', type: 'POST',
             data: {
-                'blikCode': $('#paynow_blik_code').val().replace(/\s/g, ""),
+                'blikCode': $(paynow.selectors.paymentBlikCode).val().replace(/\s/g, ""),
                 'token': $paynow_blik_form.data('token')
             },
         }).success(function (response) {
@@ -91,7 +104,7 @@ function enableBlikFormSupport() {
 }
 
 function enableBlikSupport() {
-    let $paynow_blik_code_input = $('#paynow_blik_code'), $payment_button = $('#payment-confirmation button')
+    let $paynow_blik_code_input = $(paynow.selectors.paymentBlikCode), $payment_button = $(paynow.selectors.paymentButton);
     if ($paynow_blik_code_input.length != 1) {
         return
     }
@@ -116,8 +129,8 @@ function enablePblSupport() {
 }
 
 function paynowPblPaymentBtnCheck() {
-    var $payment_button = $('#payment-confirmation button'),
-        $regulations = $('#conditions_to_approve\\[terms-and-conditions\\], #cgv');
+    var $payment_button = $(paynow.selectors.paymentButton),
+        $regulations = $(paynow.selectors.termsAndConditions);
 
     if ($('input[name="paymentMethodId"]:checked').length != 0 && $regulations.is(':checked')) {
         $payment_button.prop('disabled', false);
@@ -134,9 +147,9 @@ function paynowPblPaymentBtnCheck() {
 
 function validateBlikCode(blik_code_value) {
     blik_code_value = blik_code_value.replace(/\s/g, '');
-    var $payment_button = $('#payment-confirmation button'),
+    var $payment_button = $(paynow.selectors.paymentButton),
         $paynow_blik_payment_button = $('.paynow-blik-form button'),
-        $paynow_blik_error_span = $('#paynow_blik_code').next('span');
+        $paynow_blik_error_span = $(paynow.selectors.paymentBlikCode).next('span');
     if (blik_code_value.length === 6 && !isNaN(parseInt(blik_code_value)) && parseInt(blik_code_value)) {
         $paynow_blik_error_span.text('');
         $payment_button.prop('disabled', false);
@@ -145,7 +158,7 @@ function validateBlikCode(blik_code_value) {
         $payment_button.prop('disabled', true);
         $paynow_blik_payment_button.prop('disabled', true);
         if ($('.paynow-blik-form').data('blik-autofocus') == '1') {
-            $('#paynow_blik_code').focus();
+            $(paynow.selectors.paymentBlikCode).focus();
         }
     }
 }
