@@ -57,7 +57,10 @@ var paynow = {
         $(document).on('keyup', paynow.selectors.blikCode, paynow.blikValidate);
         $(document).on('change', paynow.selectors.pblMethod, paynow.pblValidate);
         $(document).on('change', paynow.selectors.paymentMethod, paynow.blikFormPrepare);
-        $(document).on('change', paynow.selectors.terms, paynow.blikFormPrepare);
+        $(document).on('change', paynow.selectors.terms, function(){
+            paynow.blikFormPrepare()
+            paynow.termsValidate()
+        });
 
         var termsErrorPlaceholderExists = $(paynow.selectors.terms).length != 0
             && $(paynow.selectors.termsLabel).length != 0
@@ -69,6 +72,19 @@ var paynow = {
 
     },
 
+    termsValidate: function() {
+        if (paynow.config.validateTerms == false) {
+            return true
+        }
+
+        if ($(paynow.selectors.terms).is(':checked')) {
+            $(paynow.selectors.termsErrorLabel).text('')
+            return true
+        } else {
+            return false
+        }
+    },
+
     blikFormSubmit: function (e) {
         if (e && e.preventDefault) {
             e.preventDefault()
@@ -77,12 +93,12 @@ var paynow = {
         $(paynow.selectors.blikErrorLabel).text('')
         $(paynow.selectors.termsErrorLabel).text('')
 
-        if (paynow.config.validateTerms && $(paynow.selectors.terms).is(':checked')) {
+        if (paynow.termsValidate() == false) {
             $(paynow.selectors.termsErrorLabel).text($(paynow.selectors.form).data('terms-message'))
             prestashop.emit('paynow_event_blik_submit_fail', {
                 type: 'terms_not_accepted',
             })
-            return;
+            return
         }
 
         paynow.blikButton.disable()
