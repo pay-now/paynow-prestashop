@@ -28,137 +28,180 @@ $jscomp.polyfill=function(a,n,f,p){if(n){f=$jscomp.global;a=a.split(".");for(p=0
     delete a.maskWatchers[this.selector];return this.each(function(){var b=a(this).data("mask");b&&b.remove().removeData("mask")})};a.fn.cleanVal=function(){return this.data("mask").getCleanVal()};a.applyDataMask=function(b){b=b||a.jMaskGlobals.maskElements;(b instanceof a?b:a(b)).filter(a.jMaskGlobals.dataMaskAttr).each(f)};k={maskElements:"input,td,span,div",dataMaskAttr:"*[data-mask]",dataMask:!0,watchInterval:300,watchInputs:!0,keyStrokeCompensation:10,useInput:!/Chrome\/[2-4][0-9]|SamsungBrowser/.test(window.navigator.userAgent)&&
         k("input"),watchDataMask:!1,byPassKeys:[9,16,17,18,36,37,38,39,40,91],translation:{0:{pattern:/\d/},9:{pattern:/\d/,optional:!0},"#":{pattern:/\d/,recursive:!0},A:{pattern:/[a-zA-Z0-9]/},S:{pattern:/[a-zA-Z]/}}};a.jMaskGlobals=a.jMaskGlobals||{};k=a.jMaskGlobals=a.extend(!0,{},k,a.jMaskGlobals);k.dataMask&&a.applyDataMask();setInterval(function(){a.jMaskGlobals.watchDataMask&&a.applyDataMask()},k.watchInterval)},window.jQuery,window.Zepto);
 
-var useCssClassDisabled = false
 
 var paynow = {
-    selectors: {
-        confirmation: '#payment-confirmation',
-        termsAndConditions: '#conditions_to_approve\\[terms-and-conditions\\], #cgv',
-        termsAndConditionsLabel: 'label[for="conditions_to_approve\\[terms-and-conditions\\]"], label[for="cgv"]',
-        paymentButton: '#payment-confirmation button',
-        paymentBlikCode: '#paynow_blik_code',
-        paymentBlikButton: '#paynow_blik_submit',
+
+    config: {
+        useCssClassDisabled: false,
+        validateTerms: true
     },
-};
 
-$(document).ready(function() {
+    selectors: {
+        form: '.paynow-blik-form',
+        terms: '#conditions_to_approve\\[terms-and-conditions\\], #cgv',
+        termsLabel: 'label[for="conditions_to_approve\\[terms-and-conditions\\]"], label[for="cgv"]',
+        termsErrorLabel: '#js-paynow-terms-error',
+        paymentButton: '#payment-confirmation button',
+        blikCode: '#paynow_blik_code',
+        blikButton: 'form.paynow-blik-form div.paynow-payment-option-container button',
+        blikErrorLabel: 'form.paynow-blik-form span.error',
 
-    $('input[name="payment-option"]').on("change", function () {
-        setTimeout(function () {
-            enableBlikSupport();
-            enablePblSupport();
-        }, 200);
-    });
+        pblMethod: 'div.paynow-payment-pbls input[name="paymentMethodId"]',
+        paymentMethod: 'input[name="payment-option"]',
+    },
 
-    $(paynow.selectors.termsAndConditions).on("change", function () {
-        setTimeout(function () {
-            enableBlikSupport();
-        }, 10);
-    });
+    init: function(){
+        paynow.config.useCssClassDisabled = $(paynow.selectors.paymentButton).hasClass('disabled');
 
-    useCssClassDisabled = $(paynow.selectors.paymentButton).hasClass('disabled');
-});
+        $(document).on('click', paynow.selectors.blikButton, paynow.blikFormSubmit);
+        $(document).on('keyup', paynow.selectors.blikCode, paynow.blikValidate);
+        $(document).on('change', paynow.selectors.pblMethod, paynow.pblValidate);
+        $(document).on('change', paynow.selectors.paymentMethod, paynow.blikFormPrepare);
+        $(document).on('change', paynow.selectors.terms, paynow.blikFormPrepare);
 
-function enableBlikFormSupport() {
-    var $paynow_blik_form = $('.paynow-blik-form');
-    var $paynow_blik_error_span = $(paynow.selectors.paymentBlikCode).next('span');
-    var $blik_pay_button = $($paynow_blik_form).find('button');
-    var $term_and_conditions = $(paynow.selectors.termsAndConditions);
-    var $term_and_conditions_label = $(paynow.selectors.termsAndConditionsLabel);
+        var termsErrorPlaceholderExists = $(paynow.selectors.terms).length != 0
+            && $(paynow.selectors.termsLabel).length != 0
+            && $(paynow.selectors.termsErrorLabel).length == 0
 
-    if ($term_and_conditions.length && $term_and_conditions_label.length && $('#js-paynow-terms-error').length == 0) {
-        $term_and_conditions_label.after('<span id="js-paynow-terms-error" class="paynow-terms-error"></span>');
-    }
+        if (termsErrorPlaceholderExists) {
+            $(paynow.selectors.termsLabel).after('<span id="js-paynow-terms-error" class="paynow-terms-error"></span>')
+        }
 
-    var $paynow_blik_terms_error_span = $('#js-paynow-terms-error');
+    },
 
-    $('.paynow-blik-form button').off('click').on('click', function (e) {
-        e.preventDefault();
-        $paynow_blik_error_span.text('');
-        $paynow_blik_terms_error_span.text('');
+    blikFormSubmit: function (e) {
+        if (e && e.preventDefault) {
+            e.preventDefault()
+        }
 
-        if ($term_and_conditions.length && !$term_and_conditions.is(':checked')) {
-            $paynow_blik_terms_error_span.text($paynow_blik_form.data('terms-message'));
+        $(paynow.selectors.blikErrorLabel).text('')
+        $(paynow.selectors.termsErrorLabel).text('')
+
+        if (paynow.config.validateTerms && $(paynow.selectors.terms).is(':checked')) {
+            $(paynow.selectors.termsErrorLabel).text($(paynow.selectors.form).data('terms-message'))
+            prestashop.emit('paynow_event_blik_submit_fail', {
+                type: 'terms_not_accepted',
+            })
             return;
         }
 
-        $blik_pay_button.prop('disabled', true);
-        $.ajax($paynow_blik_form.data('action'), {
+        paynow.blikButton.disable()
+        $.ajax($(paynow.selectors.form).data('action'), {
             method: 'POST', type: 'POST',
             data: {
-                'blikCode': $(paynow.selectors.paymentBlikCode).val().replace(/\s/g, ""),
-                'token': $paynow_blik_form.data('token')
+                'blikCode': $(paynow.selectors.blikCode).val().replace(/\s/g, ""),
+                'token': $(paynow.selectors.form).data('token')
             },
-        }).success(function (response) {
-            if (response.success === true) {
-                window.location.href = response.redirect_url;
+        }).success(function (data, textStatus, jqXHR) {
+            if (data.success === true) {
+                window.location.href = data.redirect_url
             } else {
-                $blik_pay_button.prop('disabled', false);
-                $paynow_blik_error_span.text(response.message);
+                paynow.blikButton.enable()
+                $(paynow.selectors.blikErrorLabel).text(data.message)
+                prestashop.emit('paynow_event_blik_submit_fail', {
+                    type: 'xhr_ok_but_error',
+                    response: data,
+                    textStatus: textStatus,
+                    jqXHR: jqXHR,
+                })
             }
-        }).error(function () {
-            $paynow_blik_error_span.text($paynow_blik_form.data('error-message'))
+        }).error(function (jqXHR, textStatus, errorThrown) {
+            paynow.blikButton.enable()
+            $(paynow.selectors.blikErrorLabel).text($(paynow.selectors.form).data('error-message'))
+            prestashop.emit('paynow_event_blik_submit_fail', {
+                type: 'xhr_error',
+                jqXHR: jqXHR,
+                textStatus: textStatus,
+                errorThrown: errorThrown
+            })
         });
+    },
 
-    })
-}
-
-function enableBlikSupport() {
-    let $paynow_blik_code_input = $(paynow.selectors.paymentBlikCode), $payment_button = $(paynow.selectors.paymentButton);
-    if ($paynow_blik_code_input.length != 1) {
-        return
-    }
-    enableBlikFormSupport();
-    $paynow_blik_code_input.mask('000 000', {placeholder: "___ ___"});
-    if ($paynow_blik_code_input.is(':visible')) {
-        $payment_button.prop('disabled', true).hide();
-        validateBlikCode($paynow_blik_code_input.val())
-    } else {
-        $payment_button.prop('disabled', false).show();
-    }
-    $paynow_blik_code_input.keyup(function () {
-        validateBlikCode($paynow_blik_code_input.val())
-    });
-}
-
-function enablePblSupport() {
-    if ($('.paynow-payment-pbls').is(':visible')) {
-        paynowPblPaymentBtnCheck();
-    }
-    $('input[name="paymentMethodId"]').off('change').on('change', paynowPblPaymentBtnCheck);
-}
-
-function paynowPblPaymentBtnCheck() {
-    var $payment_button = $(paynow.selectors.paymentButton),
-        $regulations = $(paynow.selectors.termsAndConditions);
-
-    if ($('input[name="paymentMethodId"]:checked').length != 0 && $regulations.is(':checked')) {
-        $payment_button.prop('disabled', false);
-        if (useCssClassDisabled) {
-            $payment_button.removeClass('disabled');
+    blikFormPrepare: function() {
+        if ($(paynow.selectors.blikCode).length != 1) {
+            return
         }
-    } else {
-        $payment_button.prop('disabled', true);
-        if (useCssClassDisabled) {
-            $payment_button.addClass('disabled');
-        }
-    }
-}
 
-function validateBlikCode(blik_code_value) {
-    blik_code_value = blik_code_value.replace(/\s/g, '');
-    var $payment_button = $(paynow.selectors.paymentButton),
-        $paynow_blik_payment_button = $('.paynow-blik-form button'),
-        $paynow_blik_error_span = $(paynow.selectors.paymentBlikCode).next('span');
-    if (blik_code_value.length === 6 && !isNaN(parseInt(blik_code_value)) && parseInt(blik_code_value)) {
-        $paynow_blik_error_span.text('');
-        $payment_button.prop('disabled', false);
-        $paynow_blik_payment_button.prop('disabled', false);
-    } else {
-        $payment_button.prop('disabled', true);
-        $paynow_blik_payment_button.prop('disabled', true);
-        if ($('.paynow-blik-form').data('blik-autofocus') == '1') {
-            $(paynow.selectors.paymentBlikCode).focus();
+        $(paynow.selectors.blikCode).mask('000 000', {placeholder: "___ ___"})
+
+        if ($(paynow.selectors.form).data('blik-autofocus') == '1') {
+            $(paynow.selectors.blikCode).focus();
         }
-    }
-}
+
+        if ($(paynow.selectors.blikCode).is(':visible')) {
+            paynow.paymentButton.disable()
+            paynow.paymentButton.hide()
+        } else {
+            paynow.paymentButton.enable()
+            paynow.paymentButton.show()
+        }
+    },
+
+    blikValidate: function () {
+        blik_code_value = $(paynow.selectors.blikCode).val().replace(/\s/g, '');
+
+        if (blik_code_value.length === 6 && !isNaN(parseInt(blik_code_value)) && parseInt(blik_code_value)) {
+            $(paynow.selectors.blikCode).next('span').text('');
+            paynow.blikButton.enable()
+            return true
+        } else {
+            paynow.blikButton.disable()
+            return false
+        }
+    },
+
+    pblValidate: function () {
+        if (paynow.config.validateTerms && $(paynow.selectors.terms).is(':checked')) {
+            paynow.paymentButton.enable();
+            return true
+        } else {
+            paynow.paymentButton.disable();
+            return false
+        }
+    },
+
+    paymentButton: {
+        show: function () {
+            $(paynow.selectors.paymentButton).show();
+        },
+        hide: function () {
+            $(paynow.selectors.paymentButton).hide();
+        },
+        disable: function () {
+            $(paynow.selectors.paymentButton).prop('disabled', true);
+            if (paynow.config.useCssClassDisabled) {
+                $(paynow.selectors.paymentButton).addClass('disabled');
+            }
+        },
+        enable: function () {
+            $(paynow.selectors.paymentButton).prop('disabled', false);
+            if (paynow.config.useCssClassDisabled) {
+                $(paynow.selectors.paymentButton).removeClass('disabled');
+            }
+        }
+    },
+
+    blikButton: {
+        disable: function () {
+            $(paynow.selectors.blikButton).prop('disabled', true);
+            if (paynow.config.useCssClassDisabled) {
+                $(paynow.selectors.blikButton).addClass('disabled');
+            }
+        },
+        enable: function () {
+            $(paynow.selectors.blikButton).prop('disabled', false);
+            if (paynow.config.useCssClassDisabled) {
+                $(paynow.selectors.blikButton).removeClass('disabled');
+            }
+        }
+    },
+
+};
+
+
+$(document).ready(paynow.init);
+
+// backward compatibility; in case someone is using old functions in own code
+function enableBlikSupport() { paynow.blikFormPrepare() }
+function paynowPblPaymentBtnCheck() { paynow.pblValidate() }
+function enablePblSupport() {}
