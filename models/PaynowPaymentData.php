@@ -342,7 +342,7 @@ class PaynowPaymentData extends ObjectModel
     /**
      * @throws PrestaShopException
      */
-    public static function getActiveByExternalId($external_id, $createNew = false) {
+    public static function getActiveByExternalId($external_id, $createNew = false, $payment_id = null) {
         $payments = self::findAllByExternalId($external_id)->getResults();
         foreach($payments as $payment) {
             if ($payment->active == '1') {
@@ -356,9 +356,9 @@ class PaynowPaymentData extends ObjectModel
         if ($createNew && !$payment) {
             // order check
             $order = Order::getByReference($external_id);
-            if (!Validate::isLoadedObject($cart)) {
+            if (!Validate::isLoadedObject($order)) {
                 PaynowPaymentData::create(
-                    'unknown',
+                    $payment_id,
                     Paynow\Model\Payment\Status::STATUS_NEW,
                     $order->id,
                     $order->id_cart,
@@ -374,7 +374,7 @@ class PaynowPaymentData extends ObjectModel
             $cart = new Cart($cart_id);
             if (!Validate::isLoadedObject($cart)) {
                 PaynowPaymentData::create(
-                    'unknown',
+                    $payment_id,
                     Paynow\Model\Payment\Status::STATUS_NEW,
                     null,
                     $cart->id,

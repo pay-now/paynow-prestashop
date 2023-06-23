@@ -46,7 +46,7 @@ class PaynowOrderStateProcessor
         }
 
         /** @var \PaynowPaymentData $payment */
-        $payment = PaynowPaymentData::getActiveByExternalId($data['externalId'], true);
+        $payment = PaynowPaymentData::getActiveByExternalId($data['externalId'], true, $data['paymentId'] ?? 'unknown');
 
         if (empty($payment)) {
             throw new PaynowNotificationStopProcessing(
