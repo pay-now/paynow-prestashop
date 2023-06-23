@@ -46,11 +46,11 @@ class PaynowOrderStateProcessor
         }
 
         /** @var \PaynowPaymentData $payment */
-        $payment = PaynowPaymentData::getActiveByExternalId($data['externalId']);
+        $payment = PaynowPaymentData::getActiveByExternalId($data['externalId'], true, $data['paymentId'] ?? 'unknown');
 
         if (empty($payment)) {
             throw new PaynowNotificationStopProcessing(
-                'Skipped processing. Order or Cart not found.',
+                'Skipped processing. Payment, Order or Cart not found.',
                 $data
             );
         }
