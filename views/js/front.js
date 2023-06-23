@@ -141,7 +141,7 @@ var paynow = {
         blik_code_value = $(paynow.selectors.blikCode).val().replace(/\s/g, '');
 
         if (blik_code_value.length === 6 && !isNaN(parseInt(blik_code_value)) && parseInt(blik_code_value)) {
-            $(paynow.selectors.blikCode).next('span').text('');
+            $(paynow.selectors.blikErrorLabel).text('');
             paynow.blikButton.enable()
             return true
         } else {
