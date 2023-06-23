@@ -14,6 +14,9 @@
             <form action="{$paynow_url|escape:'htmlall':'UTF-8'}" method="POST">
         {/if}
         <p class="payment_module paynow{if !empty($method.pbls)} with-pbls{/if}">
+            {if (Module::isEnabled('onepagecheckoutps'))}
+                <a href="window.location = '{$paynow_url|escape:'htmlall':'UTF-8'}'" style="display: none">{$cta_text|escape:'htmlall':'UTF-8'}</a>
+            {/if}
             {include file="./_partials/payment_method_button.tpl"}
             {if !empty($method.pbls)}
                 {include file="./_partials/payment_pbls.tpl"}

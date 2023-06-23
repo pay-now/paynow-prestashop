@@ -342,14 +342,50 @@ class PaynowPaymentData extends ObjectModel
     /**
      * @throws PrestaShopException
      */
-    public static function getActiveByExternalId($external_id) {
+    public static function getActiveByExternalId($external_id, $createNew = false, $payment_id = null) {
         $payments = self::findAllByExternalId($external_id)->getResults();
         foreach($payments as $payment) {
             if ($payment->active == '1') {
                 return $payment;
             }
         }
-        return reset($payments);
+        $payment = reset($payments);
+
+        // when creating a new one, it is necessary to check whether there is an order/cart matching the $external_id
+        // if one exists, based on its info, we create a payment object
+        if ($createNew && !$payment) {
+            // order check
+            $order = Order::getByReference($external_id);
+            if (!Validate::isLoadedObject($order)) {
+                PaynowPaymentData::create(
+                    $payment_id,
+                    Paynow\Model\Payment\Status::STATUS_NEW,
+                    $order->id,
+                    $order->id_cart,
+                    $order->reference,
+                    $order->reference,
+                    $order->total_paid
+                );
+                return self::getActiveByExternalId($external_id);
+            }
+
+            // cart check
+            [$cart_id, $random] = explode('_', $external_id);
+            $cart = new Cart($cart_id);
+            if (!Validate::isLoadedObject($cart)) {
+                PaynowPaymentData::create(
+                    $payment_id,
+                    Paynow\Model\Payment\Status::STATUS_NEW,
+                    null,
+                    $cart->id,
+                    null,
+                    $external_id,
+                    $cart->getOrderTotal()
+                );
+                return self::getActiveByExternalId($external_id);
+            }
+        }
+        return $payment;
     }
 
     public static function setOptimisticLockByExternalId($external_id)
