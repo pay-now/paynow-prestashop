@@ -33,6 +33,9 @@
 {else}
     <form action="{$paynow_url|escape:'htmlall':'UTF-8'}" method="POST">
         <p class="payment_module paynow">
+            {if (Module::isEnabled('onepagecheckoutps'))}
+                <a href="window.location = '{$paynow_url|escape:'htmlall':'UTF-8'}'" style="display: none">{$cta_text|escape:'htmlall':'UTF-8'}</a>
+            {/if}
             <button name="paymentMethodId" type="submit" class="payment-option">
                 <img src="{$logo|escape:'htmlall':'UTF-8'}" alt="{$cta_text|escape:'htmlall':'UTF-8'}">
                 {$cta_text|escape:'htmlall':'UTF-8'}
