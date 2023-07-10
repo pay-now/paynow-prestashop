@@ -107,16 +107,11 @@ var paynow = {
         }
 
         paynow.blikButton.disable()
-        $.ajax($(paynow.selectors.form).data('action'), {
-            method: 'POST', type: 'POST',
-            data: {
-                'blikCode': $(paynow.selectors.blikCode).val().replace(/\s/g, ""),
-                'token': $(paynow.selectors.form).data('token')
-            },
-        }).success(function (data, textStatus, jqXHR) {
-            if (data.success === true) {
+        paynow.chargeBlik(
+            function (data, textStatus, jqXHR) {
                 window.location.href = data.redirect_url
-            } else {
+            },
+            function (data, textStatus, jqXHR) {
                 paynow.blikButton.enable()
                 $(paynow.selectors.blikErrorLabel).text(data.message)
                 prestashop.emit('paynow_event_blik_submit_fail', {
@@ -125,17 +120,18 @@ var paynow = {
                     textStatus: textStatus,
                     jqXHR: jqXHR,
                 })
+            },
+            function (jqXHR, textStatus, errorThrown) {
+                paynow.blikButton.enable()
+                $(paynow.selectors.blikErrorLabel).text($(paynow.selectors.form).data('error-message'))
+                prestashop.emit('paynow_event_blik_submit_fail', {
+                    type: 'xhr_error',
+                    jqXHR: jqXHR,
+                    textStatus: textStatus,
+                    errorThrown: errorThrown
+                })
             }
-        }).error(function (jqXHR, textStatus, errorThrown) {
-            paynow.blikButton.enable()
-            $(paynow.selectors.blikErrorLabel).text($(paynow.selectors.form).data('error-message'))
-            prestashop.emit('paynow_event_blik_submit_fail', {
-                type: 'xhr_error',
-                jqXHR: jqXHR,
-                textStatus: textStatus,
-                errorThrown: errorThrown
-            })
-        });
+        )
     },
 
     blikFormPrepare: function() {
@@ -195,6 +191,30 @@ var paynow = {
         if ($('#velsof_supercheckout_form').length) {
             $("#supercheckout_confirm_order").trigger('click')
         }
+    },
+
+    chargeBlik: function (onSuccess, onFail, onError) {
+        $.ajax($(paynow.selectors.form).data('action'), {
+            method: 'POST', type: 'POST',
+            data: {
+                'blikCode': $(paynow.selectors.blikCode).val().replace(/\s/g, ""),
+                'token': $(paynow.selectors.form).data('token')
+            },
+        }).success(function (data, textStatus, jqXHR) {
+            if (data.success === true) {
+                if (typeof onSuccess == 'function') {
+                    onSuccess(data, textStatus, jqXHR)
+                }
+            } else {
+                if (typeof onFail == 'function') {
+                    onFail(data, textStatus, jqXHR)
+                }
+            }
+        }).error(function (jqXHR, textStatus, errorThrown) {
+            if (typeof onError == 'function') {
+                onError(jqXHR, textStatus, errorThrown)
+            }
+        });
     },
 
     paymentButton: {
