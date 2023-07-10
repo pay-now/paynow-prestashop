@@ -101,6 +101,11 @@ var paynow = {
             return
         }
 
+        if (paynow.isOnePageCheckout()) {
+            paynow.triggerOnePageCheckoutPlaceOrder()
+            return;
+        }
+
         paynow.blikButton.disable()
         $.ajax($(paynow.selectors.form).data('action'), {
             method: 'POST', type: 'POST',
@@ -173,6 +178,22 @@ var paynow = {
         } else {
             paynow.paymentButton.disable();
             return false
+        }
+    },
+
+    isOnePageCheckout: function () {
+        // support for: Supercheckout by Knownband
+        if ($('#velsof_supercheckout_form').length) {
+            return true
+        }
+
+        return false
+    },
+
+    triggerOnePageCheckoutPlaceOrder: function () {
+        // support for: Supercheckout by Knownband
+        if ($('#velsof_supercheckout_form').length) {
+            $("#supercheckout_confirm_order").trigger('click')
         }
     },
 
