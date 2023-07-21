@@ -117,13 +117,18 @@ class Paynow extends PaymentModule
 
     private function registerHooks()
     {
-        $registerStatus = $this->registerHook('header') &&
-            $this->registerHook('displayOrderDetail') &&
+        $registerStatus = $this->registerHook('displayOrderDetail') &&
             $this->registerHook('actionOrderStatusPostUpdate') &&
             $this->registerHook('actionOrderSlipAdd') &&
             $this->registerHook('displayAdminOrder') &&
             $this->registerHook('displayAdminAfterHeader') &&
             $this->registerHook('actionAdminControllerSetMedia');
+
+        if (version_compare(_PS_VERSION_, '8.1', 'ge')) {
+            $registerStatus &= $this->registerHook('displayHeader');
+        } else {
+            $registerStatus &= $this->registerHook('header');
+        }
 
         if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
             $registerStatus &= $this->registerHook('payment') &&
@@ -140,13 +145,18 @@ class Paynow extends PaymentModule
 
     private function unregisterHooks()
     {
-        $registerStatus = $this->unregisterHook('header') &&
-            $this->unregisterHook('displayOrderDetail') &&
+        $registerStatus = $this->unregisterHook('displayOrderDetail') &&
             $this->unregisterHook('actionOrderStatusPostUpdate') &&
             $this->unregisterHook('actionOrderSlipAdd') &&
             $this->unregisterHook('displayAdminOrder') &&
             $this->unregisterHook('displayAdminAfterHeader') &&
             $this->unregisterHook('actionAdminControllerSetMedia');
+
+        if (version_compare(_PS_VERSION_, '8.1', 'ge')) {
+            $registerStatus &= $this->unregisterHook('displayHeader');
+        } else {
+            $registerStatus &= $this->unregisterHook('header');
+        }
 
         if (version_compare(_PS_VERSION_, '1.7', 'lt')) {
             $registerStatus &= $this->unregisterHook('displayPaymentEU') &&
@@ -340,6 +350,16 @@ class Paynow extends PaymentModule
     {
         ContextCore::getContext()->controller->addCSS(($this->_path) . 'views/css/front.css', 'all');
         ContextCore::getContext()->controller->addJs(($this->_path) . 'views/js/front.js', 'all');
+    }
+
+    /**
+     * Prestashop 8.1 compatibility
+     *
+     * @return void
+     */
+    public function hookDisplayHeader()
+    {
+        $this->hookHeader();
     }
 
     public function getPaymentMethodTitle($payment_method_type): string
