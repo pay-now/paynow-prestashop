@@ -81,7 +81,7 @@ class PaynowFrontController extends ModuleFrontControllerCore
     protected function ajaxRender($value = null, $controller = null, $method = null)
     {
         header('Content-Type: application/json');
-        if (version_compare(_PS_VERSION_, '1.7', 'gt')) {
+        if (version_compare(_PS_VERSION_, '1.7.4.4', 'gt')) {
             parent::ajaxRender($value, $controller, $method);
         } else {
             echo $value;
