@@ -98,8 +98,13 @@ class PaynowOrderStateProcessor
                     'Processing notification to create new order from cart',
                     $data
                 );
-                if ((float)$payment->total !== $cart->getCartTotalPrice()) {
-                    $data['cartTotalPrice'] = $cart->getCartTotalPrice();
+                if (method_exists($cart, 'getCartTotalPrice')) {
+                    $cartTotalPrice = $cart->getCartTotalPrice();
+                } else {
+                    $cartTotalPrice = $this->getCartTotalPrice($cart);
+                }
+                if ((float)$payment->total !== $cartTotalPrice) {
+                    $data['cartTotalPrice'] = $cartTotalPrice;
                     $data['paymentTotal'] = (float)$payment->total;
                     throw new PaynowNotificationStopProcessing(
                         'Inconsistent payment and cart amount.',
@@ -351,6 +356,24 @@ class PaynowOrderStateProcessor
         } else {
             throw new PaynowNotificationRetryProcessing($message, $data);
         }
+    }
+
+    private function getCartTotalPrice($cart): float
+    {
+        $summary = $cart->getSummaryDetails();
+
+        $id_order = (int)Order::getIdByCartId($cart->id);
+        $order = new Order($id_order);
+
+        if (Validate::isLoadedObject($order)) {
+            $taxCalculationMethod = $order->getTaxCalculationMethod();
+        } else {
+            $taxCalculationMethod = Group::getPriceDisplayMethod(Group::getCurrent()->id);
+        }
+
+        return $taxCalculationMethod == PS_TAX_EXC ?
+            (float)$summary['total_price_without_tax'] :
+            (float)$summary['total_price'];
     }
 
 }

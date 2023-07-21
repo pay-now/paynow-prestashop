@@ -128,7 +128,7 @@ class PaynowPaymentOptions
                         'paymentMethodId' => $payment_method->getId()
                     ]
                 ),
-                'action_token' => Tools::encrypt($this->context->customer->secure_key),
+                'action_token' => Tools::encrypt($this->context->customer->secure_key ?? ''),
                 'error_message' => $this->getMessage('An error occurred during the payment process'),
                 'terms_message' => $this->getMessage('You have to accept terms and conditions'),
                 'blik_autofocus' => Configuration::get('PAYNOW_BLIK_AUTOFOCUS_ENABLED') === '0' ? '0' : '1',

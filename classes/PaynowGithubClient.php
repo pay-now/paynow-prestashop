@@ -41,7 +41,7 @@ class PaynowGithubClient
         try {
             return json_decode($this->client->sendRequest($request)->getBody()->getContents());
         } catch (ClientExceptionInterface $exception) {
-            PaynowLogger::error("Error occurred during retrieving github latest release information {message={}}", $exception->getMessage());
+            PaynowLogger::error("Error occurred during retrieving github latest release information {message={}}", [$exception->getMessage()]);
         }
 
         return null;
