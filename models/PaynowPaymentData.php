@@ -356,7 +356,7 @@ class PaynowPaymentData extends ObjectModel
         if ($createNew && !$payment) {
             // order check
             $order = Order::getByReference($external_id);
-            if (!Validate::isLoadedObject($order)) {
+            if (Validate::isLoadedObject($order)) {
                 PaynowPaymentData::create(
                     $payment_id,
                     Paynow\Model\Payment\Status::STATUS_NEW,
@@ -372,7 +372,7 @@ class PaynowPaymentData extends ObjectModel
             // cart check
             [$cart_id, $random] = explode('_', $external_id);
             $cart = new Cart($cart_id);
-            if (!Validate::isLoadedObject($cart)) {
+            if (Validate::isLoadedObject($cart)) {
                 PaynowPaymentData::create(
                     $payment_id,
                     Paynow\Model\Payment\Status::STATUS_NEW,
