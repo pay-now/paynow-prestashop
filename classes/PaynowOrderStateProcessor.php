@@ -133,7 +133,8 @@ class PaynowOrderStateProcessor
 
         $order = new Order($payment->id_order);
         if (!Validate::isLoadedObject($order)) {
-            throw new PaynowNotificationStopProcessing(
+            $this->retryProcessingNTimes(
+                $payment,
                 'Skipped processing. Order not found.',
                 $data
             );
