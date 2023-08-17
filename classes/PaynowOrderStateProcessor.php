@@ -133,6 +133,7 @@ class PaynowOrderStateProcessor
 
         $order = new Order($payment->id_order);
         if (!Validate::isLoadedObject($order)) {
+            $data['payment->id_order'] = var_export($payment->id_order, true);
             $this->retryProcessingNTimes(
                 $payment,
                 'Skipped processing. Order not found.',
