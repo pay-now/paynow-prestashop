@@ -35,6 +35,7 @@ include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
 include_once(dirname(__FILE__) . '/classes/PaynowPaymentProcessor.php');
 include_once(dirname(__FILE__) . '/classes/PaynowPaymentDataBuilder.php');
 include_once(dirname(__FILE__) . '/classes/PaynowGithubClient.php');
+include_once(dirname(__FILE__) . '/classes/PaynowLockingHelper.php');
 
 class Paynow extends PaymentModule
 {

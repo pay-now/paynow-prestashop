@@ -34,6 +34,8 @@ class PaynowPaymentProcessor
 
     private $paymentDataBuilder;
 
+    private $externalId = null;
+
     /**
      * @param Context $context
      * @param $module
@@ -55,9 +57,8 @@ class PaynowPaymentProcessor
     public function process(): array
     {
         if (PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') && ! empty($this->module->currentOrder)) {
-            $order       = new Order($this->module->currentOrder);
-            $external_id = $order->reference;
-            $payment     = $this->processFromOrder($order, $external_id);
+            $order   = new Order($this->module->currentOrder);
+            $payment = $this->processFromOrder($order, $this->getExternalId());
 
             PaynowPaymentData::create(
                 $payment->getPaymentId(),
@@ -69,9 +70,8 @@ class PaynowPaymentProcessor
                 $order->total_paid
             );
         } else {
-            $cart        = $this->context->cart;
-            $external_id = uniqid($cart->id . '_', false);
-            $payment     = $this->processFromCart($cart, $external_id);
+            $cart    = $this->context->cart;
+            $payment = $this->processFromCart($cart, $this->getExternalId());
 
             PaynowPaymentData::create(
                 $payment->getPaymentId(),
@@ -79,7 +79,7 @@ class PaynowPaymentProcessor
                 null,
                 $cart->id,
                 null,
-                $external_id,
+                $this->getExternalId(),
                 $cart->getOrderTotal()
             );
         }
@@ -88,7 +88,7 @@ class PaynowPaymentProcessor
             'Payment has been successfully created {cartId={}, externalId={}, paymentId={}, status={}}',
             [
                 $this->context->cart->id,
-                $external_id,
+                $this->getExternalId(),
                 $payment->getPaymentId(),
                 $payment->getStatus()
             ]
@@ -98,8 +98,20 @@ class PaynowPaymentProcessor
             'payment_id'   => $payment->getPaymentId(),
             'status'       => $payment->getStatus(),
             'redirect_url' => $payment->getRedirectUrl() ?? null,
-            'external_id'  => $external_id
+            'external_id'  => $this->getExternalId()
         ];
+    }
+
+    /**
+     * @return string
+     */
+    public function getExternalId(): string
+    {
+        if (empty($this->externalId)) {
+            $this->generateExternalId();
+        }
+
+        return $this->externalId;
     }
 
     /**
@@ -143,6 +155,22 @@ class PaynowPaymentProcessor
     private function generateIdempotencyKey($external_id): string
     {
         return substr(uniqid($external_id . '_', true), 0, 45);
+    }
+
+    /**
+     * @return void
+     */
+    private function generateExternalId(): void
+    {
+        if (PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') && ! empty($this->module->currentOrder)) {
+            $order = new Order($this->module->currentOrder);
+
+            $this->externalId = $order->reference;
+        } else {
+            $cart = $this->context->cart;
+
+            $this->externalId = uniqid($cart->id . '_', false);
+        }
     }
 
     /**
