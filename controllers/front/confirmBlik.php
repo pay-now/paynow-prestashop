@@ -41,6 +41,9 @@ class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
             PaynowLogger::debug('confirmBlik: status processing ended', $statusToProcess);
         } catch (Exception $e) {
             $statusToProcess['exception'] = $e->getMessage();
+            if (isset($e->logContext)) {
+                $statusToProcess['notificationContext'] = $e->logContext;
+            }
             PaynowLogger::debug('confirmBlik: status processing failed', $statusToProcess);
         }
 

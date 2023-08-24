@@ -133,6 +133,7 @@ class PaynowPaymentData extends ObjectModel
                     'exception' => $e->getMessage(),
                     'file' => $e->getFile(),
                     'line' => $e->getline(),
+                    'DB error' => Db::getInstance()->getMsgError(),
                 ]
             );
             throw $e;
@@ -170,6 +171,39 @@ class PaynowPaymentData extends ObjectModel
 
         return $queryBuilder
             ->where('external_id', '=', $external_id)
+            ->orderBy('created_at', 'desc')
+            ->getAll();
+    }
+
+    /**
+     * @param $order_id
+     *
+     * @return PrestaShopCollection
+     * @throws PrestaShopException
+     */
+    public static function findAllByOrderId($order_id)
+    {
+        Db::getInstance(_PS_USE_SQL_SLAVE_)->disableCache();
+        $queryBuilder = new PrestaShopCollection(self::class);
+
+        return $queryBuilder
+            ->where('id_order', '=', $order_id)
+            ->orderBy('created_at', 'desc')
+            ->getAll();
+    }
+    /**
+     * @param $cart_id
+     *
+     * @return PrestaShopCollection
+     * @throws PrestaShopException
+     */
+    public static function findAllByCartId($cart_id)
+    {
+        Db::getInstance(_PS_USE_SQL_SLAVE_)->disableCache();
+        $queryBuilder = new PrestaShopCollection(self::class);
+
+        return $queryBuilder
+            ->where('id_cart', '=', $cart_id)
             ->orderBy('created_at', 'desc')
             ->getAll();
     }
@@ -357,6 +391,13 @@ class PaynowPaymentData extends ObjectModel
             // order check
             $order = Order::getByReference($external_id);
             if (Validate::isLoadedObject($order)) {
+                $paymentData = PaynowPaymentData::getActiveByOrderId($order->id);
+                if (Validate::isLoadedObject($paymentData)) {
+                    $paymentData->external_id = $external_id;
+                    $paymentData->update();
+                    return $paymentData;
+                }
+
                 PaynowPaymentData::create(
                     $payment_id,
                     Paynow\Model\Payment\Status::STATUS_NEW,
@@ -373,6 +414,13 @@ class PaynowPaymentData extends ObjectModel
             [$cart_id, $random] = explode('_', $external_id);
             $cart = new Cart($cart_id);
             if (Validate::isLoadedObject($cart)) {
+                $paymentData = PaynowPaymentData::getActiveByCartId($cart->id);
+                if (Validate::isLoadedObject($paymentData)) {
+                    $paymentData->external_id = $external_id;
+                    $paymentData->update();
+                    return $paymentData;
+                }
+
                 PaynowPaymentData::create(
                     $payment_id,
                     Paynow\Model\Payment\Status::STATUS_NEW,
@@ -388,26 +436,51 @@ class PaynowPaymentData extends ObjectModel
         return $payment;
     }
 
+    /**
+     * @throws PrestaShopException
+     */
+    public static function getActiveByOrderId($order_id)
+    {
+        $payments = self::findAllByOrderId($order_id)->getResults();
+        foreach ($payments as $payment) {
+            if ($payment->active == '1') {
+                return $payment;
+            }
+        }
+        return false;
+    }
+    /**
+     * @throws PrestaShopException
+     */
+    public static function getActiveByCartId($order_id)
+    {
+        $payments = self::findAllByCartId($order_id)->getResults();
+        foreach ($payments as $payment) {
+            if ($payment->active == '1') {
+                return $payment;
+            }
+        }
+        return false;
+    }
+
     public static function setOptimisticLockByExternalId($external_id)
     {
         $data = PaynowPaymentData::findLastByExternalId($external_id);
         if ($data) {
             $data->locked      = 1;
             $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
-            if ($data->update()) {
-                PaynowLogger::debug(
-                    'Successfully set up optimistic lock on paynow data {externalId={}}',
-                    [
-                        $external_id
-                    ]
-                );
+            $changedRows = $data->update();
+            $logContext = [
+                'externalId' => $external_id,
+                'changedRows' => $changedRows,
+                'DB::getMsgError' => Db::getInstance()->getMsgError(),
+                'DB::Affected_Rows' => Db::getInstance()->Affected_Rows(),
+                'saved_model' => (array)$data
+            ];
+            if ($changedRows) {
+                PaynowLogger::debug('Successfully set up optimistic lock on paynow data', $logContext);
             } else {
-                PaynowLogger::warning(
-                    'Can\'t set optimistic lock due update error {externalId={}}',
-                    [
-                        $external_id
-                    ]
-                );
+                PaynowLogger::warning('Can\'t set optimistic lock due update error', $logContext);
             }
         } else {
             PaynowLogger::warning(
@@ -425,20 +498,18 @@ class PaynowPaymentData extends ObjectModel
         if ($data) {
             $data->locked      = 1;
             $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
-            if ($data->update()) {
-                PaynowLogger::debug(
-                    'Successfully set up optimistic lock on paynow data {cartId={}}',
-                    [
-                        $cart_id
-                    ]
-                );
+            $changedRows = $data->update();
+            $logContext = [
+                'cartId' => $cart_id,
+                'changedRows' => $changedRows,
+                'DB::getMsgError' => Db::getInstance()->getMsgError(),
+                'DB::Affected_Rows' => Db::getInstance()->Affected_Rows(),
+                'saved_model' => (array)$data
+            ];
+            if ($changedRows) {
+                PaynowLogger::debug('Successfully set up optimistic lock on paynow data', $logContext);
             } else {
-                PaynowLogger::warning(
-                    'Can\'t set optimistic lock due update error {cartId={}}',
-                    [
-                        $cart_id
-                    ]
-                );
+                PaynowLogger::warning('Can\'t set optimistic lock due update error', $logContext);
             }
         } else {
             PaynowLogger::warning(
@@ -456,20 +527,18 @@ class PaynowPaymentData extends ObjectModel
         if ($data) {
             $data->locked      = 0;
             $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
-            if ($data->update()) {
-                PaynowLogger::debug(
-                    'Successfully unset optimistic lock on paynow data {externalId={}}',
-                    [
-                        $external_id
-                    ]
-                );
+            $changedRows = $data->update();
+            $logContext = [
+                'externalId' => $external_id,
+                'changedRows' => $changedRows,
+                'DB::getMsgError' => Db::getInstance()->getMsgError(),
+                'DB::Affected_Rows' => Db::getInstance()->Affected_Rows(),
+                'saved_model' => (array)$data
+            ];
+            if ($changedRows) {
+                PaynowLogger::debug('Successfully unset optimistic lock on paynow data', $logContext);
             } else {
-                PaynowLogger::warning(
-                    'Can\'t unset optimistic lock due update error {externalId={}}',
-                    [
-                        $external_id
-                    ]
-                );
+                PaynowLogger::debug('Can\'t unset optimistic lock due update error', $logContext);
             }
         } else {
             PaynowLogger::warning(
@@ -487,20 +556,18 @@ class PaynowPaymentData extends ObjectModel
         if ($data) {
             $data->locked      = 0;
             $data->modified_at = (new DateTime())->format('Y-m-d H:i:s');
-            if ($data->update()) {
-                PaynowLogger::debug(
-                    'Successfully unset optimistic lock on paynow data {cartId={}}',
-                    [
-                        $cart_id
-                    ]
-                );
+            $changedRows = $data->update();
+            $logContext = [
+                'cartId' => $cart_id,
+                'changedRows' => $changedRows,
+                'DB::getMsgError' => Db::getInstance()->getMsgError(),
+                'DB::Affected_Rows' => Db::getInstance()->Affected_Rows(),
+                'saved_model' => (array)$data
+            ];
+            if ($changedRows) {
+                PaynowLogger::debug('Successfully unset optimistic lock on paynow data', $logContext);
             } else {
-                PaynowLogger::warning(
-                    'Can\'t unset optimistic lock due update error {cartId={}}',
-                    [
-                        $cart_id
-                    ]
-                );
+                PaynowLogger::warning('Can\'t unset optimistic lock due update error', $logContext);
             }
         } else {
             PaynowLogger::warning(
@@ -511,4 +578,6 @@ class PaynowPaymentData extends ObjectModel
             );
         }
     }
+
+
 }
