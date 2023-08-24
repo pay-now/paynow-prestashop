@@ -250,9 +250,14 @@ var paynow = {
             if (paynow.config.useCssClassDisabled) {
                 $(paynow.selectors.blikButton).removeClass('disabled');
             }
+        },
+        show: function () {
+            $(paynow.selectors.blikButton).show();
+        },
+        hide: function () {
+            $(paynow.selectors.blikButton).hide();
         }
-    },
-
+    }
 };
 
 

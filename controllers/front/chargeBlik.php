@@ -42,9 +42,14 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                 $this->ajaxRender(json_encode($response));
                 exit;
             }
+            $lockingHelper = new PaynowLockingHelper();
+            $paynowPaymentProcessor = new PaynowPaymentProcessor($this->context, $this->module);
+            $externalId = $paynowPaymentProcessor->getExternalId();
+
+            $lockingHelper->checkAndCreate($externalId);
 
             try {
-                $payment_data = (new PaynowPaymentProcessor($this->context, $this->module))->process();
+                $payment_data = $paynowPaymentProcessor->process();
                 if ($payment_data['status'] && in_array($payment_data['status'], [
                         Paynow\Model\Payment\Status::STATUS_NEW,
                         Paynow\Model\Payment\Status::STATUS_PENDING
@@ -124,6 +129,8 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                     $response['message'] = $this->translations['An error occurred during the payment process'];
                 }
             }
+
+            $lockingHelper->delete($externalId);
         } else {
             $response['message'] = $this->translations['An error occurred during the payment process'];
         }

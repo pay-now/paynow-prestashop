@@ -18,9 +18,13 @@ class PaynowOrderStateProcessor
     /** @var Paynow */
     public $module;
 
+    /** @var \PaynowLockingHelper */
+    private $lockingHelper;
+
     public function __construct($module)
     {
         $this->module = $module;
+        $this->lockingHelper = new PaynowLockingHelper();
     }
 
     /**
@@ -30,6 +34,26 @@ class PaynowOrderStateProcessor
      */
     public function processNotification($data)
     {
+        PaynowLogger::info('Lock checking...', $data);
+
+        $externalIdForLockingSystem = $data['externalId'] ?? $data['paymentId'] ?? 'unknown';
+        if ($this->lockingHelper->checkAndCreate($externalIdForLockingSystem)) {
+            for ($i = 1; $i<=3; $i++) {
+                sleep(1);
+                $isNotificationLocked = $this->lockingHelper->checkAndCreate($externalIdForLockingSystem);
+                if (!$isNotificationLocked) {
+                    break;
+                } elseif ($i == 3) {
+                    throw new PaynowNotificationRetryProcessing(
+                        'Skipped processing. Previous notification is still processing.',
+                        $data
+                    );
+                }
+            }
+        }
+
+        PaynowLogger::info('Lock passed successfully, notification validation starting.', $data);
+
         if (empty($data['modifiedAt'])) {
             $data['modifiedAt'] = (new DateTime('now', new DateTimeZone(Configuration::get('PS_TIMEZONE'))))->format('Y-m-d H:i:s');
         } else {
@@ -49,6 +73,7 @@ class PaynowOrderStateProcessor
         $payment = PaynowPaymentData::getActiveByExternalId($data['externalId'], true, $data['paymentId'] ?? 'unknown');
 
         if (empty($payment)) {
+            $this->lockingHelper->delete($externalIdForLockingSystem);
             throw new PaynowNotificationStopProcessing(
                 'Skipped processing. Payment, Order or Cart not found.',
                 $data
@@ -60,6 +85,7 @@ class PaynowOrderStateProcessor
         $data['activePaymentDate']      = $payment->sent_at;
 
         if ($payment->status === Status::STATUS_CONFIRMED) {
+            $this->lockingHelper->delete($externalIdForLockingSystem);
             throw new PaynowNotificationStopProcessing(
                 'Skipped processing. An order already has a paid status.',
                 $data
@@ -68,6 +94,7 @@ class PaynowOrderStateProcessor
 
         if ($data['status'] == $payment->status
             && $data['paymentId'] == $payment->id_payment) {
+            $this->lockingHelper->delete($externalIdForLockingSystem);
             throw new PaynowNotificationStopProcessing(
                 sprintf(
                     'Skipped processing. Transition status (%s) already consumed.',
@@ -106,6 +133,7 @@ class PaynowOrderStateProcessor
                 if ((float)$payment->total !== $cartTotalPrice) {
                     $data['cartTotalPrice'] = $cartTotalPrice;
                     $data['paymentTotal'] = (float)$payment->total;
+                    $this->lockingHelper->delete($externalIdForLockingSystem);
                     throw new PaynowNotificationStopProcessing(
                         'Inconsistent payment and cart amount.',
                         $data
@@ -125,6 +153,7 @@ class PaynowOrderStateProcessor
         }
 
         if (!empty($payment->sent_at) && $payment->sent_at > $data['modifiedAt'] && !$isConfirmed) {
+            $this->lockingHelper->delete($externalIdForLockingSystem);
             throw new PaynowNotificationStopProcessing(
                 'Skipped processing. Order has newer status. Time travels are prohibited.',
                 $data
@@ -133,6 +162,7 @@ class PaynowOrderStateProcessor
 
         $order = new Order($payment->id_order);
         if (!Validate::isLoadedObject($order)) {
+            $data['payment->id_order'] = var_export($payment->id_order, true);
             $this->retryProcessingNTimes(
                 $payment,
                 'Skipped processing. Order not found.',
@@ -142,6 +172,7 @@ class PaynowOrderStateProcessor
 
         if ($order->module !== $this->module->name) {
             $data['orderModule'] = $order->module;
+            $this->lockingHelper->delete($externalIdForLockingSystem);
             throw new PaynowNotificationStopProcessing(
                 'Skipped processing. Order has other payment (other payment driver).',
                 $data
@@ -149,6 +180,7 @@ class PaynowOrderStateProcessor
         }
 
         if ((int)$order->current_state === (int)Configuration::get('PAYNOW_ORDER_CONFIRMED_STATE')) {
+            $this->lockingHelper->delete($externalIdForLockingSystem);
             throw new PaynowNotificationStopProcessing(
                 'Skipped processing. The order has already paid status.',
                 $data
@@ -242,6 +274,8 @@ class PaynowOrderStateProcessor
             $payment->sent_at = $data['modifiedAt'];
             $payment->save();
         }
+
+        $this->lockingHelper->delete($externalIdForLockingSystem);
 
     }
 
@@ -352,6 +386,7 @@ class PaynowOrderStateProcessor
         $payment->save();
 
         $data['counter'] = $payment->counter;
+        $this->lockingHelper->delete($data['externalId'] ?? $data['paymentId'] ?? 'unknown');
         if ($payment->counter >= $counter) {
             throw new PaynowNotificationStopProcessing($message, $data);
         } else {
