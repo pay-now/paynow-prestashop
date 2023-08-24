@@ -43,7 +43,7 @@ class PaynowLockingHelper
             }
         } catch ( \Exception $exception ) {
             PaynowLogger::error(
-                'Error occurred when creating locking dir {exception={}, file={}, line={}}',
+                'Error occurred when creating locking dir.',
                 [
                     'exception' => $exception->getMessage(),
                     'file' => $exception->getFile(),
