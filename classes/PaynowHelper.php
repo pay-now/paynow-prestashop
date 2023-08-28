@@ -29,8 +29,7 @@ class PaynowHelper
      */
     public static function canProcessCreateOrder(int $id_order, string $payment_status, int $payment_data_locked, bool $orders_exists): bool
     {
-        return PaynowConfigurationHelper::CREATE_ORDER_AFTER_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') &&
-            Status::STATUS_CONFIRMED === $payment_status &&
+        return Status::STATUS_CONFIRMED === $payment_status &&
             0 === $id_order &&
             0 === $payment_data_locked &&
             false === $orders_exists;
