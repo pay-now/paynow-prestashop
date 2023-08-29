@@ -31,7 +31,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             );
             (new PaynowOrderStateProcessor($this->module))->processNotification($notification_data);
         } catch (SignatureVerificationException | InvalidArgumentException $e) {
-            $notification_data['exeption'] = $e->getMessage();
+            $notification_data['exception'] = $e->getMessage();
             PaynowLogger::error('Notification: Signature verification failed', $notification_data);
             header('HTTP/1.1 400 Bad Request', true, 400);
             ob_clean();
@@ -50,7 +50,7 @@ class PaynowNotificationsModuleFrontController extends PaynowFrontController
             exit;
         } catch (Exception $e) {
             $notification_data['responseCode'] = 400;
-            $notification_data['exeption'] = $e->getMessage();
+            $notification_data['exception'] = $e->getMessage();
             $notification_data['file'] = $e->getFile();
             $notification_data['line'] = $e->getLine();
             PaynowLogger::error('Notification: unknown error', $notification_data);
