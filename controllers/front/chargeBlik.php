@@ -42,6 +42,17 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                 $this->ajaxRender(json_encode($response));
                 exit;
             }
+            if (method_exists($cart, 'checkQuantities') && !$cart->checkQuantities()) {
+                PaynowLogger::warning(
+                    'Can\'t process charge BLIK payment due wrong cart quantities {cartId={}}',
+                    [
+                        Context::getContext()->cart->id
+                    ]
+                );
+                $response['message'] = $this->translations['An error occurred during the cart validation'];
+                $this->ajaxRender(json_encode($response));
+                exit;
+            }
             $lockingHelper = new PaynowLockingHelper();
             $paynowPaymentProcessor = new PaynowPaymentProcessor($this->context, $this->module);
             $externalId = $paynowPaymentProcessor->getExternalId();
