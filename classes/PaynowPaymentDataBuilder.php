@@ -114,6 +114,10 @@ class PaynowPaymentDataBuilder
             )
         ];
 
+        if (!empty($id_customer)){
+            $request['buyer']['externalId'] = md5($id_customer.$this->module->getSignatureKey());
+        }
+
         if (! empty(Tools::getValue('paymentMethodId'))) {
             $request['paymentMethodId'] = (int)Tools::getValue('paymentMethodId');
         }
