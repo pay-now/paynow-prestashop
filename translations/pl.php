@@ -32,6 +32,7 @@ $_MODULE['<{paynow}prestashop>paynow_25ff02e309aae3d0482fbed45779775e'] = 'Mapow
 $_MODULE['<{paynow}prestashop>paynow_44b5c9fa000917ab5298c433fbf6363c'] = 'Oczekuje na potwierdzenie płatności';
 $_MODULE['<{paynow}prestashop>paynow_9c177322910ae897716f7e2b34aca357'] = 'Płatność została zatwierdzona przez kupującego';
 $_MODULE['<{paynow}prestashop>paynow_cd10dcbd7081dbda3934081dba30ab75'] = 'Płatność nie została zatwierdzona przez kupującego';
+$_MODULE['<{paynow}prestashop>paynow_fd823811758abff881e9c8e90f0a977f'] = 'Podczas sprawdzania koszyka wystąpił błąd';
 $_MODULE['<{paynow}prestashop>paynow_2aa54c4496c22d7f7c4fb1694d0410f8'] = 'Podczas płatności wystąpił błąd i płatność nie została ukończona';
 $_MODULE['<{paynow}prestashop>paynow_d17d037e4749f139ee93457a11db123a'] = 'Podczas płatności wystąpił błąd';
 $_MODULE['<{paynow}prestashop>paynow_98e9b6c8cf34382f367422a0c20f6f06'] = 'Płatność została porzucona przez kupującego';
