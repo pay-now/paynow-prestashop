@@ -32,6 +32,7 @@ $jscomp.polyfill=function(a,n,f,p){if(n){f=$jscomp.global;a=a.split(".");for(p=0
 var paynow = {
 
     config: {
+        allTermsHaveToBeChecked: false,
         useCssClassDisabled: false,
         validateTerms: true
     },
@@ -51,6 +52,8 @@ var paynow = {
     },
 
     init: function(){
+        paynow.overrideDefaults();
+
         paynow.config.useCssClassDisabled = $(paynow.selectors.paymentButton).hasClass('disabled');
 
         $(document).on('click', paynow.selectors.blikButton, paynow.blikFormSubmit);
@@ -72,12 +75,34 @@ var paynow = {
 
     },
 
+    overrideDefaults: function() {
+        if (!window.hasOwnProperty('paynowOverrides')) {
+            return;
+        }
+
+        if (window.paynowOverrides.hasOwnProperty('selectors')) {
+            for (const [key, value] of Object.entries(window.paynowOverrides.selectors)) {
+                if (paynow.selectors.hasOwnProperty(key)) {
+                    paynow.selectors[key] = value;
+                }
+            }
+        }
+
+        if (window.paynowOverrides.hasOwnProperty('config')) {
+            for (const [key, value] of Object.entries(window.paynowOverrides.config)) {
+                if (paynow.config.hasOwnProperty(key)) {
+                    paynow.config[key] = value;
+                }
+            }
+        }
+    },
+
     termsValidate: function() {
         if (paynow.config.validateTerms == false) {
             return true
         }
 
-        if ($(paynow.selectors.terms).is(':checked')) {
+        if (paynow.isTermsChecked()) {
             $(paynow.selectors.termsErrorLabel).text('')
             return true
         } else {
@@ -168,7 +193,7 @@ var paynow = {
     },
 
     pblValidate: function () {
-        if (paynow.config.validateTerms && $(paynow.selectors.terms).is(':checked')) {
+        if (paynow.config.validateTerms && paynow.isTermsChecked()) {
             paynow.paymentButton.enable();
             return true
         } else {
@@ -184,6 +209,14 @@ var paynow = {
         }
 
         return false
+    },
+
+    isTermsChecked: function () {
+        if (paynow.config.allTermsHaveToBeChecked) {
+            return !$(paynow.selectors.terms).is(':not(:checked)')
+        } else {
+            return $(paynow.selectors.terms).is(':checked')
+        }
     },
 
     triggerOnePageCheckoutPlaceOrder: function () {

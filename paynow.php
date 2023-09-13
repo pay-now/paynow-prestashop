@@ -47,7 +47,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.6.33';
+        $this->version = '1.6.34';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -787,6 +787,7 @@ class Paynow extends PaymentModule
             'Awaiting payment confirmation'                                                                                                                                                     => $this->l('Awaiting payment confirmation'),
             'Payment has been authorized by the buyer'                                                                                                                                          => $this->l('Payment has been authorized by the buyer'),
             'Payment has not been authorized by the buyer'                                                                                                                                      => $this->l('Payment has not been authorized by the buyer'),
+            'An error occurred during the cart validation'                                                                                                                                      => $this->l('An error occurred during the cart validation'),
             'An error occurred during the payment process and the payment could not be completed'                                                                                               => $this->l('An error occurred during the payment process and the payment could not be completed'),
             'An error occurred during the payment process'                                                                                                                                      => $this->l('An error occurred during the payment process.'),
             'Payment has been abandoned by the buyer'                                                                                                                                           => $this->l('Payment has been abandoned by the buyer'),

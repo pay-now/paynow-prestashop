@@ -398,7 +398,12 @@ class PaynowOrderStateProcessor
     {
         $summary = $cart->getSummaryDetails();
 
-        $id_order = (int)Order::getIdByCartId($cart->id);
+        if (version_compare(_PS_VERSION_, '1.7.1.0', 'ge')) {
+            $id_order = (int)Order::getIdByCartId($cart->id);
+        } else {
+            $id_order = (int)Order::getOrderByCartId($cart->id);
+        }
+
         $order = new Order($id_order);
 
         if (Validate::isLoadedObject($order)) {
