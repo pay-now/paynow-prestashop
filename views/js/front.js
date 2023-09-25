@@ -47,6 +47,8 @@ var paynow = {
         blikErrorLabel: 'form.paynow-blik-form span.error',
 
         pblMethod: 'div.paynow-payment-pbls input[name="paymentMethodId"]',
+        cardMethod: 'div.paynow-payment-card input[name="paymentMethodToken"]',
+        cardMethodOptions: 'div.paynow-payment-card .paynow-payment-card-option',
         paymentMethod: 'input[name="payment-option"]',
     },
 
@@ -56,9 +58,10 @@ var paynow = {
         $(document).on('click', paynow.selectors.blikButton, paynow.blikFormSubmit);
         $(document).on('keyup', paynow.selectors.blikCode, paynow.blikValidate);
         $(document).on('change', paynow.selectors.pblMethod, paynow.pblValidate);
-        $(document).on('change', paynow.selectors.paymentMethod, paynow.blikFormPrepare);
+        $(document).on('change', paynow.selectors.cardMethod, paynow.cardValidate);
+        $(document).on('change', paynow.selectors.paymentMethod, paynow.onPaymentOptionChange);
         $(document).on('change', paynow.selectors.terms, function(){
-            paynow.blikFormPrepare()
+            paynow.onPaymentOptionChange()
             paynow.termsValidate()
         });
 
@@ -134,7 +137,7 @@ var paynow = {
         )
     },
 
-    blikFormPrepare: function() {
+    onPaymentOptionChange: function () {
         if ($(paynow.selectors.blikCode).length != 1) {
             return
         }
@@ -148,10 +151,17 @@ var paynow = {
         if ($(paynow.selectors.blikCode).is(':visible')) {
             paynow.paymentButton.disable()
             paynow.paymentButton.hide()
+        } else if ($(paynow.selectors.cardMethodOptions).is(':visible') && !$(paynow.selectors.cardMethod + ':checked').length) {
+            paynow.paymentButton.disable()
         } else {
             paynow.paymentButton.enable()
             paynow.paymentButton.show()
         }
+    },
+
+    // backward compatibility
+    blikFormPrepare: function() {
+        paynow.onPaymentOptionChange()
     },
 
     blikValidate: function () {
@@ -163,6 +173,18 @@ var paynow = {
             return true
         } else {
             paynow.blikButton.disable()
+            return false
+        }
+    },
+
+    cardValidate: function () {
+        const checkedCardOption = $(paynow.selectors.cardMethod + ':checked');
+
+        if (checkedCardOption.length && (!paynow.config.validateTerms || $(paynow.selectors.terms).is(':checked'))) {
+            paynow.paymentButton.enable();
+            return true
+        } else {
+            paynow.paymentButton.disable();
             return false
         }
     },

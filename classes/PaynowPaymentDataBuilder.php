@@ -130,6 +130,10 @@ class PaynowPaymentDataBuilder
             $request['authorizationCode'] = (int)preg_replace('/\s+/', '', Tools::getValue('blikCode'));
         }
 
+        if (!empty(Tools::getValue('paymentMethodToken'))) {
+            $request['paymentMethodToken'] = Tools::getValue('paymentMethodToken');
+        }
+
         if (Configuration::get('PAYNOW_SEND_ORDER_ITEMS')) {
             $products    = $this->context->cart->getProducts(true);
             $order_items = [];

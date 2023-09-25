@@ -239,3 +239,83 @@ p.payment_module.paynow button:after {
         padding: 1rem;
     }
 }
+
+.paynow-payment-card-option {
+    margin-bottom: 10px;
+}
+
+.paynow-payment-card-option:last-child {
+    margin-bottom: 20px;
+}
+
+.paynow-payment-card-option input {
+    display: none;
+}
+
+.paynow-payment-card-option label, .paynow-payment-card-option button {
+    border: 1px solid #D2D2D2;
+    border-radius: 3px;
+    display: flex !important;
+    align-items: stretch;
+    height: 60px;
+    width: 100%;
+    margin: 0;
+    background-color: transparent;
+}
+
+.paynow-payment-card-option input[type=radio]:checked + label {
+    background: #f3f3f3;
+}
+
+.paynow-payment-card-option input[type=radio]:not(:disabled) + label {
+    cursor: pointer;
+}
+
+.paynow-payment-card-details {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.paynow-payment-card-details p {
+    margin: 0;
+    text-align: left;
+}
+
+.paynow-payment-card-details-card-name {
+    font-size: 12px;
+    line-height: 20px;
+    color: #000000;
+}
+
+.paynow-payment-card-details-card-name.paynow-expired {
+    color: #8E8E8E;
+}
+
+.paynow-payment-card-details-expiration {
+    font-size: 10px;
+    line-height: 20px;
+    color: #8E8E8E;
+}
+
+.paynow-payment-card-details-expiration.paynow-expired {
+    color: #E52E07;
+}
+
+.paynow-payment-card-image {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 96px;
+}
+
+.paynow-payment-card-image img {
+    max-width: 40px;
+    max-height: 24px;
+}
+
+.paynow-payment-card-image.--double img {
+    max-width: 20px;
+    max-height: 12px;
+}
