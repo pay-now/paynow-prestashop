@@ -278,7 +278,8 @@ class Paynow extends PaymentModule
             $this->getApiKey(),
             $this->getSignatureKey(),
             $this->isSandboxEnabled() ? \Paynow\Environment::SANDBOX : \Paynow\Environment::PRODUCTION,
-            'Prestashop-' . _PS_VERSION_ . '/Plugin-' . $this->version
+            'Prestashop-' . _PS_VERSION_ . '/Plugin-' . $this->version,
+            \Paynow\Configuration::API_VERSION_V3
         );
     }
 
@@ -468,14 +469,24 @@ class Paynow extends PaymentModule
                                     'blik_autofocus' => Configuration::get('PAYNOW_BLIK_AUTOFOCUS_ENABLED') === '0' ? '0' : '1',
                                 ]);
                             }
-                            array_push($payment_options, [
+
+                            $payment_option = [
                                 'name' => $this->getPaymentMethodTitle($payment_method->getType()),
                                 'image' => $payment_method->getImage(),
                                 'id' => $payment_method->getId(),
                                 'enabled' => $payment_method->isEnabled(),
                                 'type' => $payment_method->getType(),
                                 'authorization' => $payment_method->getAuthorizationType(),
-                            ]);
+                            ];
+
+                            if (Paynow\Model\PaymentMethods\Type::CARD == $payment_method->getType()) {
+                                $payment_option['action_card'] = PaynowLinkHelper::getPaymentUrl([
+                                    'paymentMethodId' => $payment_method->getId()
+                                ]);
+                                $payment_option['instruments'] = $payment_method->getSavedInstruments();
+                            }
+
+                            array_push($payment_options, $payment_option);
                         }
                         $list[$payment_method->getType()] = $payment_method->getId();
                     }

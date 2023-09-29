@@ -114,6 +114,10 @@ class PaynowPaymentDataBuilder
             )
         ];
 
+        if (!empty($id_customer)){
+            $request['buyer']['externalId'] = md5($id_customer.$this->module->getSignatureKey());
+        }
+
         if (! empty(Tools::getValue('paymentMethodId'))) {
             $request['paymentMethodId'] = (int)Tools::getValue('paymentMethodId');
         }
@@ -124,6 +128,10 @@ class PaynowPaymentDataBuilder
 
         if (! empty(Tools::getValue('blikCode'))) {
             $request['authorizationCode'] = (int)preg_replace('/\s+/', '', Tools::getValue('blikCode'));
+        }
+
+        if (!empty(Tools::getValue('paymentMethodToken'))) {
+            $request['paymentMethodToken'] = Tools::getValue('paymentMethodToken');
         }
 
         if (Configuration::get('PAYNOW_SEND_ORDER_ITEMS')) {

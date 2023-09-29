@@ -10,7 +10,7 @@
 *}
 {if !empty($payment_options)}
     {foreach from=$payment_options item=method}
-        {if ($method.type !== 'BLIK' AND $method.type !== 'PBL' ||  ($method.type == 'BLIK' AND $method.authorization != 'CODE')) }
+        {if ($method.type !== 'BLIK' AND $method.type !== 'PBL' AND $method.type !== 'CARD' ||  ($method.type == 'BLIK' AND $method.authorization != 'CODE') || ($method.type == 'CARD' AND empty($method.instruments))) }
             <form action="{$paynow_url|escape:'htmlall':'UTF-8'}" method="POST">
         {/if}
         <p class="payment_module paynow{if !empty($method.pbls)} with-pbls{/if}">
@@ -24,9 +24,12 @@
                 {if $method.authorization == 'CODE'}
                     {include file="./_partials/payment_method_blik_form.tpl"}
                 {/if}
+                {if ($method.type == 'CARD' AND !empty($method.instruments))}
+                    {include file="./_partials/payment_method_card_form.tpl"}
+                {/if}
             {/if}
         </p>
-        {if ($method.type !== 'BLIK' AND $method.type !== 'PBL' ||  ($method.type == 'BLIK' AND $method.authorization != 'CODE')) }
+        {if ($method.type !== 'BLIK' AND $method.type !== 'PBL' AND $method.type !== 'CARD' ||  ($method.type == 'BLIK' AND $method.authorization != 'CODE') || ($method.type == 'CARD' AND empty($method.instruments))) }
             </form>
         {/if}
     {/foreach}
