@@ -138,7 +138,13 @@ class PaynowPaymentOptions
                 'action_card' => PaynowLinkHelper::getPaymentUrl([
                     'paymentMethodId' => $payment_method->getId()
                 ]),
-                'paynowCardInstruments' => $payment_method->getSavedInstruments(),
+                'action_remove_saved_instrument' => Context::getContext()->link->getModuleLink(
+                    'paynow',
+                    'removeSavedInstrument'
+                ),
+                'action_remove_saved_instrument_token' => Tools::encrypt($this->context->customer->secure_key),
+                'dots_image' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->module->name . '/views/img/three-dots.svg'),
+                'paynow_card_instruments' => $payment_method->getSavedInstruments(),
             ]);
         }
     }

@@ -480,10 +480,18 @@ class Paynow extends PaymentModule
                             ];
 
                             if (Paynow\Model\PaymentMethods\Type::CARD == $payment_method->getType()) {
-                                $payment_option['action_card'] = PaynowLinkHelper::getPaymentUrl([
-                                    'paymentMethodId' => $payment_method->getId()
+                                $payment_option = array_merge($payment_option, [
+                                    'action_card' => PaynowLinkHelper::getPaymentUrl([
+                                        'paymentMethodId' => $payment_method->getId()
+                                    ]),
+                                    'action_remove_saved_instrument' => Context::getContext()->link->getModuleLink(
+                                        'paynow',
+                                        'removeSavedInstrument'
+                                    ),
+                                    'action_token' => Tools::encrypt($this->context->customer->secure_key),
+                                    'dots_image' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/three-dots.svg'),
+                                    'instruments' => $payment_method->getSavedInstruments(),
                                 ]);
-                                $payment_option['instruments'] = $payment_method->getSavedInstruments();
                             }
 
                             array_push($payment_options, $payment_option);

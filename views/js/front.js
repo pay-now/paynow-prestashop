@@ -51,6 +51,9 @@ var paynow = {
         cardMethod: 'div.paynow-payment-card input[name="paymentMethodToken"]',
         cardMethodOptions: 'div.paynow-payment-card .paynow-payment-card-option',
         paymentMethod: 'input[name="payment-option"]',
+
+        cardMethodMiniMenuOpen: '.paynow-payment-card-menu .paynow-payment-card-menu-button',
+        cardMethodRemove: '[data-remove-saved-instrument]',
     },
 
     init: function(){
@@ -67,6 +70,8 @@ var paynow = {
             paynow.onPaymentOptionChange()
             paynow.termsValidate()
         });
+        $(document).on('click', paynow.selectors.cardMethodMiniMenuOpen, paynow.toggleCardMiniMenu);
+        $(document).on('click', paynow.selectors.cardMethodRemove, paynow.removeSavedInstrument);
 
         var termsErrorPlaceholderExists = $(paynow.selectors.terms).length != 0
             && $(paynow.selectors.termsLabel).length != 0
@@ -233,6 +238,10 @@ var paynow = {
         return false
     },
 
+    toggleCardMiniMenu: function (e) {
+        $(e.currentTarget).siblings().toggleClass('--hidden')
+    },
+
     isTermsChecked: function () {
         if (paynow.config.allTermsHaveToBeChecked) {
             return !$(paynow.selectors.terms).is(':not(:checked)')
@@ -269,6 +278,29 @@ var paynow = {
             if (typeof onError == 'function') {
                 onError(jqXHR, textStatus, errorThrown)
             }
+        });
+    },
+
+    removeSavedInstrument: function (e) {
+        const target = $(e.currentTarget);
+        const savedInstrument = target.data('removeSavedInstrument');
+        const cardMethodOption = $('#' + savedInstrument);
+
+        cardMethodOption.addClass('loading');
+        $.ajax(target.data('action'), {
+            method: 'POST', type: 'POST',
+            data: {
+                'savedInstrumentToken': savedInstrument,
+                'token': target.data('token'),
+            },
+        }).success(function (data, textStatus, jqXHR) {
+            if (data.success === true) {
+                cardMethodOption.remove();
+            } else {
+                cardMethodOption.removeClass('loading');
+            }
+        }).error(function (jqXHR, textStatus, errorThrown) {
+            cardMethodOption.removeClass('loading');
         });
     },
 
