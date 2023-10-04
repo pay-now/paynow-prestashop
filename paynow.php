@@ -18,6 +18,7 @@ include_once(dirname(__FILE__) . '/vendor/autoload.php');
 include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
 include_once(dirname(__FILE__) . '/classes/PaynowLogger.php');
 include_once(dirname(__FILE__) . '/classes/PaynowHelper.php');
+include_once(dirname(__FILE__) . '/classes/PaynowKeysGenerator.php');
 include_once(dirname(__FILE__) . '/classes/PaynowNotificationRetryProcessing.php');
 include_once(dirname(__FILE__) . '/classes/PaynowNotificationStopProcessing.php');
 include_once(dirname(__FILE__) . '/classes/PaynowConfigurationHelper.php');
@@ -388,7 +389,7 @@ class Paynow extends PaymentModule
     {
         $total = number_format($this->context->cart->getOrderTotal() * 100, 0, '', '');
         $currency = new Currency($this->context->cart->id_currency);
-        return (new PaynowPaymentMethodsHelper($this->getPaynowClient()))->getAvailable($currency->iso_code, $total);
+        return (new PaynowPaymentMethodsHelper($this->getPaynowClient()))->getAvailable($currency->iso_code, $total, $this->context);
     }
 
     private function getGDPRNotices(): array
