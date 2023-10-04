@@ -128,7 +128,7 @@ class PaynowPaymentProcessor
                 $order->reference
             ]
         );
-        $idempotency_key      = $this->generateIdempotencyKey($external_id);
+        $idempotency_key      = PaynowKeysGenerator::generateIdempotencyKey($external_id);
         $payment_request_data = $this->paymentDataBuilder->fromOrder($order);
 
         return $this->sendPaymentRequest($payment_request_data, $idempotency_key);
@@ -146,15 +146,10 @@ class PaynowPaymentProcessor
                 $external_id
             ]
         );
-        $idempotency_key      = $this->generateIdempotencyKey($external_id);
+        $idempotency_key      = PaynowKeysGenerator::generateIdempotencyKey($external_id);
         $payment_request_data = $this->paymentDataBuilder->fromCart($cart, $external_id);
 
         return $this->sendPaymentRequest($payment_request_data, $idempotency_key);
-    }
-
-    private function generateIdempotencyKey($external_id): string
-    {
-        return substr(uniqid($external_id . '_', true), 0, 45);
     }
 
     /**
@@ -165,11 +160,11 @@ class PaynowPaymentProcessor
         if (PaynowConfigurationHelper::CREATE_ORDER_BEFORE_PAYMENT === (int)Configuration::get('PAYNOW_CREATE_ORDER_STATE') && ! empty($this->module->currentOrder)) {
             $order = new Order($this->module->currentOrder);
 
-            $this->externalId = $order->reference;
+            $this->externalId = PaynowKeysGenerator::generateExternalIdByOrder($order);
         } else {
             $cart = $this->context->cart;
 
-            $this->externalId = uniqid($cart->id . '_', false);
+            $this->externalId = PaynowKeysGenerator::generateExternalIdByCart($cart);
         }
     }
 

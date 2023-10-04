@@ -389,7 +389,7 @@ class Paynow extends PaymentModule
     {
         $total = number_format($this->context->cart->getOrderTotal() * 100, 0, '', '');
         $currency = new Currency($this->context->cart->id_currency);
-        return (new PaynowPaymentMethodsHelper($this->getPaynowClient()))->getAvailable($currency->iso_code, $total, $this->context);
+        return (new PaynowPaymentMethodsHelper($this->getPaynowClient()))->getAvailable($currency->iso_code, $total, $this->context, $this);
     }
 
     private function getGDPRNotices(): array

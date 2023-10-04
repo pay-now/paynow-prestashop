@@ -39,4 +39,14 @@ class PaynowKeysGenerator
     {
         return uniqid($cart->id . '_', false);
     }
+
+    /**
+     * @param $customerId
+     * @param $module
+     * @return string
+     */
+    public static function generateBuyerExternalId($customerId, $module): string
+    {
+        return md5($customerId . $module->getSignatureKey());
+    }
 }
