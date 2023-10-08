@@ -395,7 +395,7 @@ class Paynow extends PaymentModule
     private function getGDPRNotices(): array
     {
         $locale  = $this->context->language->locale ?? $this->context->language->language_code;
-        return (new PaynowGDPRHelper($this->getPaynowClient()))->getNotices($locale);
+        return (new PaynowGDPRHelper($this->getPaynowClient(), $this->context->cart))->getNotices($locale);
     }
 
     /** Returns is possible to show payment option

@@ -53,7 +53,6 @@ class PaynowPaymentMethodsHelper
                 $buyerExternalId = PaynowKeysGenerator::generateBuyerExternalId($context->cart->id_customer, $module);
             }
 
-
             return $this->payment_client->getPaymentMethods($currency_iso_code, $total, $idempotencyKey, $buyerExternalId);
         } catch (PaynowException $exception) {
             PaynowLogger::error(
