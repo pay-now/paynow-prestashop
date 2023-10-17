@@ -63,11 +63,12 @@ class PaynowFrontController extends ModuleFrontControllerCore
         );
     }
 
-    protected function getPaymentStatus($paymentId)
+    protected function getPaymentStatus($paymentId, $external_id)
     {
         PaynowLogger::info('Retrieving payment status {paymentId={}}', [$paymentId]);
         try {
-            $status = (new Paynow\Service\Payment($this->module->getPaynowClient()))->status($paymentId)->getStatus();
+            $idempotencyKey = PaynowKeysGenerator::generateIdempotencyKey($external_id);
+            $status = (new Paynow\Service\Payment($this->module->getPaynowClient()))->status($paymentId, $idempotencyKey)->getStatus();
             PaynowLogger::info('Retrieved payment status {paymentId={}, status={}}', [$paymentId, $status]);
 
             return $status;

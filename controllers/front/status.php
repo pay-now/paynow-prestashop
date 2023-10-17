@@ -34,7 +34,7 @@ class PaynowStatusModuleFrontController extends PaynowFrontController
             $payment = PaynowPaymentData::findLastByExternalId($external_id);
             $payment_status = $payment->status;
             if (Status::STATUS_CONFIRMED !== $payment->status) {
-                $payment_status_from_api = $this->getPaymentStatus($payment->id_payment);
+                $payment_status_from_api = $this->getPaymentStatus($payment->id_payment, $payment->external_id);
                 $statusToProcess = [
                     'status' => $payment_status_from_api,
                     'externalId' => $payment->external_id,

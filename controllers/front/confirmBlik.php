@@ -28,7 +28,7 @@ class PaynowConfirmBlikModuleFrontController extends PaynowFrontController
         }
 
         $this->order = new Order($this->payment->id_order);
-        $payment_status_from_api = $this->getPaymentStatus($this->payment->id_payment);
+        $payment_status_from_api = $this->getPaymentStatus($this->payment->id_payment, $external_id);
         $statusToProcess = [
             'status' => $payment_status_from_api,
             'externalId' => $this->payment->external_id,
