@@ -114,7 +114,7 @@ class PaynowPaymentDataBuilder
             )
         ];
 
-        if (!empty($id_customer)){
+        if (!empty($id_customer) && $this->context->customer && $this->context->customer->is_guest === '0'){
             $request['buyer']['externalId'] = md5($id_customer.$this->module->getSignatureKey());
         }
 

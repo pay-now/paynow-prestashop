@@ -49,7 +49,7 @@ class PaynowPaymentMethodsHelper
         try {
             $idempotencyKey = PaynowKeysGenerator::generateIdempotencyKey(PaynowKeysGenerator::generateExternalIdByCart($context->cart));
             $buyerExternalId = null;
-            if ($context->cart->id_customer) {
+            if ($context->customer && $context->customer->isLogged()) {
                 $buyerExternalId = PaynowKeysGenerator::generateBuyerExternalId($context->cart->id_customer, $module);
             }
 

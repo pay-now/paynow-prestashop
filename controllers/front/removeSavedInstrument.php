@@ -26,12 +26,24 @@ class PaynowRemoveSavedInstrumentModuleFrontController extends PaynowFrontContro
         ];
 
         if ($this->isTokenValid()) {
-            $savedInstrumentToken = Tools::getValue('savedInstrumentToken');
+            try {
+                $savedInstrumentToken = Tools::getValue('savedInstrumentToken');
 
-            $response = [
-                'success' => true,
-                'token' => $savedInstrumentToken,
-            ];
+                (new PaynowSavedInstrumentHelper($this->context, $this->module))->remove($savedInstrumentToken);
+
+                $response = [
+                    'success' => true,
+                ];
+            } catch (Exception $e) {
+                $response['error'] = $e->getMessage();
+                PaynowLogger::error(
+                    'An error occurred during saved instrument removal {code={}, message={}}',
+                    [
+                        $e->getCode(),
+                        $e->getMessage()
+                    ]
+                );
+            }
         }
 
         $this->ajaxRender(json_encode($response));
