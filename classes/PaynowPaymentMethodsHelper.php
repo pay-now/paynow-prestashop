@@ -39,19 +39,29 @@ class PaynowPaymentMethodsHelper
     /**
      * @param $currency_iso_code
      * @param $total
+     * @param $context
+     * @param $module
      *
      * @return PaymentMethods|null
      */
-    public function getAvailable($currency_iso_code, $total): ?PaymentMethods
+    public function getAvailable($currency_iso_code, $total, $context, $module): ?PaymentMethods
     {
         try {
-            return $this->payment_client->getPaymentMethods($currency_iso_code, $total);
+            $idempotencyKey = PaynowKeysGenerator::generateIdempotencyKey(PaynowKeysGenerator::generateExternalIdByCart($context->cart));
+            $buyerExternalId = null;
+            if ($context->cart->id_customer) {
+                $buyerExternalId = PaynowKeysGenerator::generateBuyerExternalId($context->cart->id_customer, $module);
+            }
+
+            return $this->payment_client->getPaymentMethods($currency_iso_code, $total, $idempotencyKey, $buyerExternalId);
         } catch (PaynowException $exception) {
             PaynowLogger::error(
-                'An error occurred during payment methods retrieve {code={}, message={}}',
+                'An error occurred during payment methods retrieve {code={}, message={}, errors={}, m={}}',
                 [
                     $exception->getCode(),
-                    $exception->getPrevious()->getMessage()
+                    $exception->getPrevious()->getMessage(),
+                    $exception->getErrors(),
+                    $exception->getMessage()
                 ]
             );
         }
