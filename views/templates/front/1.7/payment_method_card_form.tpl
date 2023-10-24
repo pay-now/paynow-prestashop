@@ -14,7 +14,7 @@
             <p>{l s='Select a saved card or enter new card details:' mod='paynow'}</p>
             <div class="paynow-payment-card">
                 {foreach from=$paynow_card_instruments item=instrument}
-                    <div class="paynow-payment-card-option" id="{$instrument->getToken()}">
+                    <div class="paynow-payment-card-option">
                         <input type="radio" name="paymentMethodToken" value="{$instrument->getToken()}" id="{$instrument->getToken()}" {if $instrument->isExpired()} disabled {/if}>
                         <label for="{$instrument->getToken()}">
                             <div class="paynow-payment-card-image">
