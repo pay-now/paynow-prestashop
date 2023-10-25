@@ -14,7 +14,7 @@
             <p>{l s='Select a saved card or enter new card details:' mod='paynow'}</p>
             <div class="paynow-payment-card">
                 {foreach from=$method.instruments item=instrument}
-                    <div class="paynow-payment-card-option">
+                    <div class="paynow-payment-card-option" id="wrapper-{$instrument->getToken()}">
                         <button name="paymentMethodToken" value="{$instrument->getToken()}" type="submit" {if $instrument->isExpired()} disabled {/if}>
                             <div class="paynow-payment-card-image">
                                 <img src="{$instrument->getImage()}" alt="{$instrument->getBrand()}">

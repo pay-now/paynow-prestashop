@@ -284,7 +284,7 @@ var paynow = {
     removeSavedInstrument: function (e) {
         const target = $(e.currentTarget);
         const savedInstrument = target.data('removeSavedInstrument');
-        const cardMethodOption = $('#' + savedInstrument);
+        const cardMethodOption = $('#wrapper-' + savedInstrument);
 
         cardMethodOption.addClass('loading');
         $.ajax(target.data('action'), {
