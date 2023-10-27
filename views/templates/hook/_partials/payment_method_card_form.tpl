@@ -31,7 +31,7 @@
                         </button>
                         <div class="paynow-payment-card-menu">
                             <button class="paynow-payment-card-menu-button" type="button">
-                                <img src="{$method.dots_image}" alt="three dots icon">
+                                {l s='remove' mod='paynow'}
                             </button>
                             <button
                                 class="paynow-payment-card-remove --hidden" type="button"
@@ -46,9 +46,8 @@
                 {/foreach}
                 <div class="paynow-payment-card-option">
                     <button name="paymentMethodToken" value="" type="submit">
-                        <div class="paynow-payment-card-image --double">
-                            <img src="https://static.sandbox.paynow.pl/payment-method-icons/visa.png" alt="VISA">
-                            <img src="https://static.sandbox.paynow.pl/payment-method-icons/mastercard.png" alt="MASTERCARD">
+                        <div class="paynow-payment-card-image">
+                            <img src="{$method.default_card_image}" alt="Card default icon">
                         </div>
                         <div class="paynow-payment-card-details">
                             <p class="paynow-payment-card-details-card-name">{l s='Enter your new card details' mod='paynow'}</p>

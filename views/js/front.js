@@ -72,6 +72,9 @@ var paynow = {
         });
         $(document).on('click', paynow.selectors.cardMethodMiniMenuOpen, paynow.toggleCardMiniMenu);
         $(document).on('click', paynow.selectors.cardMethodRemove, paynow.removeSavedInstrument);
+        $(document).on('click', function (ev) {
+            paynow.closeMiniMenu(ev)
+        });
 
         var termsErrorPlaceholderExists = $(paynow.selectors.terms).length != 0
             && $(paynow.selectors.termsLabel).length != 0
@@ -236,6 +239,12 @@ var paynow = {
         }
 
         return false
+    },
+
+    closeMiniMenu: function (e) {
+        if (!$(e.target).is(paynow.selectors.cardMethodRemove) && !$(e.target).is(paynow.selectors.cardMethodMiniMenuOpen)) {
+            $(paynow.selectors.cardMethodRemove).addClass('--hidden')
+        }
     },
 
     toggleCardMiniMenu: function (e) {

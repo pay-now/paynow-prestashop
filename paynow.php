@@ -491,7 +491,7 @@ class Paynow extends PaymentModule
                                         'removeSavedInstrument'
                                     ),
                                     'action_token' => Tools::encrypt($this->context->customer->secure_key),
-                                    'dots_image' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/three-dots.svg'),
+                                    'default_card_image' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/card-default.svg'),
                                     'instruments' => $payment_method->getSavedInstruments(),
                                 ]);
                             }

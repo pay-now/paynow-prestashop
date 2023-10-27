@@ -32,7 +32,7 @@
                         </label>
                         <div class="paynow-payment-card-menu">
                             <button class="paynow-payment-card-menu-button" type="button">
-                                <img src="{$dots_image}" alt="three dots icon">
+                                {l s='remove' mod='paynow'}
                             </button>
                             <button
                                     class="paynow-payment-card-remove --hidden" type="button"
@@ -48,9 +48,8 @@
                 <div class="paynow-payment-card-option">
                     <input type="radio" name="paymentMethodToken" value="" id="paymentMethodToken-default">
                     <label for="paymentMethodToken-default">
-                        <div class="paynow-payment-card-image --double">
-                            <img src="https://static.sandbox.paynow.pl/payment-method-icons/visa.png" alt="VISA">
-                            <img src="https://static.sandbox.paynow.pl/payment-method-icons/mastercard.png" alt="MASTERCARD">
+                        <div class="paynow-payment-card-image">
+                            <img src="{$default_card_image}" alt="Card default icon">
                         </div>
                         <div class="paynow-payment-card-details">
                             <p class="paynow-payment-card-details-card-name">{l s='Enter your new card details' mod='paynow'}</p>
