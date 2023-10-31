@@ -14,7 +14,7 @@
             <p>{l s='Select a saved card or enter new card details:' mod='paynow'}</p>
             <div class="paynow-payment-card">
                 {foreach from=$method.instruments item=instrument}
-                    <div class="paynow-payment-card-option">
+                    <div class="paynow-payment-card-option" id="wrapper-{$instrument->getToken()}">
                         <button name="paymentMethodToken" value="{$instrument->getToken()}" type="submit" {if $instrument->isExpired()} disabled {/if}>
                             <div class="paynow-payment-card-image">
                                 <img src="{$instrument->getImage()}" alt="{$instrument->getBrand()}">
@@ -29,13 +29,25 @@
                                 {/if}
                             </div>
                         </button>
+                        <div class="paynow-payment-card-menu">
+                            <button class="paynow-payment-card-menu-button" type="button">
+                                {l s='remove' mod='paynow'}
+                            </button>
+                            <button
+                                class="paynow-payment-card-remove --hidden" type="button"
+                                data-remove-saved-instrument="{$instrument->getToken()}"
+                                data-action="{$method.action_remove_saved_instrument}"
+                                data-token="{$method.action_token}"
+                            >
+                                {l s='Remove card' mod='paynow'}
+                            </button>
+                        </div>
                     </div>
                 {/foreach}
                 <div class="paynow-payment-card-option">
                     <button name="paymentMethodToken" value="" type="submit">
-                        <div class="paynow-payment-card-image --double">
-                            <img src="https://static.sandbox.paynow.pl/payment-method-icons/visa.png" alt="VISA">
-                            <img src="https://static.sandbox.paynow.pl/payment-method-icons/mastercard.png" alt="MASTERCARD">
+                        <div class="paynow-payment-card-image">
+                            <img src="{$method.default_card_image}" alt="Card default icon">
                         </div>
                         <div class="paynow-payment-card-details">
                             <p class="paynow-payment-card-details-card-name">{l s='Enter your new card details' mod='paynow'}</p>

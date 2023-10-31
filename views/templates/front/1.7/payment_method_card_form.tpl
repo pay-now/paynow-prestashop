@@ -8,13 +8,13 @@
 * @copyright mElements S.A.
 * @license   MIT License
 *}
-{if $paynowCardInstruments}
+{if $paynow_card_instruments}
     <form class="payment-form paynow-payment-form" action="{$action_card}" method="POST">
         <div class="paynow-payment-option-container">
             <p>{l s='Select a saved card or enter new card details:' mod='paynow'}</p>
             <div class="paynow-payment-card">
-                {foreach from=$paynowCardInstruments item=instrument}
-                    <div class="paynow-payment-card-option">
+                {foreach from=$paynow_card_instruments item=instrument}
+                    <div class="paynow-payment-card-option" id="wrapper-{$instrument->getToken()}">
                         <input type="radio" name="paymentMethodToken" value="{$instrument->getToken()}" id="{$instrument->getToken()}" {if $instrument->isExpired()} disabled {/if}>
                         <label for="{$instrument->getToken()}">
                             <div class="paynow-payment-card-image">
@@ -30,14 +30,26 @@
                                 {/if}
                             </div>
                         </label>
+                        <div class="paynow-payment-card-menu">
+                            <button class="paynow-payment-card-menu-button" type="button">
+                                {l s='remove' mod='paynow'}
+                            </button>
+                            <button
+                                    class="paynow-payment-card-remove --hidden" type="button"
+                                    data-remove-saved-instrument="{$instrument->getToken()}"
+                                    data-action="{$action_remove_saved_instrument}"
+                                    data-token="{$action_remove_saved_instrument_token}"
+                            >
+                                {l s='Remove card' mod='paynow'}
+                            </button>
+                        </div>
                     </div>
                 {/foreach}
                 <div class="paynow-payment-card-option">
                     <input type="radio" name="paymentMethodToken" value="" id="paymentMethodToken-default">
                     <label for="paymentMethodToken-default">
-                        <div class="paynow-payment-card-image --double">
-                            <img src="https://static.sandbox.paynow.pl/payment-method-icons/visa.png" alt="VISA">
-                            <img src="https://static.sandbox.paynow.pl/payment-method-icons/mastercard.png" alt="MASTERCARD">
+                        <div class="paynow-payment-card-image">
+                            <img src="{$default_card_image}" alt="Card default icon">
                         </div>
                         <div class="paynow-payment-card-details">
                             <p class="paynow-payment-card-details-card-name">{l s='Enter your new card details' mod='paynow'}</p>

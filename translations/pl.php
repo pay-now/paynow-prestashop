@@ -76,6 +76,8 @@ $_MODULE['<{paynow}prestashop>payment_method_card_form_76fd25c5c62f184483aea1dce
 $_MODULE['<{paynow}prestashop>payment_method_card_form_7896bdb62c4e9bd3baa9f8d56ffaa031'] = 'Wygasa:';
 $_MODULE['<{paynow}prestashop>payment_method_card_form_20d44104dfc61a9c2de2814c26208c2b'] = 'Wprowadź dane nowej karty';
 $_MODULE['<{paynow}prestashop>payment_method_card_form_f21bac71884b2f861ed0b5479e5607f3'] = 'Możesz ją zapisać w następnym kroku';
+$_MODULE['<{paynow}prestashop>payment_method_card_form_0f6969d7052da9261e31ddb6e88c136e'] = 'usuń';
+$_MODULE['<{paynow}prestashop>payment_method_card_form_3f9742a5b058d0a3f1b7ffa4eed8b9cc'] = 'Usuń kartę';
 $_MODULE['<{paynow}prestashop>payment_data_processing_info_43340e6cc4e88197d57f8d6d5ea50a46'] = 'Czytaj więcej';
 $_MODULE['<{paynow}prestashop>return_3eea8b36c11f4bdf099b22d3f8788cff'] = 'Zapłać przelewem online lub BLIK';
 $_MODULE['<{paynow}prestashop>return_f403ac95a07ddae169d88c4833ace3ce'] = 'Dziękujemy za złożenie zamówienia!';

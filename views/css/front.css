@@ -242,6 +242,11 @@ p.payment_module.paynow button:after {
 
 .paynow-payment-card-option {
     margin-bottom: 10px;
+    position: relative;
+}
+
+.paynow-payment-card-option.loading {
+    opacity: 0.4;
 }
 
 .paynow-payment-card-option:last-child {
@@ -315,7 +320,43 @@ p.payment_module.paynow button:after {
     max-height: 24px;
 }
 
-.paynow-payment-card-image.--double img {
-    max-width: 20px;
-    max-height: 12px;
+.paynow-payment-card-menu {
+    position: absolute;
+    bottom: 10px;
+    right: 13px;
+    z-index: 1;
+}
+
+.paynow-payment-card-option .paynow-payment-card-remove {
+    position: absolute;
+    height: auto;
+    width: auto;
+    border: none;
+    white-space: nowrap;
+    right: 0;
+    bottom: -25px;
+    box-shadow: 0 4px 4px 0 #00000040;
+    padding: 5px 25px;
+    background-color: white;
+    z-index: 2;
+    font-size: 12px;
+    line-height: 20px;
+    cursor: pointer;
+}
+
+.paynow-payment-card-option .paynow-payment-card-remove.--hidden {
+    display: none !important;
+}
+
+.paynow-payment-card-option .paynow-payment-card-remove:hover {
+    background-color: #f1f1f1;
+}
+
+.paynow-payment-card-option .paynow-payment-card-menu-button {
+    height: auto;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 20px;
+    text-decoration: underline;
 }
