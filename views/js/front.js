@@ -250,21 +250,6 @@ var paynow = {
         });
     },
 
-    updateCustomerToken: function () {
-        $.ajax($(paynow.selectors.form).data('tokenRefresh'), {
-            method: 'POST',
-            type: 'POST'
-        }).success(function (data) {
-            if (data.token) {
-                $(paynow.selectors.form).data('token', data.token);
-            } else {
-                console.error('Cannot get new token');
-            }
-        }).error(function () {
-            console.error('Cannot get new token');
-        });
-    },
-
     paymentButton: {
         show: function () {
             $(paynow.selectors.paymentButton).show();
