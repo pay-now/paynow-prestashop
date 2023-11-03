@@ -360,6 +360,10 @@ class PaynowAdminFormHelper
                                 [
                                     'id_option' => Paynow\Model\PaymentMethods\Type::GOOGLE_PAY,
                                     'name' => $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::GOOGLE_PAY)
+                                ],
+                                [
+                                    'id_option' => Paynow\Model\PaymentMethods\Type::APPLE_PAY,
+                                    'name' => $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::APPLE_PAY)
                                 ]
                             ],
                             'id'    => 'id_option',

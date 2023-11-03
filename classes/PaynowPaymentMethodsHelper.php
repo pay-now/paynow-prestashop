@@ -45,7 +45,8 @@ class PaynowPaymentMethodsHelper
     public function getAvailable($currency_iso_code, $total): ?PaymentMethods
     {
         try {
-            return $this->payment_client->getPaymentMethods($currency_iso_code, $total);
+            $applePayEnabled = htmlspecialchars($_COOKIE['applePayEnabled'] ?? '0') === '1';
+            return $this->payment_client->getPaymentMethods($currency_iso_code, $total, $applePayEnabled);
         } catch (PaynowException $exception) {
             PaynowLogger::error(
                 'An error occurred during payment methods retrieve {code={}, message={}}',
