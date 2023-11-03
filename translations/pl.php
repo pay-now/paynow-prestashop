@@ -12,6 +12,7 @@ $_MODULE['<{paynow}prestashop>paynow_98ab4d4a3d466bd1b61b31c8ae0f094a'] = 'Płat
 $_MODULE['<{paynow}prestashop>paynow_cc21116ce900f38c0691823ab193b9a3'] = 'Płatność kartą';
 $_MODULE['<{paynow}prestashop>paynow_961d23fcb6c49cee1150dba52beb04ca'] = 'Płatność szybkim przelewem';
 $_MODULE['<{paynow}prestashop>paynow_2a34963732b2fea04f1417120be393ae'] = 'Płatność Google Pay';
+$_MODULE['<{paynow}prestashop>paynow_111999b13ca63380771744ea02c4906b'] = 'Płatność Apple Pay';
 $_MODULE['<{paynow}prestashop>paynow_428a1abd50e8dadb4fdc0f3861dbe04b'] = 'Zleć zwrot środków przez paynow.pl';
 $_MODULE['<{paynow}prestashop>paynow_dc34c9c3d4e62630ad62b58828cae5d8'] = 'Musisz wprowadzić klucze integracyjne';
 $_MODULE['<{paynow}prestashop>paynow_aaca790b3b211a66ee5ddb51b817cbf2'] = 'Czas ważności płatności musi być większy niż 60 i mniejszy niż 86400 sekund.';

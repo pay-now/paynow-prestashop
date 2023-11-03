@@ -376,6 +376,8 @@ class Paynow extends PaymentModule
                 return $this->l('Pay by online transfer');
             case \Paynow\Model\PaymentMethods\Type::GOOGLE_PAY:
                 return $this->l('Pay by Google Pay');
+            case \Paynow\Model\PaymentMethods\Type::APPLE_PAY:
+                return $this->l('Pay by Apple Pay');
         }
     }
 
