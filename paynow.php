@@ -49,7 +49,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.6.34';
+        $this->version = '1.6.35';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -379,6 +379,8 @@ class Paynow extends PaymentModule
                 return $this->l('Pay by online transfer');
             case \Paynow\Model\PaymentMethods\Type::GOOGLE_PAY:
                 return $this->l('Pay by Google Pay');
+            case \Paynow\Model\PaymentMethods\Type::APPLE_PAY:
+                return $this->l('Pay by Apple Pay');
         }
     }
 
@@ -466,6 +468,7 @@ class Paynow extends PaymentModule
                                         ]
                                     ),
                                     'action_token' => Tools::encrypt($this->context->customer->secure_key),
+                                    'action_token_refresh' => Context::getContext()->link->getModuleLink('paynow', 'customerToken'),
                                     'error_message' => $this->getTranslationsArray()['An error occurred during the payment process'],
                                     'terms_message' => $this->getTranslationsArray()['You have to accept terms and conditions'],
                                     'blik_autofocus' => Configuration::get('PAYNOW_BLIK_AUTOFOCUS_ENABLED') === '0' ? '0' : '1',

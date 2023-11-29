@@ -8,7 +8,7 @@
 * @copyright mElements S.A.
 * @license   MIT License
 *}
-<form class="payment-form paynow-blik-form" data-method="POST" data-action="{$action_blik}" data-token="{$action_token}" data-error-message="{$error_message}" data-terms-message="{$terms_message}" data-blik-autofocus="{$blik_autofocus}">
+<form class="payment-form paynow-blik-form" data-method="POST" data-action="{$action_blik}" data-token="{$action_token}" data-token-refresh="{$action_token_refresh}" data-error-message="{$error_message}" data-terms-message="{$terms_message}" data-blik-autofocus="{$blik_autofocus}">
     <div class="paynow-option-content-{$method.type} collapse" id="paynow-option-{$method.type}">
         <div class="paynow-payment-option-blik">
             <div class="form-group row">

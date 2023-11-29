@@ -47,13 +47,14 @@ class PaynowPaymentMethodsHelper
     public function getAvailable($currency_iso_code, $total, $context, $module): ?PaymentMethods
     {
         try {
+            $applePayEnabled = htmlspecialchars($_COOKIE['applePayEnabled'] ?? '0') === '1';
             $idempotencyKey = PaynowKeysGenerator::generateIdempotencyKey(PaynowKeysGenerator::generateExternalIdByCart($context->cart));
             $buyerExternalId = null;
             if ($context->customer && $context->customer->isLogged()) {
                 $buyerExternalId = PaynowKeysGenerator::generateBuyerExternalId($context->cart->id_customer, $module);
             }
 
-            return $this->payment_client->getPaymentMethods($currency_iso_code, $total, $idempotencyKey, $buyerExternalId);
+            return $this->payment_client->getPaymentMethods($currency_iso_code, $total, $applePayEnabled, $idempotencyKey, $buyerExternalId);
         } catch (PaynowException $exception) {
             PaynowLogger::error(
                 'An error occurred during payment methods retrieve {code={}, message={}, errors={}, m={}}',

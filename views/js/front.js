@@ -84,6 +84,7 @@ var paynow = {
             $(paynow.selectors.termsLabel).after('<span id="js-paynow-terms-error" class="paynow-terms-error"></span>')
         }
 
+        paynow.addApplePayEnabledToCookie();
     },
 
     overrideDefaults: function() {
@@ -288,6 +289,16 @@ var paynow = {
                 onError(jqXHR, textStatus, errorThrown)
             }
         });
+    },
+
+    addApplePayEnabledToCookie: function () {
+        let applePayEnabled = false;
+
+        if (window.ApplePaySession) {
+            applePayEnabled = window.ApplePaySession.canMakePayments();
+        }
+
+        document.cookie = 'applePayEnabled=' + (applePayEnabled ? '1' : '0');
     },
 
     removeSavedInstrument: function (e) {
