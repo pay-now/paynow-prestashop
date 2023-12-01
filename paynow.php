@@ -280,8 +280,7 @@ class Paynow extends PaymentModule
             $this->getApiKey(),
             $this->getSignatureKey(),
             $this->isSandboxEnabled() ? \Paynow\Environment::SANDBOX : \Paynow\Environment::PRODUCTION,
-            'Prestashop-' . _PS_VERSION_ . '/Plugin-' . $this->version,
-            \Paynow\Configuration::API_VERSION_V3
+            'Prestashop-' . _PS_VERSION_ . '/Plugin-' . $this->version
         );
     }
 
@@ -849,6 +848,7 @@ class Paynow extends PaymentModule
             'Show retry payment button on selected statuses'                                                                                                                                    => $this->l('Show retry payment button on selected statuses'),
             'BLIK field autofocus'                                                                                                                                                              => $this->l('BLIK field autofocus'),
             'Autofocus on checkout form field: BLIK code. Enabled by default. Disabling may be helpful when checkout page is visualy long (e.g. single-page checkout).'                         => $this->l('Autofocus on checkout form field: BLIK code. Enabled by default. Disabling may be helpful when checkout page is visualy long (e.g. single-page checkout).'),
+			'An error occurred while deleting the saved card.'																																	=> $this->l('An error occurred while deleting the saved card.'),
         ];
     }
 }

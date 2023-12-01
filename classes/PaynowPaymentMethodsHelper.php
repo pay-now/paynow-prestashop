@@ -57,8 +57,10 @@ class PaynowPaymentMethodsHelper
             return $this->payment_client->getPaymentMethods($currency_iso_code, $total, $applePayEnabled, $idempotencyKey, $buyerExternalId);
         } catch (PaynowException $exception) {
             PaynowLogger::error(
-                'An error occurred during payment methods retrieve {code={}, message={}, errors={}, m={}}',
+                'An error occurred during payment methods retrieve {currency={}, total={}, code={}, message={}, errors={}, m={}}',
                 [
+					$currency_iso_code,
+					$total,
                     $exception->getCode(),
                     $exception->getPrevious()->getMessage(),
                     $exception->getErrors(),

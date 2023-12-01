@@ -322,7 +322,7 @@ p.payment_module.paynow button:after {
 
 .paynow-payment-card-menu {
     position: absolute;
-    bottom: 10px;
+    top: 25px;
     right: 13px;
     z-index: 1;
 }
@@ -359,4 +359,9 @@ p.payment_module.paynow button:after {
     font-size: 12px;
     line-height: 20px;
     text-decoration: underline;
+}
+
+.paynow-payment-card-error {
+    font-size: 10px;
+    color: #E52E07;
 }

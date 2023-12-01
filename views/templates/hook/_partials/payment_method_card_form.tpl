@@ -38,10 +38,12 @@
                                 data-remove-saved-instrument="{$instrument->getToken()}"
                                 data-action="{$method.action_remove_saved_instrument}"
                                 data-token="{$method.action_token}"
+                                data-error-message="{l s='An error occurred while deleting the saved card.' mod='paynow'}"
                             >
                                 {l s='Remove card' mod='paynow'}
                             </button>
                         </div>
+                        <span class="paynow-payment-card-error"></span>
                     </div>
                 {/foreach}
                 <div class="paynow-payment-card-option">

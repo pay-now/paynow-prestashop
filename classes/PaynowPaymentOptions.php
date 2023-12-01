@@ -143,7 +143,7 @@ class PaynowPaymentOptions
                     'paynow',
                     'removeSavedInstrument'
                 ),
-                'action_remove_saved_instrument_token' => Tools::encrypt($this->context->customer->secure_key),
+                'action_remove_saved_instrument_token' => Tools::encrypt($this->context->customer->secure_key ?? ''),
                 'default_card_image' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->module->name . '/views/img/card-default.svg'),
                 'paynow_card_instruments' => $payment_method->getSavedInstruments(),
             ]);

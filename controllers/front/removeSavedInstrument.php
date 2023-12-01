@@ -12,8 +12,14 @@
 
 class PaynowRemoveSavedInstrumentModuleFrontController extends PaynowFrontController
 {
+	/**
+	 * @var array
+	 */
+	private $translations;
+
     public function initContent()
     {
+		$this->translations = $this->module->getTranslationsArray();
         parent::initContent();
 
         $this->removeSavedInstrument();
@@ -35,7 +41,7 @@ class PaynowRemoveSavedInstrumentModuleFrontController extends PaynowFrontContro
                     'success' => true,
                 ];
             } catch (Exception $e) {
-                $response['error'] = $e->getMessage();
+                $response['error'] = $this->translations['An error occurred while deleting the saved card.'];
                 PaynowLogger::error(
                     'An error occurred during saved instrument removal {code={}, message={}}',
                     [

@@ -304,6 +304,7 @@ var paynow = {
     removeSavedInstrument: function (e) {
         const target = $(e.currentTarget);
         const savedInstrument = target.data('removeSavedInstrument');
+        const errorMessage = target.data('errorMessage');
         const cardMethodOption = $('#wrapper-' + savedInstrument);
 
         cardMethodOption.addClass('loading');
@@ -318,10 +319,22 @@ var paynow = {
                 cardMethodOption.remove();
             } else {
                 cardMethodOption.removeClass('loading');
+                paynow.showRemoveSavedInstrumentErrorMessage(savedInstrument, errorMessage);
             }
         }).error(function (jqXHR, textStatus, errorThrown) {
             cardMethodOption.removeClass('loading');
+            paynow.showRemoveSavedInstrumentErrorMessage(savedInstrument, errorMessage);
         });
+    },
+
+    showRemoveSavedInstrumentErrorMessage: function (savedInstrument, errorMessage) {
+        const errorMessageWrapper = jQuery('#wrapper-' + savedInstrument + ' .paynow-payment-card-error');
+
+        errorMessageWrapper.text(errorMessage);
+
+        setTimeout(() => {
+            errorMessageWrapper.text('');
+        }, 5000)
     },
 
     paymentButton: {
