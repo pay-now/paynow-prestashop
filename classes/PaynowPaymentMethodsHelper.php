@@ -39,20 +39,36 @@ class PaynowPaymentMethodsHelper
     /**
      * @param $currency_iso_code
      * @param $total
+     * @param $context
+     * @param $module
      *
      * @return PaymentMethods|null
      */
-    public function getAvailable($currency_iso_code, $total): ?PaymentMethods
+    public function getAvailable($currency_iso_code, $total, $context, $module): ?PaymentMethods
     {
+		$applePayEnabled = htmlspecialchars($_COOKIE['applePayEnabled'] ?? '0') === '1';
+		$idempotencyKey = PaynowKeysGenerator::generateIdempotencyKey(PaynowKeysGenerator::generateExternalIdByCart($context->cart));
+		$buyerExternalId = null;
+
+		if ($context->customer && $context->customer->isLogged()) {
+			$buyerExternalId = PaynowKeysGenerator::generateBuyerExternalId($context->cart->id_customer, $module);
+		}
+
         try {
-            $applePayEnabled = htmlspecialchars($_COOKIE['applePayEnabled'] ?? '0') === '1';
-            return $this->payment_client->getPaymentMethods($currency_iso_code, $total, $applePayEnabled);
+            return $this->payment_client->getPaymentMethods($currency_iso_code, $total, $applePayEnabled, $idempotencyKey, $buyerExternalId);
         } catch (PaynowException $exception) {
             PaynowLogger::error(
-                'An error occurred during payment methods retrieve {code={}, message={}}',
+                'An error occurred during payment methods retrieve {currency={}, total={}, applePayEnabled={}, idempotencyKey={}, buyerExternalId={}, code={}, message={}, errors={}, m={}}',
                 [
+					$currency_iso_code,
+					$total,
+					$applePayEnabled,
+					$idempotencyKey,
+					$buyerExternalId,
                     $exception->getCode(),
-                    $exception->getPrevious()->getMessage()
+                    $exception->getPrevious()->getMessage(),
+                    $exception->getErrors(),
+                    $exception->getMessage()
                 ]
             );
         }

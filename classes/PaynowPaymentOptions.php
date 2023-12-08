@@ -134,6 +134,19 @@ class PaynowPaymentOptions
                 'terms_message' => $this->getMessage('You have to accept terms and conditions'),
                 'blik_autofocus' => Configuration::get('PAYNOW_BLIK_AUTOFOCUS_ENABLED') === '0' ? '0' : '1',
             ]);
+        } elseif (Paynow\Model\PaymentMethods\Type::CARD == $payment_method->getType()) {
+            $this->context->smarty->assign([
+                'action_card' => PaynowLinkHelper::getPaymentUrl([
+                    'paymentMethodId' => $payment_method->getId()
+                ]),
+                'action_remove_saved_instrument' => Context::getContext()->link->getModuleLink(
+                    'paynow',
+                    'removeSavedInstrument'
+                ),
+                'action_remove_saved_instrument_token' => Tools::encrypt($this->context->customer->secure_key ?? ''),
+                'default_card_image' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->module->name . '/views/img/card-default.svg'),
+                'paynow_card_instruments' => $payment_method->getSavedInstruments(),
+            ]);
         }
     }
 
@@ -141,6 +154,10 @@ class PaynowPaymentOptions
     {
         if ($this->isWhiteLabelEnabled(Paynow\Model\PaymentMethods\Type::BLIK, $payment_method)) {
             return 'module:paynow/views/templates/front/1.7/payment_method_blik_form.tpl';
+        }
+
+        if (Paynow\Model\PaymentMethods\Type::CARD === $payment_method->getType()) {
+            return 'module:paynow/views/templates/front/1.7/payment_method_card_form.tpl';
         }
 
         return null;

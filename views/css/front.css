@@ -239,3 +239,129 @@ p.payment_module.paynow button:after {
         padding: 1rem;
     }
 }
+
+.paynow-payment-card-option {
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.paynow-payment-card-option.loading {
+    opacity: 0.4;
+}
+
+.paynow-payment-card-option:last-child {
+    margin-bottom: 20px;
+}
+
+.paynow-payment-card-option input {
+    display: none;
+}
+
+.paynow-payment-card-option label, .paynow-payment-card-option button {
+    border: 1px solid #D2D2D2;
+    border-radius: 3px;
+    display: flex !important;
+    align-items: stretch;
+    height: 60px;
+    width: 100%;
+    margin: 0;
+    background-color: transparent;
+}
+
+.paynow-payment-card-option input[type=radio]:checked + label {
+    background: #f3f3f3;
+}
+
+.paynow-payment-card-option input[type=radio]:not(:disabled) + label {
+    cursor: pointer;
+}
+
+.paynow-payment-card-details {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.paynow-payment-card-details p {
+    margin: 0;
+    text-align: left;
+}
+
+.paynow-payment-card-details-card-name {
+    font-size: 12px;
+    line-height: 20px;
+    color: #000000;
+}
+
+.paynow-payment-card-details-card-name.paynow-expired {
+    color: #8E8E8E;
+}
+
+.paynow-payment-card-details-expiration {
+    font-size: 10px;
+    line-height: 20px;
+    color: #8E8E8E;
+}
+
+.paynow-payment-card-details-expiration.paynow-expired {
+    color: #E52E07;
+}
+
+.paynow-payment-card-image {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 96px;
+}
+
+.paynow-payment-card-image img {
+    max-width: 40px;
+    max-height: 24px;
+}
+
+.paynow-payment-card-menu {
+    position: absolute;
+    top: 25px;
+    right: 13px;
+    z-index: 1;
+}
+
+.paynow-payment-card-option .paynow-payment-card-remove {
+    position: absolute;
+    height: auto;
+    width: auto;
+    border: none;
+    white-space: nowrap;
+    right: 0;
+    bottom: -25px;
+    box-shadow: 0 4px 4px 0 #00000040;
+    padding: 5px 25px;
+    background-color: white;
+    z-index: 2;
+    font-size: 12px;
+    line-height: 20px;
+    cursor: pointer;
+}
+
+.paynow-payment-card-option .paynow-payment-card-remove.--hidden {
+    display: none !important;
+}
+
+.paynow-payment-card-option .paynow-payment-card-remove:hover {
+    background-color: #f1f1f1;
+}
+
+.paynow-payment-card-option .paynow-payment-card-menu-button {
+    height: auto;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 20px;
+    text-decoration: underline;
+}
+
+.paynow-payment-card-error {
+    font-size: 10px;
+    color: #E52E07;
+}

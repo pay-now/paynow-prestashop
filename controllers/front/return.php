@@ -50,7 +50,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
         }
 
         if (Tools::getValue('paymentId')) {
-            $payment_status_from_api = $this->getPaymentStatus($this->payment->id_payment);
+            $payment_status_from_api = $this->getPaymentStatus($this->payment->id_payment, $this->payment->external_id);
             $statusToProcess = [
                 'status' => $payment_status_from_api,
                 'externalId' => $this->payment->external_id,
