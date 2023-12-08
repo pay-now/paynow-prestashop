@@ -18,6 +18,7 @@ include_once(dirname(__FILE__) . '/vendor/autoload.php');
 include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
 include_once(dirname(__FILE__) . '/classes/PaynowLogger.php');
 include_once(dirname(__FILE__) . '/classes/PaynowHelper.php');
+include_once(dirname(__FILE__) . '/classes/PaynowKeysGenerator.php');
 include_once(dirname(__FILE__) . '/classes/PaynowNotificationRetryProcessing.php');
 include_once(dirname(__FILE__) . '/classes/PaynowNotificationStopProcessing.php');
 include_once(dirname(__FILE__) . '/classes/PaynowConfigurationHelper.php');
@@ -36,6 +37,7 @@ include_once(dirname(__FILE__) . '/classes/PaynowPaymentProcessor.php');
 include_once(dirname(__FILE__) . '/classes/PaynowPaymentDataBuilder.php');
 include_once(dirname(__FILE__) . '/classes/PaynowGithubClient.php');
 include_once(dirname(__FILE__) . '/classes/PaynowLockingHelper.php');
+include_once(dirname(__FILE__) . '/classes/PaynowSavedInstrumentHelper.php');
 
 class Paynow extends PaymentModule
 {
@@ -47,7 +49,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.6.35';
+        $this->version = '1.7.0';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -389,13 +391,13 @@ class Paynow extends PaymentModule
     {
         $total = number_format($this->context->cart->getOrderTotal() * 100, 0, '', '');
         $currency = new Currency($this->context->cart->id_currency);
-        return (new PaynowPaymentMethodsHelper($this->getPaynowClient()))->getAvailable($currency->iso_code, $total);
+        return (new PaynowPaymentMethodsHelper($this->getPaynowClient()))->getAvailable($currency->iso_code, $total, $this->context, $this);
     }
 
     private function getGDPRNotices(): array
     {
         $locale  = $this->context->language->locale ?? $this->context->language->language_code;
-        return (new PaynowGDPRHelper($this->getPaynowClient()))->getNotices($locale);
+        return (new PaynowGDPRHelper($this->getPaynowClient(), $this->context->cart))->getNotices($locale);
     }
 
     /** Returns is possible to show payment option
@@ -471,14 +473,32 @@ class Paynow extends PaymentModule
                                     'blik_autofocus' => Configuration::get('PAYNOW_BLIK_AUTOFOCUS_ENABLED') === '0' ? '0' : '1',
                                 ]);
                             }
-                            array_push($payment_options, [
+
+                            $payment_option = [
                                 'name' => $this->getPaymentMethodTitle($payment_method->getType()),
                                 'image' => $payment_method->getImage(),
                                 'id' => $payment_method->getId(),
                                 'enabled' => $payment_method->isEnabled(),
                                 'type' => $payment_method->getType(),
                                 'authorization' => $payment_method->getAuthorizationType(),
-                            ]);
+                            ];
+
+                            if (Paynow\Model\PaymentMethods\Type::CARD == $payment_method->getType()) {
+                                $payment_option = array_merge($payment_option, [
+                                    'action_card' => PaynowLinkHelper::getPaymentUrl([
+                                        'paymentMethodId' => $payment_method->getId()
+                                    ]),
+                                    'action_remove_saved_instrument' => Context::getContext()->link->getModuleLink(
+                                        'paynow',
+                                        'removeSavedInstrument'
+                                    ),
+                                    'action_token' => Tools::encrypt($this->context->customer->secure_key),
+                                    'default_card_image' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/card-default.svg'),
+                                    'instruments' => $payment_method->getSavedInstruments(),
+                                ]);
+                            }
+
+                            array_push($payment_options, $payment_option);
                         }
                         $list[$payment_method->getType()] = $payment_method->getId();
                     }
@@ -828,6 +848,7 @@ class Paynow extends PaymentModule
             'Show retry payment button on selected statuses'                                                                                                                                    => $this->l('Show retry payment button on selected statuses'),
             'BLIK field autofocus'                                                                                                                                                              => $this->l('BLIK field autofocus'),
             'Autofocus on checkout form field: BLIK code. Enabled by default. Disabling may be helpful when checkout page is visualy long (e.g. single-page checkout).'                         => $this->l('Autofocus on checkout form field: BLIK code. Enabled by default. Disabling may be helpful when checkout page is visualy long (e.g. single-page checkout).'),
+			'An error occurred while deleting the saved card.'																																	=> $this->l('An error occurred while deleting the saved card.'),
         ];
     }
 }

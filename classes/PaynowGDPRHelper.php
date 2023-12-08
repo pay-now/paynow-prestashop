@@ -18,6 +18,8 @@ use Paynow\Exception\PaynowException;
  */
 class PaynowGDPRHelper
 {
+    private $cart;
+
     /**
      * @var Client
      */
@@ -25,10 +27,12 @@ class PaynowGDPRHelper
 
     /**
      * @param Client $client
+     * @param $cart
      */
-    public function __construct(Client $client)
+    public function __construct(Client $client, $cart)
     {
         $this->client = $client;
+        $this->cart = $cart;
     }
 
     /**
@@ -77,7 +81,8 @@ class PaynowGDPRHelper
     {
         try {
             PaynowLogger::info("Retrieving GDPR notices");
-            return (new Paynow\Service\DataProcessing($this->client))->getNotices($locale)->getAll();
+            $idempotencyKey = PaynowKeysGenerator::generateIdempotencyKey(PaynowKeysGenerator::generateExternalIdByCart($this->cart));
+            return (new Paynow\Service\DataProcessing($this->client))->getNotices($locale, $idempotencyKey)->getAll();
         } catch (PaynowException $exception) {
             PaynowLogger::error(
                 'An error occurred during GDPR notices retrieve {code={}, message={}}',

@@ -48,7 +48,12 @@ var paynow = {
         blikErrorLabel: 'form.paynow-blik-form span.error',
 
         pblMethod: 'div.paynow-payment-pbls input[name="paymentMethodId"]',
+        cardMethod: 'div.paynow-payment-card input[name="paymentMethodToken"]',
+        cardMethodOptions: 'div.paynow-payment-card .paynow-payment-card-option',
         paymentMethod: 'input[name="payment-option"]',
+
+        cardMethodMiniMenuOpen: '.paynow-payment-card-menu .paynow-payment-card-menu-button',
+        cardMethodRemove: '[data-remove-saved-instrument]',
     },
 
     init: function(){
@@ -59,10 +64,16 @@ var paynow = {
         $(document).on('click', paynow.selectors.blikButton, paynow.blikFormSubmit);
         $(document).on('keyup', paynow.selectors.blikCode, paynow.blikValidate);
         $(document).on('change', paynow.selectors.pblMethod, paynow.pblValidate);
-        $(document).on('change', paynow.selectors.paymentMethod, paynow.blikFormPrepare);
+        $(document).on('change', paynow.selectors.cardMethod, paynow.cardValidate);
+        $(document).on('change', paynow.selectors.paymentMethod, paynow.onPaymentOptionChange);
         $(document).on('change', paynow.selectors.terms, function(){
-            paynow.blikFormPrepare()
+            paynow.onPaymentOptionChange()
             paynow.termsValidate()
+        });
+        $(document).on('click', paynow.selectors.cardMethodMiniMenuOpen, paynow.toggleCardMiniMenu);
+        $(document).on('click', paynow.selectors.cardMethodRemove, paynow.removeSavedInstrument);
+        $(document).on('click', function (ev) {
+            paynow.closeMiniMenu(ev)
         });
 
         var termsErrorPlaceholderExists = $(paynow.selectors.terms).length != 0
@@ -160,7 +171,7 @@ var paynow = {
         )
     },
 
-    blikFormPrepare: function() {
+    onPaymentOptionChange: function () {
         if ($(paynow.selectors.blikCode).length != 1) {
             return
         }
@@ -174,10 +185,17 @@ var paynow = {
         if ($(paynow.selectors.blikCode).is(':visible')) {
             paynow.paymentButton.disable()
             paynow.paymentButton.hide()
+        } else if ($(paynow.selectors.cardMethodOptions).is(':visible') && !$(paynow.selectors.cardMethod + ':checked').length) {
+            paynow.paymentButton.disable()
         } else {
             paynow.paymentButton.enable()
             paynow.paymentButton.show()
         }
+    },
+
+    // backward compatibility
+    blikFormPrepare: function() {
+        paynow.onPaymentOptionChange()
     },
 
     blikValidate: function () {
@@ -189,6 +207,18 @@ var paynow = {
             return true
         } else {
             paynow.blikButton.disable()
+            return false
+        }
+    },
+
+    cardValidate: function () {
+        const checkedCardOption = $(paynow.selectors.cardMethod + ':checked');
+
+        if (checkedCardOption.length && (!paynow.config.validateTerms || $(paynow.selectors.terms).is(':checked'))) {
+            paynow.paymentButton.enable();
+            return true
+        } else {
+            paynow.paymentButton.disable();
             return false
         }
     },
@@ -210,6 +240,16 @@ var paynow = {
         }
 
         return false
+    },
+
+    closeMiniMenu: function (e) {
+        if (!$(e.target).is(paynow.selectors.cardMethodRemove) && !$(e.target).is(paynow.selectors.cardMethodMiniMenuOpen)) {
+            $(paynow.selectors.cardMethodRemove).addClass('--hidden')
+        }
+    },
+
+    toggleCardMiniMenu: function (e) {
+        $(e.currentTarget).siblings().toggleClass('--hidden')
     },
 
     isTermsChecked: function () {
@@ -259,6 +299,42 @@ var paynow = {
         }
 
         document.cookie = 'applePayEnabled=' + (applePayEnabled ? '1' : '0');
+    },
+
+    removeSavedInstrument: function (e) {
+        const target = $(e.currentTarget);
+        const savedInstrument = target.data('removeSavedInstrument');
+        const errorMessage = target.data('errorMessage');
+        const cardMethodOption = $('#wrapper-' + savedInstrument);
+
+        cardMethodOption.addClass('loading');
+        $.ajax(target.data('action'), {
+            method: 'POST', type: 'POST',
+            data: {
+                'savedInstrumentToken': savedInstrument,
+                'token': target.data('token'),
+            },
+        }).success(function (data, textStatus, jqXHR) {
+            if (data.success === true) {
+                cardMethodOption.remove();
+            } else {
+                cardMethodOption.removeClass('loading');
+                paynow.showRemoveSavedInstrumentErrorMessage(savedInstrument, errorMessage);
+            }
+        }).error(function (jqXHR, textStatus, errorThrown) {
+            cardMethodOption.removeClass('loading');
+            paynow.showRemoveSavedInstrumentErrorMessage(savedInstrument, errorMessage);
+        });
+    },
+
+    showRemoveSavedInstrumentErrorMessage: function (savedInstrument, errorMessage) {
+        const errorMessageWrapper = jQuery('#wrapper-' + savedInstrument + ' .paynow-payment-card-error');
+
+        errorMessageWrapper.text(errorMessage);
+
+        setTimeout(() => {
+            errorMessageWrapper.text('');
+        }, 5000)
     },
 
     paymentButton: {
