@@ -12,6 +12,7 @@
     <form action="{$method.action_card|escape:'htmlall':'UTF-8'}" method="POST">
         <div class="paynow-payment-option-container">
             <p>{l s='Select a saved card or enter new card details:' mod='paynow'}</p>
+            <input type="hidden" name="paymentMethodFingerprint" id="payment-method-fingerprint" value="">
             <div class="paynow-payment-card">
                 {foreach from=$method.instruments item=instrument}
                     <div class="paynow-payment-card-option" id="wrapper-{$instrument->getToken()}">

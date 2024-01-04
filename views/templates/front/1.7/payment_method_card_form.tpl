@@ -12,6 +12,7 @@
     <form class="payment-form paynow-payment-form" action="{$action_card}" method="POST">
         <div class="paynow-payment-option-container">
             <p>{l s='Select a saved card or enter new card details:' mod='paynow'}</p>
+            <input type="hidden" name="paymentMethodFingerprint" id="payment-method-fingerprint" value="">
             <div class="paynow-payment-card">
                 {foreach from=$paynow_card_instruments item=instrument}
                     <div class="paynow-payment-card-option" id="wrapper-{$instrument->getToken()}">
