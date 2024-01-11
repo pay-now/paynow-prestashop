@@ -134,6 +134,10 @@ class PaynowPaymentDataBuilder
             $request['paymentMethodToken'] = Tools::getValue('paymentMethodToken');
         }
 
+		if (! empty(Tools::getValue('paymentMethodFingerprint'))) {
+			$request['buyer']['deviceFingerprint'] = Tools::getValue('paymentMethodFingerprint');
+		}
+
         if (Configuration::get('PAYNOW_SEND_ORDER_ITEMS')) {
             $products    = $this->context->cart->getProducts(true);
             $order_items = [];
