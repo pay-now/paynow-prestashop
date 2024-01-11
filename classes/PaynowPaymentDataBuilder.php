@@ -134,7 +134,7 @@ class PaynowPaymentDataBuilder
             $request['paymentMethodToken'] = Tools::getValue('paymentMethodToken');
         }
 
-		if (!empty(Tools::getValue('paymentMethodFingerprint'))) {
+		if (! empty(Tools::getValue('paymentMethodFingerprint'))) {
 			$request['buyer']['deviceFingerprint'] = Tools::getValue('paymentMethodFingerprint');
 		}
 
