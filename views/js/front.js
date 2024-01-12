@@ -85,6 +85,7 @@ var paynow = {
         }
 
         paynow.addApplePayEnabledToCookie();
+        paynow.addFingerprintToCardPayment();
     },
 
     overrideDefaults: function() {
@@ -299,6 +300,27 @@ var paynow = {
         }
 
         document.cookie = 'applePayEnabled=' + (applePayEnabled ? '1' : '0');
+    },
+
+    addFingerprintToCardPayment: function () {
+        const input = $('#payment-method-fingerprint');
+
+        if (!input.length) {
+            return;
+        }
+
+        try {
+            const fpPromise = import('https://static.paynow.pl/scripts/PyG5QjFDUI.min.js')
+                .then(FingerprintJS => FingerprintJS.load())
+
+            fpPromise
+                .then(fp => fp.get())
+                .then(result => {
+                    input.val(result.visitorId);
+                })
+        } catch (e) {
+            console.error('Cannot get fingerprint');
+        }
     },
 
     removeSavedInstrument: function (e) {
