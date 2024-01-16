@@ -368,7 +368,38 @@ class PaynowOrderStateProcessor
         if (count($payments) > 0) {
             $payments[0]->transaction_id = $id_payment;
             $payments[0]->update();
-        }
+        } else {
+			try {
+				// in case when order payment was not created
+				$result = $order->addOrderPayment(
+					$order->getTotalPaid(),
+					$this->module->displayName,
+					$id_payment
+				);
+
+				if (!$result) {
+					PaynowLogger::error(
+						'Cannot create order payment entry',
+						[
+							$order->id,
+							$order->reference,
+							$id_payment
+						]
+					);
+				}
+			} catch (Throwable $t) {
+				PaynowLogger::error(
+					'Cannot create order payment entry due to exception: ',
+					[
+						$t->getMessage(),
+						$t->getLine(),
+						$order->id,
+						$order->reference,
+						$id_payment
+					]
+				);
+			}
+		}
     }
 
     /**
