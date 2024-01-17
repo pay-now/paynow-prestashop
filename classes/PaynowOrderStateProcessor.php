@@ -226,7 +226,7 @@ class PaynowOrderStateProcessor
                     $data['paymentId'],
                     $data['externalId']
                 );
-                $this->addOrderPayment($order, $data['paymentId']);
+                $this->addOrderPayment($order, $data['paymentId'], $payment->total);
                 break;
             case Paynow\Model\Payment\Status::STATUS_ERROR:
                 $this->changeState(
@@ -358,48 +358,49 @@ class PaynowOrderStateProcessor
         return $previous_status_exists && $is_change_possible;
     }
 
-    /**
-     * @param $order
-     * @param $id_payment
-     */
-    private function addOrderPayment($order, $id_payment)
+	/**
+	 * @param $order
+	 * @param $id_payment
+	 * @param $total
+	 */
+    private function addOrderPayment($order, $id_payment, $total)
     {
         $payments = $order->getOrderPaymentCollection()->getResults();
         if (count($payments) > 0) {
             $payments[0]->transaction_id = $id_payment;
             $payments[0]->update();
         } else {
-			try {
-				// in case when order payment was not created
-				$result = $order->addOrderPayment(
-					$order->getTotalPaid(),
-					$this->module->displayName,
-					$id_payment
-				);
+            try {
+                // in case when order payment was not created
+                $result = $order->addOrderPayment(
+                    $total,
+                    $this->module->displayName,
+                    $id_payment
+                );
 
-				if (!$result) {
-					PaynowLogger::error(
-						'Cannot create order payment entry',
-						[
-							$order->id,
-							$order->reference,
-							$id_payment
-						]
-					);
-				}
-			} catch (Throwable $t) {
-				PaynowLogger::error(
-					'Cannot create order payment entry due to exception: ',
-					[
-						$t->getMessage(),
-						$t->getLine(),
-						$order->id,
-						$order->reference,
-						$id_payment
-					]
-				);
-			}
-		}
+                if (!$result) {
+                    PaynowLogger::error(
+                        'Cannot create order payment entry',
+                        [
+                            $order->id,
+                            $order->reference,
+                            $id_payment
+                        ]
+                    );
+                }
+            } catch (Throwable $t) {
+                PaynowLogger::error(
+                    'Cannot create order payment entry due to exception: ',
+                    [
+                        $t->getMessage(),
+                        $t->getLine(),
+                        $order->id,
+                        $order->reference,
+                        $id_payment
+                    ]
+                );
+            }
+        }
     }
 
     /**
