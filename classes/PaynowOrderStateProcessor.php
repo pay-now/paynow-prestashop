@@ -371,7 +371,7 @@ class PaynowOrderStateProcessor
             $payments[0]->update();
         } else {
             try {
-				$currentOrder = new Order($order->id);
+                $currentOrder = new Order($order->id);
                 // in case when order payment was not created
                 $result = $currentOrder->addOrderPayment(
                     $total,
@@ -383,7 +383,7 @@ class PaynowOrderStateProcessor
                     PaynowLogger::error(
                         'Cannot create order payment entry',
                         [
-							$currentOrder->id,
+                            $currentOrder->id,
                             $currentOrder->reference,
                             $id_payment
                         ]
