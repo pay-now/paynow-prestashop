@@ -95,6 +95,10 @@ p.payment_module .paynow img {
     padding: 10px;
 }
 
+.paynow-payment-form-card {
+    padding: 0;
+}
+
 button.payment-option {
     width: 100%;
     padding: 33px 40px 34px 17px;

@@ -8,11 +8,11 @@
 * @copyright mElements S.A.
 * @license   MIT License
 *}
-{if $paynow_card_instruments}
-    <form class="payment-form paynow-payment-form" action="{$action_card}" method="POST">
+<form class="payment-form paynow-payment-form paynow-payment-form-card" action="{$action_card}" method="POST">
+    <input type="hidden" name="paymentMethodFingerprint" id="payment-method-fingerprint" value="">
+    {if $paynow_card_instruments}
         <div class="paynow-payment-option-container">
             <p>{l s='Select a saved card or enter new card details:' mod='paynow'}</p>
-            <input type="hidden" name="paymentMethodFingerprint" id="payment-method-fingerprint" value="">
             <div class="paynow-payment-card">
                 {foreach from=$paynow_card_instruments item=instrument}
                     <div class="paynow-payment-card-option" id="wrapper-{$instrument->getToken()}">
@@ -63,5 +63,5 @@
             </div>
             {include file="module:paynow/views/templates/front/1.7/_partials/payment_data_processing_info.tpl"}
         </div>
-    </form>
-{/if}
+    {/if}
+</form>
