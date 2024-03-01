@@ -115,7 +115,7 @@ class PaynowPaymentDataBuilder
         ];
 
         if (!empty($id_customer) && $this->context->customer && $this->context->customer->is_guest === '0'){
-            $request['buyer']['externalId'] = md5($id_customer.$this->module->getSignatureKey());
+            $request['buyer']['externalId'] = PaynowKeysGenerator::generateBuyerExternalId($id_customer, $this->module);
         }
 
         if (! empty(Tools::getValue('paymentMethodId'))) {
