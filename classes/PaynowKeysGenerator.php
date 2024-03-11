@@ -1,5 +1,7 @@
 <?php
 
+use Paynow\Util\ClientExternalIdCalculator;
+
 /**
  * NOTICE OF LICENSE
  *
@@ -47,6 +49,6 @@ class PaynowKeysGenerator
      */
     public static function generateBuyerExternalId($customerId, $module): string
     {
-        return md5($customerId . $module->getSignatureKey());
+        return ClientExternalIdCalculator::calculate("$customerId", $module->getSignatureKey());
     }
 }
