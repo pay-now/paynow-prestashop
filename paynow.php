@@ -98,24 +98,54 @@ class Paynow extends PaymentModule
 
     private function createDbTables()
     {
-        return Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paynow_payments` (
-            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ,
-            `id_order` INT(10) UNSIGNED NOT NULL,
-            `id_cart` INT(10) UNSIGNED NOT NULL,
-            `id_payment` varchar(30) NOT NULL,
-            `order_reference` varchar(9)  NOT NULL,
-            `external_id` varchar(50)  NOT NULL,
-            `status` varchar(64) NOT NULL,
-            `total` DECIMAL(20,6) NOT NULL DEFAULT \'0.000000\',
-            `locked` TINYINT(1) NOT NULL DEFAULT 0,
-            `active` tinyint(1) NOT NULL DEFAULT 0,
-            `counter` tinyint(1) NOT NULL DEFAULT 0,
-            `sent_at` datetime DEFAULT NULL,
-            `created_at` datetime,
-            `modified_at` datetime,
-            UNIQUE (`id_payment`, `status`),
-            INDEX `index_order_cart_payment_reference` (`id_order`, `id_cart`, `id_payment`, `order_reference`)
-        )');
+		if (Db::getInstance()->ExecuteS('SHOW TABLES LIKE "' . _DB_PREFIX_ . 'paynow_payments"')) {
+			$alterTotal = true;
+			$alterLocked = true;
+			$alterCounter = true;
+			$alterActive = true;
+			$alterSentAt = true;
+
+			if (Db::getInstance()->ExecuteS('SHOW COLUMNS FROM ' . _DB_PREFIX_ . 'paynow_payments LIKE "total"') == false) {
+				$alterTotal = Db::getInstance()->Execute("ALTER TABLE `" . _DB_PREFIX_ . "paynow_payments` ADD `total` DECIMAL(20,6) NOT NULL DEFAULT '0.000000' AFTER `status`;");
+			}
+
+			if (Db::getInstance()->ExecuteS('SHOW COLUMNS FROM ' . _DB_PREFIX_ . 'paynow_payments LIKE "locked"') == false) {
+				$alterLocked = Db::getInstance()->Execute("ALTER TABLE `" . _DB_PREFIX_ . "paynow_payments` ADD `locked` TINYINT(1) NOT NULL DEFAULT 0 AFTER `total`;");
+			}
+
+			if (Db::getInstance()->ExecuteS('SHOW COLUMNS FROM ' . _DB_PREFIX_ . 'paynow_payments LIKE "counter"') == false) {
+				$alterCounter = Db::getInstance()->Execute("ALTER TABLE `" . _DB_PREFIX_ . "paynow_payments` ADD `counter` TINYINT(1) NOT NULL DEFAULT 0 AFTER `locked`;");
+			}
+
+			if (Db::getInstance()->ExecuteS('SHOW COLUMNS FROM ' . _DB_PREFIX_ . 'paynow_payments LIKE "active"') == false) {
+				$alterActive = Db::getInstance()->Execute("ALTER TABLE `" . _DB_PREFIX_ . "paynow_payments` ADD `active` TINYINT(1) NOT NULL DEFAULT 0 AFTER `counter`;");
+			}
+
+			if (Db::getInstance()->ExecuteS('SHOW COLUMNS FROM ' . _DB_PREFIX_ . 'paynow_payments LIKE "sent_at"') == false) {
+				$alterSentAt = Db::getInstance()->Execute("ALTER TABLE `" . _DB_PREFIX_ . "paynow_payments` ADD `sent_at` datetime NULL AFTER `active`;");
+			}
+
+			return $alterTotal && $alterLocked && $alterCounter && $alterActive && $alterSentAt;
+		} else {
+			return Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paynow_payments` (
+				`id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+				`id_order` INT(10) UNSIGNED NOT NULL,
+				`id_cart` INT(10) UNSIGNED NOT NULL,
+				`id_payment` varchar(30) NOT NULL,
+				`order_reference` varchar(9)  NOT NULL,
+				`external_id` varchar(50)  NOT NULL,
+				`status` varchar(64) NOT NULL,
+				`total` DECIMAL(20,6) NOT NULL DEFAULT \'0.000000\',
+				`locked` TINYINT(1) NOT NULL DEFAULT 0,
+				`active` tinyint(1) NOT NULL DEFAULT 0,
+				`counter` tinyint(1) NOT NULL DEFAULT 0,
+				`sent_at` datetime DEFAULT NULL,
+				`created_at` datetime,
+				`modified_at` datetime,
+				UNIQUE (`id_payment`, `status`),
+				INDEX `index_order_cart_payment_reference` (`id_order`, `id_cart`, `id_payment`, `order_reference`)
+			)');
+		}
     }
 
     private function registerHooks()
