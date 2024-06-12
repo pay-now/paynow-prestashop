@@ -9,9 +9,9 @@
     }
   ],
   "require": {
-    "php": ">=7.1",
+    "php": ">=7.2",
     "ext-json": "*",
-    "pay-now/paynow-php-sdk": "^2.3.1",
+    "pay-now/paynow-php-sdk": "^2.4.0",
     "nyholm/psr7": "^1.2",
     "php-http/curl-client": "^2.1"
   },
@@ -22,7 +22,7 @@
   },
   "config": {
     "platform": {
-      "php": "7.1"
+      "php": "7.2"
     },
     "prepend-autoloader": false,
     "optimize-autoloader": true
