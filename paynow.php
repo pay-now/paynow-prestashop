@@ -79,8 +79,10 @@ class Paynow extends PaymentModule
 
     public function install()
     {
+		$tablesCreated = $this->createDbTables();
+
         if (!parent::install() ||
-            !$this->createDbTables() ||
+            !$tablesCreated ||
             !$this->createModuleSettings() ||
             !$this->registerHooks()) {
             return false;
