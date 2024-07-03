@@ -380,6 +380,8 @@ class Paynow extends PaymentModule
                 return $this->l('Pay by Google Pay');
             case \Paynow\Model\PaymentMethods\Type::APPLE_PAY:
                 return $this->l('Pay by Apple Pay');
+			case \Paynow\Model\PaymentMethods\Type::PAYPO:
+				return $this->l('PayPo - buy now, pay later');
         }
     }
 

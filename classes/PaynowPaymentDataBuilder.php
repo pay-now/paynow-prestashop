@@ -12,6 +12,8 @@
 
 class PaynowPaymentDataBuilder
 {
+	public const PAYPO_ID = 3000;
+
     private $context;
 
     /**
@@ -94,6 +96,7 @@ class PaynowPaymentDataBuilder
     ): array {
         $currency = Currency::getCurrency($id_currency);
         $customer = new Customer((int)$id_customer);
+		$paymentMethodId = Tools::getValue('paymentMethodId');
 
         $request = [
             'amount'      => number_format($total_to_paid * 100, 0, '', ''),
@@ -118,8 +121,46 @@ class PaynowPaymentDataBuilder
             $request['buyer']['externalId'] = PaynowKeysGenerator::generateBuyerExternalId($id_customer, $this->module);
         }
 
-        if (! empty(Tools::getValue('paymentMethodId'))) {
-            $request['paymentMethodId'] = (int)Tools::getValue('paymentMethodId');
+        if (! empty($paymentMethodId)) {
+            $request['paymentMethodId'] = (int)$paymentMethodId;
+
+			if ((int)$paymentMethodId === self::PAYPO_ID) {
+				$address = new Address($this->context->cart->id_address_delivery);
+				$invoiceAddress = new Address($this->context->cart->id_address_invoice);
+
+				try {
+					$state = new State($address->id_state);
+				} catch (Throwable $e) {
+					$state = null;
+				}
+
+				try {
+					$invoiceState = new State($invoiceAddress->id_state);
+				} catch (Throwable $e) {
+					$invoiceState = null;
+				}
+
+				$request['buyer']['address'] = [
+					'billing' => [
+						'street' => $invoiceAddress->address1,
+						'houseNumber' => $invoiceAddress->address2,
+						'apartmentNumber' => '',
+						'zipcode' => $invoiceAddress->postcode,
+						'city' => $invoiceAddress->city,
+						'county' => $invoiceState ? $invoiceState->name : '',
+						'country' => $invoiceAddress->country,
+					],
+					'shipping' => [
+						'street' => $address->address1,
+						'houseNumber' => $address->address2,
+						'apartmentNumber' => '',
+						'zipcode' => $address->postcode,
+						'city' => $address->city,
+						'county' => $state ? $state->name : '',
+						'country' => $address->country,
+					]
+				];
+			}
         }
 
         if (Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED')) {

@@ -364,7 +364,11 @@ class PaynowAdminFormHelper
                                 [
                                     'id_option' => Paynow\Model\PaymentMethods\Type::APPLE_PAY,
                                     'name' => $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::APPLE_PAY)
-                                ]
+                                ],
+								[
+									'id_option' => Paynow\Model\PaymentMethods\Type::PAYPO,
+									'name' => $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::PAYPO)
+								]
                             ],
                             'id'    => 'id_option',
                             'name'  => 'name'
