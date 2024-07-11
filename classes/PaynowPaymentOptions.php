@@ -133,7 +133,7 @@ class PaynowPaymentOptions
 
 			$payment_options[] = $this->getPaymentOption(
 				$this->module->getPaymentMethodTitle('DIGITAL_WALLETS'),
-				$this->module->getLogo(),
+				count($digitalWalletsPayments) === 1 ? $digitalWalletsPayments[0]->getImage() : $this->module->getDigitalWalletsLogo(),
 				PaynowLinkHelper::getPaymentUrl(),
 				'module:paynow/views/templates/front/1.7/payment_method_digital_wallets_form.tpl'
 			);

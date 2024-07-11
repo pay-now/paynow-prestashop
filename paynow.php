@@ -518,7 +518,7 @@ class Paynow extends PaymentModule
 						if (!empty($digitalWalletsPayments)) {
 							array_push($payment_options, [
 								'name' => $this->getPaymentMethodTitle('DIGITAL_WALLETS'),
-								'image' => $this->getLogo(),
+								'image' => count($digitalWalletsPayments) === 1 ? $digitalWalletsPayments[0]->getImage() : $this->getDigitalWalletsLogo(),
 								'type' => 'DIGITAL_WALLETS',
 								'authorization' => '',
 								'pbls' => $digitalWalletsPayments
@@ -683,6 +683,11 @@ class Paynow extends PaymentModule
 
         return false;
     }
+
+	public function getDigitalWalletsLogo()
+	{
+		return Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/digital-wallets.svg');
+	}
 
     public function getLogo()
     {
