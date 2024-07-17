@@ -138,7 +138,7 @@ p.payment_module.paynow button:after {
 }
 
 .payment-option img {
-    max-height: 1.5rem !important;
+    max-height: 1.125rem !important;
     max-width: 80px !important;
     height: auto !important;
     margin-right: 10px;
