@@ -381,6 +381,8 @@ class Paynow extends PaymentModule
                 return $this->l('Pay by Google Pay');
             case \Paynow\Model\PaymentMethods\Type::APPLE_PAY:
                 return $this->l('Pay by Apple Pay');
+			case 'DIGITAL_WALLETS':
+				return $this->l('Pay by digital wallets');
         }
     }
 
@@ -442,11 +444,16 @@ class Paynow extends PaymentModule
             'data_processing_notices' => $gdpr_notices ?? null
         ]);
 
+		$digital_wallets = [
+			Paynow\Model\PaymentMethods\Type::GOOGLE_PAY,
+			Paynow\Model\PaymentMethods\Type::APPLE_PAY,
+		];
         $payment_options = [];
         if ((int)Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS') === 1) {
             $payment_methods = $this->getPaymentMethods();
             if (!empty($payment_methods)) {
                 $list = [];
+				$digitalWalletsPayments = [];
                 foreach ($payment_methods->getAll() as $payment_method) {
                     if (!isset($list[$payment_method->getType()])) {
                         if (Paynow\Model\PaymentMethods\Type::PBL == $payment_method->getType()) {
@@ -457,7 +464,13 @@ class Paynow extends PaymentModule
                                 'authorization' => $payment_method->getAuthorizationType(),
                                 'pbls' => $payment_methods->getOnlyPbls()
                             ]);
-                        } else {
+                        } elseif (in_array($payment_method->getType(), $digital_wallets)) {
+							if (!$payment_method->isEnabled()) {
+								continue;
+							}
+
+							$digitalWalletsPayments[] = $payment_method;
+						} else {
                             if (Paynow\Model\PaymentMethods\Type::BLIK == $payment_method->getType()) {
                                 $this->context->smarty->assign([
                                     'action_blik' => Context::getContext()->link->getModuleLink(
@@ -502,6 +515,16 @@ class Paynow extends PaymentModule
                             array_push($payment_options, $payment_option);
                         }
                         $list[$payment_method->getType()] = $payment_method->getId();
+
+						if (!empty($digitalWalletsPayments)) {
+							array_push($payment_options, [
+								'name' => $this->getPaymentMethodTitle('DIGITAL_WALLETS'),
+								'image' => count($digitalWalletsPayments) === 1 ? $digitalWalletsPayments[0]->getImage() : $this->getDigitalWalletsLogo(),
+								'type' => 'DIGITAL_WALLETS',
+								'authorization' => '',
+								'pbls' => $digitalWalletsPayments
+							]);
+						}
                     }
                 }
                 $this->context->smarty->assign([
@@ -661,6 +684,11 @@ class Paynow extends PaymentModule
 
         return false;
     }
+
+	public function getDigitalWalletsLogo()
+	{
+		return Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/digital-wallets.svg');
+	}
 
     public function getLogo()
     {
@@ -850,6 +878,7 @@ class Paynow extends PaymentModule
             'Autofocus on checkout form field: BLIK code. Enabled by default. Disabling may be helpful when checkout page is visualy long (e.g. single-page checkout).'                         => $this->l('Autofocus on checkout form field: BLIK code. Enabled by default. Disabling may be helpful when checkout page is visualy long (e.g. single-page checkout).'),
 			'An error occurred while deleting the saved card.'																																	=> $this->l('An error occurred while deleting the saved card.'),
 			'First accept the terms of service, then click pay.'																																=> $this->l('First accept the terms of service, then click pay.'),
+			'Digital wallets'																																									=> $this->l('Digital wallets'),
         ];
     }
 }
