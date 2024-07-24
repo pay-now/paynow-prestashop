@@ -79,12 +79,13 @@ class Paynow extends PaymentModule
 
     public function install()
     {
-        if (!parent::install() ||
+		if (!parent::install() ||
             !$this->createDbTables() ||
             !$this->createModuleSettings() ||
             !$this->registerHooks()) {
             return false;
         }
+
         return true;
     }
 
@@ -98,24 +99,24 @@ class Paynow extends PaymentModule
 
     private function createDbTables()
     {
-        return Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paynow_payments` (
-            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ,
-            `id_order` INT(10) UNSIGNED NOT NULL,
-            `id_cart` INT(10) UNSIGNED NOT NULL,
-            `id_payment` varchar(30) NOT NULL,
-            `order_reference` varchar(9)  NOT NULL,
-            `external_id` varchar(50)  NOT NULL,
-            `status` varchar(64) NOT NULL,
-            `total` DECIMAL(20,6) NOT NULL DEFAULT \'0.000000\',
-            `locked` TINYINT(1) NOT NULL DEFAULT 0,
-            `active` tinyint(1) NOT NULL DEFAULT 0,
-            `counter` tinyint(1) NOT NULL DEFAULT 0,
-            `sent_at` datetime DEFAULT NULL,
-            `created_at` datetime,
-            `modified_at` datetime,
-            UNIQUE (`id_payment`, `status`),
-            INDEX `index_order_cart_payment_reference` (`id_order`, `id_cart`, `id_payment`, `order_reference`)
-        )');
+		return Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paynow_payments` (
+			`id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+			`id_order` INT(10) UNSIGNED NOT NULL,
+			`id_cart` INT(10) UNSIGNED NOT NULL,
+			`id_payment` varchar(30) NOT NULL,
+			`order_reference` varchar(9)  NOT NULL,
+			`external_id` varchar(50)  NOT NULL,
+			`status` varchar(64) NOT NULL,
+			`total` DECIMAL(20,6) NOT NULL DEFAULT \'0.000000\',
+			`locked` TINYINT(1) NOT NULL DEFAULT 0,
+			`active` tinyint(1) NOT NULL DEFAULT 0,
+			`counter` tinyint(1) NOT NULL DEFAULT 0,
+			`sent_at` datetime DEFAULT NULL,
+			`created_at` datetime,
+			`modified_at` datetime,
+			UNIQUE (`id_payment`, `status`),
+			INDEX `index_order_cart_payment_reference` (`id_order`, `id_cart`, `id_payment`, `order_reference`)
+		)');
     }
 
     private function registerHooks()
