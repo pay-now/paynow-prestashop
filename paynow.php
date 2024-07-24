@@ -469,7 +469,7 @@ class Paynow extends PaymentModule
                                     'action_token' => Tools::encrypt($this->context->customer->secure_key),
                                     'action_token_refresh' => Context::getContext()->link->getModuleLink('paynow', 'customerToken'),
                                     'error_message' => $this->getTranslationsArray()['An error occurred during the payment process'],
-                                    'terms_message' => $this->getTranslationsArray()['You have to accept terms and conditions'],
+                                    'terms_message' => $this->getTranslationsArray()['First accept the terms of service, then click pay.'],
                                     'blik_autofocus' => Configuration::get('PAYNOW_BLIK_AUTOFOCUS_ENABLED') === '0' ? '0' : '1',
                                 ]);
                             }
@@ -839,7 +839,6 @@ class Paynow extends PaymentModule
             'Wrong BLIK code'                                                                                                                                                                   => $this->l('Wrong BLIK code'),
             'BLIK code has expired'                                                                                                                                                             => $this->l('BLIK code has expired'),
             'BLIK code already used'                                                                                                                                                            => $this->l('BLIK code already used'),
-            'You have to accept terms and conditions'                                                                                                                                           => $this->l('You have to accept terms and conditions'),
             'Moment of creating order'                                                                                                                                                          => $this->l('Moment of creating order'),
             'On clicking the Place order'                                                                                                                                                       => $this->l('On clicking the Place order'),
             'After the successful Paynow payment'                                                                                                                                               => $this->l('After the successful Paynow payment'),
@@ -849,6 +848,7 @@ class Paynow extends PaymentModule
             'BLIK field autofocus'                                                                                                                                                              => $this->l('BLIK field autofocus'),
             'Autofocus on checkout form field: BLIK code. Enabled by default. Disabling may be helpful when checkout page is visualy long (e.g. single-page checkout).'                         => $this->l('Autofocus on checkout form field: BLIK code. Enabled by default. Disabling may be helpful when checkout page is visualy long (e.g. single-page checkout).'),
 			'An error occurred while deleting the saved card.'																																	=> $this->l('An error occurred while deleting the saved card.'),
+			'First accept the terms of service, then click pay.'																																=> $this->l('First accept the terms of service, then click pay.'),
         ];
     }
 }

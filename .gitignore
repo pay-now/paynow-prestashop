@@ -9,3 +9,9 @@ composer.lock
 
 # composer dependencies
 vendor
+
+# built
+dist
+
+# docker
+docker-compose.yml

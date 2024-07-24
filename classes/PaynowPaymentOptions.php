@@ -131,7 +131,7 @@ class PaynowPaymentOptions
                 'action_token' => Tools::encrypt($this->context->customer->secure_key ?? ''),
                 'action_token_refresh' => Context::getContext()->link->getModuleLink('paynow', 'customerToken'),
                 'error_message' => $this->getMessage('An error occurred during the payment process'),
-                'terms_message' => $this->getMessage('You have to accept terms and conditions'),
+                'terms_message' => $this->getMessage('First accept the terms of service, then click pay.'),
                 'blik_autofocus' => Configuration::get('PAYNOW_BLIK_AUTOFOCUS_ENABLED') === '0' ? '0' : '1',
             ]);
         } elseif (Paynow\Model\PaymentMethods\Type::CARD == $payment_method->getType()) {
