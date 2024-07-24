@@ -41,7 +41,6 @@ var paynow = {
         form: '.paynow-blik-form',
         terms: '#conditions_to_approve\\[terms-and-conditions\\], #cgv',
         termsLabel: 'label[for="conditions_to_approve\\[terms-and-conditions\\]"], label[for="cgv"]',
-        termsErrorLabel: '#js-paynow-terms-error',
         paymentButton: '#payment-confirmation button',
         blikCode: '#paynow_blik_code',
         blikButton: 'form.paynow-blik-form div.paynow-payment-option-container button',
@@ -76,14 +75,6 @@ var paynow = {
             paynow.closeMiniMenu(ev)
         });
 
-        var termsErrorPlaceholderExists = $(paynow.selectors.terms).length != 0
-            && $(paynow.selectors.termsLabel).length != 0
-            && $(paynow.selectors.termsErrorLabel).length == 0
-
-        if (termsErrorPlaceholderExists) {
-            $(paynow.selectors.termsLabel).after('<span id="js-paynow-terms-error" class="paynow-terms-error"></span>')
-        }
-
         paynow.addApplePayEnabledToCookie();
         paynow.addFingerprintToCardPayment();
     },
@@ -116,7 +107,7 @@ var paynow = {
         }
 
         if (paynow.isTermsChecked()) {
-            $(paynow.selectors.termsErrorLabel).text('')
+            $(paynow.selectors.blikErrorLabel).text('')
             return true
         } else {
             return false
@@ -129,10 +120,9 @@ var paynow = {
         }
 
         $(paynow.selectors.blikErrorLabel).text('')
-        $(paynow.selectors.termsErrorLabel).text('')
 
         if (paynow.termsValidate() == false) {
-            $(paynow.selectors.termsErrorLabel).text($(paynow.selectors.form).data('terms-message'))
+            $(paynow.selectors.blikErrorLabel).text($(paynow.selectors.form).data('terms-message'))
             prestashop.emit('paynow_event_blik_submit_fail', {
                 type: 'terms_not_accepted',
             })

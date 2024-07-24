@@ -49,7 +49,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.7.6';
+        $this->version = '1.7.7';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -79,12 +79,13 @@ class Paynow extends PaymentModule
 
     public function install()
     {
-        if (!parent::install() ||
+		if (!parent::install() ||
             !$this->createDbTables() ||
             !$this->createModuleSettings() ||
             !$this->registerHooks()) {
             return false;
         }
+
         return true;
     }
 
@@ -98,24 +99,24 @@ class Paynow extends PaymentModule
 
     private function createDbTables()
     {
-        return Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paynow_payments` (
-            `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ,
-            `id_order` INT(10) UNSIGNED NOT NULL,
-            `id_cart` INT(10) UNSIGNED NOT NULL,
-            `id_payment` varchar(30) NOT NULL,
-            `order_reference` varchar(9)  NOT NULL,
-            `external_id` varchar(50)  NOT NULL,
-            `status` varchar(64) NOT NULL,
-            `total` DECIMAL(20,6) NOT NULL DEFAULT \'0.000000\',
-            `locked` TINYINT(1) NOT NULL DEFAULT 0,
-            `active` tinyint(1) NOT NULL DEFAULT 0,
-            `counter` tinyint(1) NOT NULL DEFAULT 0,
-            `sent_at` datetime DEFAULT NULL,
-            `created_at` datetime,
-            `modified_at` datetime,
-            UNIQUE (`id_payment`, `status`),
-            INDEX `index_order_cart_payment_reference` (`id_order`, `id_cart`, `id_payment`, `order_reference`)
-        )');
+		return Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paynow_payments` (
+			`id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+			`id_order` INT(10) UNSIGNED NOT NULL,
+			`id_cart` INT(10) UNSIGNED NOT NULL,
+			`id_payment` varchar(30) NOT NULL,
+			`order_reference` varchar(9)  NOT NULL,
+			`external_id` varchar(50)  NOT NULL,
+			`status` varchar(64) NOT NULL,
+			`total` DECIMAL(20,6) NOT NULL DEFAULT \'0.000000\',
+			`locked` TINYINT(1) NOT NULL DEFAULT 0,
+			`active` tinyint(1) NOT NULL DEFAULT 0,
+			`counter` tinyint(1) NOT NULL DEFAULT 0,
+			`sent_at` datetime DEFAULT NULL,
+			`created_at` datetime,
+			`modified_at` datetime,
+			UNIQUE (`id_payment`, `status`),
+			INDEX `index_order_cart_payment_reference` (`id_order`, `id_cart`, `id_payment`, `order_reference`)
+		)');
     }
 
     private function registerHooks()
@@ -380,6 +381,8 @@ class Paynow extends PaymentModule
                 return $this->l('Pay by Google Pay');
             case \Paynow\Model\PaymentMethods\Type::APPLE_PAY:
                 return $this->l('Pay by Apple Pay');
+			case 'DIGITAL_WALLETS':
+				return $this->l('Pay by digital wallets');
         }
     }
 
@@ -441,11 +444,16 @@ class Paynow extends PaymentModule
             'data_processing_notices' => $gdpr_notices ?? null
         ]);
 
+		$digital_wallets = [
+			Paynow\Model\PaymentMethods\Type::GOOGLE_PAY,
+			Paynow\Model\PaymentMethods\Type::APPLE_PAY,
+		];
         $payment_options = [];
         if ((int)Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS') === 1) {
             $payment_methods = $this->getPaymentMethods();
             if (!empty($payment_methods)) {
                 $list = [];
+				$digitalWalletsPayments = [];
                 foreach ($payment_methods->getAll() as $payment_method) {
                     if (!isset($list[$payment_method->getType()])) {
                         if (Paynow\Model\PaymentMethods\Type::PBL == $payment_method->getType()) {
@@ -456,7 +464,13 @@ class Paynow extends PaymentModule
                                 'authorization' => $payment_method->getAuthorizationType(),
                                 'pbls' => $payment_methods->getOnlyPbls()
                             ]);
-                        } else {
+                        } elseif (in_array($payment_method->getType(), $digital_wallets)) {
+							if (!$payment_method->isEnabled()) {
+								continue;
+							}
+
+							$digitalWalletsPayments[] = $payment_method;
+						} else {
                             if (Paynow\Model\PaymentMethods\Type::BLIK == $payment_method->getType()) {
                                 $this->context->smarty->assign([
                                     'action_blik' => Context::getContext()->link->getModuleLink(
@@ -469,7 +483,7 @@ class Paynow extends PaymentModule
                                     'action_token' => Tools::encrypt($this->context->customer->secure_key),
                                     'action_token_refresh' => Context::getContext()->link->getModuleLink('paynow', 'customerToken'),
                                     'error_message' => $this->getTranslationsArray()['An error occurred during the payment process'],
-                                    'terms_message' => $this->getTranslationsArray()['You have to accept terms and conditions'],
+                                    'terms_message' => $this->getTranslationsArray()['First accept the terms of service, then click pay.'],
                                     'blik_autofocus' => Configuration::get('PAYNOW_BLIK_AUTOFOCUS_ENABLED') === '0' ? '0' : '1',
                                 ]);
                             }
@@ -501,6 +515,16 @@ class Paynow extends PaymentModule
                             array_push($payment_options, $payment_option);
                         }
                         $list[$payment_method->getType()] = $payment_method->getId();
+
+						if (!empty($digitalWalletsPayments)) {
+							array_push($payment_options, [
+								'name' => $this->getPaymentMethodTitle('DIGITAL_WALLETS'),
+								'image' => count($digitalWalletsPayments) === 1 ? $digitalWalletsPayments[0]->getImage() : $this->getDigitalWalletsLogo(),
+								'type' => 'DIGITAL_WALLETS',
+								'authorization' => '',
+								'pbls' => $digitalWalletsPayments
+							]);
+						}
                     }
                 }
                 $this->context->smarty->assign([
@@ -660,6 +684,11 @@ class Paynow extends PaymentModule
 
         return false;
     }
+
+	public function getDigitalWalletsLogo()
+	{
+		return Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/digital-wallets.svg');
+	}
 
     public function getLogo()
     {
@@ -839,7 +868,6 @@ class Paynow extends PaymentModule
             'Wrong BLIK code'                                                                                                                                                                   => $this->l('Wrong BLIK code'),
             'BLIK code has expired'                                                                                                                                                             => $this->l('BLIK code has expired'),
             'BLIK code already used'                                                                                                                                                            => $this->l('BLIK code already used'),
-            'You have to accept terms and conditions'                                                                                                                                           => $this->l('You have to accept terms and conditions'),
             'Moment of creating order'                                                                                                                                                          => $this->l('Moment of creating order'),
             'On clicking the Place order'                                                                                                                                                       => $this->l('On clicking the Place order'),
             'After the successful Paynow payment'                                                                                                                                               => $this->l('After the successful Paynow payment'),
@@ -849,6 +877,8 @@ class Paynow extends PaymentModule
             'BLIK field autofocus'                                                                                                                                                              => $this->l('BLIK field autofocus'),
             'Autofocus on checkout form field: BLIK code. Enabled by default. Disabling may be helpful when checkout page is visualy long (e.g. single-page checkout).'                         => $this->l('Autofocus on checkout form field: BLIK code. Enabled by default. Disabling may be helpful when checkout page is visualy long (e.g. single-page checkout).'),
 			'An error occurred while deleting the saved card.'																																	=> $this->l('An error occurred while deleting the saved card.'),
+			'First accept the terms of service, then click pay.'																																=> $this->l('First accept the terms of service, then click pay.'),
+			'Digital wallets'																																									=> $this->l('Digital wallets'),
         ];
     }
 }
