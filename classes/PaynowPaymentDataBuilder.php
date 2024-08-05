@@ -12,8 +12,6 @@
 
 class PaynowPaymentDataBuilder
 {
-	public const PAYPO_ID = 3000;
-
     private $context;
 
     /**
@@ -117,50 +115,52 @@ class PaynowPaymentDataBuilder
             )
         ];
 
+		try {
+			$address = new Address($this->context->cart->id_address_delivery);
+			$invoiceAddress = new Address($this->context->cart->id_address_invoice);
+
+			try {
+				$state = new State($address->id_state);
+			} catch (Throwable $e) {
+				$state = null;
+			}
+
+			try {
+				$invoiceState = new State($invoiceAddress->id_state);
+			} catch (Throwable $e) {
+				$invoiceState = null;
+			}
+
+			$request['buyer']['address'] = [
+				'billing' => [
+					'street' => $invoiceAddress->address1,
+					'houseNumber' => $invoiceAddress->address2,
+					'apartmentNumber' => '',
+					'zipcode' => $invoiceAddress->postcode,
+					'city' => $invoiceAddress->city,
+					'county' => $invoiceState ? $invoiceState->name : '',
+					'country' => $invoiceAddress->country,
+				],
+				'shipping' => [
+					'street' => $address->address1,
+					'houseNumber' => $address->address2,
+					'apartmentNumber' => '',
+					'zipcode' => $address->postcode,
+					'city' => $address->city,
+					'county' => $state ? $state->name : '',
+					'country' => $address->country,
+				]
+			];
+		} catch (Throwable $exception) {
+			//
+		}
+
         if (!empty($id_customer) && $this->context->customer && $this->context->customer->is_guest === '0'){
             $request['buyer']['externalId'] = PaynowKeysGenerator::generateBuyerExternalId($id_customer, $this->module);
         }
 
         if (! empty($paymentMethodId)) {
             $request['paymentMethodId'] = (int)$paymentMethodId;
-
-			if ((int)$paymentMethodId === self::PAYPO_ID) {
-				$address = new Address($this->context->cart->id_address_delivery);
-				$invoiceAddress = new Address($this->context->cart->id_address_invoice);
-
-				try {
-					$state = new State($address->id_state);
-				} catch (Throwable $e) {
-					$state = null;
-				}
-
-				try {
-					$invoiceState = new State($invoiceAddress->id_state);
-				} catch (Throwable $e) {
-					$invoiceState = null;
-				}
-
-				$request['buyer']['address'] = [
-					'billing' => [
-						'street' => $invoiceAddress->address1,
-						'houseNumber' => $invoiceAddress->address2,
-						'apartmentNumber' => '',
-						'zipcode' => $invoiceAddress->postcode,
-						'city' => $invoiceAddress->city,
-						'county' => $invoiceState ? $invoiceState->name : '',
-						'country' => $invoiceAddress->country,
-					],
-					'shipping' => [
-						'street' => $address->address1,
-						'houseNumber' => $address->address2,
-						'apartmentNumber' => '',
-						'zipcode' => $address->postcode,
-						'city' => $address->city,
-						'county' => $state ? $state->name : '',
-						'country' => $address->country,
-					]
-				];
-			}
         }
 
         if (Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED')) {
