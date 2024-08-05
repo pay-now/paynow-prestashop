@@ -357,14 +357,10 @@ class PaynowAdminFormHelper
                                     'id_option' => Paynow\Model\PaymentMethods\Type::CARD,
                                     'name' => $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::CARD)
                                 ],
-                                [
-                                    'id_option' => Paynow\Model\PaymentMethods\Type::GOOGLE_PAY,
-                                    'name' => $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::GOOGLE_PAY)
-                                ],
-                                [
-                                    'id_option' => Paynow\Model\PaymentMethods\Type::APPLE_PAY,
-                                    'name' => $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::APPLE_PAY)
-                                ],
+								[
+									'id_option' => 'DIGITAL_WALLETS',
+									'name' => $this->translations['Digital wallets']
+								],
 								[
 									'id_option' => Paynow\Model\PaymentMethods\Type::PAYPO,
 									'name' => $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::PAYPO)
