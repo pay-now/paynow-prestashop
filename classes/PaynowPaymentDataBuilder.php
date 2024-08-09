@@ -131,6 +131,18 @@ class PaynowPaymentDataBuilder
 				$invoiceState = null;
 			}
 
+			try {
+				$country = Country::getIsoById($address->id_country);
+			} catch (Throwable $e) {
+				$country = null;
+			}
+
+			try {
+				$invoiceCountry = Country::getIsoById($invoiceAddress->id_country);
+			} catch (Throwable $e) {
+				$invoiceCountry = null;
+			}
+
 			$request['buyer']['address'] = [
 				'billing' => [
 					'street' => $invoiceAddress->address1,
@@ -139,7 +151,7 @@ class PaynowPaymentDataBuilder
 					'zipcode' => $invoiceAddress->postcode,
 					'city' => $invoiceAddress->city,
 					'county' => $invoiceState ? $invoiceState->name : '',
-					'country' => $invoiceAddress->country,
+					'country' => $invoiceCountry ?: '',
 				],
 				'shipping' => [
 					'street' => $address->address1,
@@ -148,11 +160,11 @@ class PaynowPaymentDataBuilder
 					'zipcode' => $address->postcode,
 					'city' => $address->city,
 					'county' => $state ? $state->name : '',
-					'country' => $address->country,
+					'country' => $country ?: '',
 				]
 			];
 		} catch (Throwable $exception) {
-			//
+			PaynowLogger::error('Cannot add addresses to payment data', ['msg' => $exception->getMessage()]);
 		}
 
         if (!empty($id_customer) && $this->context->customer && $this->context->customer->is_guest === '0'){
