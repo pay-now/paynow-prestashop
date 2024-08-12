@@ -383,6 +383,8 @@ class Paynow extends PaymentModule
                 return $this->l('Pay by Apple Pay');
 			case 'DIGITAL_WALLETS':
 				return $this->l('Pay by digital wallets');
+			case \Paynow\Model\PaymentMethods\Type::PAYPO:
+				return $this->l('PayPo - buy now, pay later');
         }
     }
 

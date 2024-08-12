@@ -94,6 +94,7 @@ class PaynowPaymentDataBuilder
     ): array {
         $currency = Currency::getCurrency($id_currency);
         $customer = new Customer((int)$id_customer);
+		$paymentMethodId = Tools::getValue('paymentMethodId');
 
         $request = [
             'amount'      => number_format($total_to_paid * 100, 0, '', ''),
@@ -114,12 +115,64 @@ class PaynowPaymentDataBuilder
             )
         ];
 
+		try {
+			$address = new Address($this->context->cart->id_address_delivery);
+			$invoiceAddress = new Address($this->context->cart->id_address_invoice);
+
+			try {
+				$state = new State($address->id_state);
+			} catch (Throwable $e) {
+				$state = null;
+			}
+
+			try {
+				$invoiceState = new State($invoiceAddress->id_state);
+			} catch (Throwable $e) {
+				$invoiceState = null;
+			}
+
+			try {
+				$country = Country::getIsoById($address->id_country);
+			} catch (Throwable $e) {
+				$country = null;
+			}
+
+			try {
+				$invoiceCountry = Country::getIsoById($invoiceAddress->id_country);
+			} catch (Throwable $e) {
+				$invoiceCountry = null;
+			}
+
+			$request['buyer']['address'] = [
+				'billing' => [
+					'street' => $invoiceAddress->address1,
+					'houseNumber' => $invoiceAddress->address2,
+					'apartmentNumber' => '',
+					'zipcode' => $invoiceAddress->postcode,
+					'city' => $invoiceAddress->city,
+					'county' => $invoiceState ? $invoiceState->name : '',
+					'country' => $invoiceCountry ?: '',
+				],
+				'shipping' => [
+					'street' => $address->address1,
+					'houseNumber' => $address->address2,
+					'apartmentNumber' => '',
+					'zipcode' => $address->postcode,
+					'city' => $address->city,
+					'county' => $state ? $state->name : '',
+					'country' => $country ?: '',
+				]
+			];
+		} catch (Throwable $exception) {
+			PaynowLogger::error('Cannot add addresses to payment data', ['msg' => $exception->getMessage()]);
+		}
+
         if (!empty($id_customer) && $this->context->customer && $this->context->customer->is_guest === '0'){
             $request['buyer']['externalId'] = PaynowKeysGenerator::generateBuyerExternalId($id_customer, $this->module);
         }
 
-        if (! empty(Tools::getValue('paymentMethodId'))) {
-            $request['paymentMethodId'] = (int)Tools::getValue('paymentMethodId');
+        if (! empty($paymentMethodId)) {
+            $request['paymentMethodId'] = (int)$paymentMethodId;
         }
 
         if (Configuration::get('PAYNOW_PAYMENT_VALIDITY_TIME_ENABLED')) {
