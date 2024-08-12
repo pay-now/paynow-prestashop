@@ -172,7 +172,13 @@ class PaynowPaymentOptions
                 'default_card_image' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->module->name . '/views/img/card-default.svg'),
                 'paynow_card_instruments' => $payment_method->getSavedInstruments(),
             ]);
-        }
+        } elseif (Paynow\Model\PaymentMethods\Type::PAYPO == $payment_method->getType()) {
+			$this->context->smarty->assign([
+				'action_paypo' => PaynowLinkHelper::getPaymentUrl([
+					'paymentMethodId' => $payment_method->getId()
+				]),
+			]);
+		}
     }
 
     private function getForm($payment_method): ?string
@@ -184,6 +190,10 @@ class PaynowPaymentOptions
         if (Paynow\Model\PaymentMethods\Type::CARD === $payment_method->getType()) {
             return 'module:paynow/views/templates/front/1.7/payment_method_card_form.tpl';
         }
+
+		if (Paynow\Model\PaymentMethods\Type::PAYPO === $payment_method->getType()) {
+			return 'module:paynow/views/templates/front/1.7/payment_method_paypo_form.tpl';
+		}
 
         return null;
     }

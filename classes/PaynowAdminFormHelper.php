@@ -361,6 +361,10 @@ class PaynowAdminFormHelper
 									'id_option' => 'DIGITAL_WALLETS',
 									'name' => $this->translations['Digital wallets']
 								],
+								[
+									'id_option' => Paynow\Model\PaymentMethods\Type::PAYPO,
+									'name' => $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::PAYPO)
+								]
                             ],
                             'id'    => 'id_option',
                             'name'  => 'name'

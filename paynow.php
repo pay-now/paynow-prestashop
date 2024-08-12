@@ -49,7 +49,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.7.7';
+        $this->version = '1.7.8';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -383,6 +383,8 @@ class Paynow extends PaymentModule
                 return $this->l('Pay by Apple Pay');
 			case 'DIGITAL_WALLETS':
 				return $this->l('Pay by digital wallets');
+			case \Paynow\Model\PaymentMethods\Type::PAYPO:
+				return $this->l('PayPo - buy now, pay later');
         }
     }
 
