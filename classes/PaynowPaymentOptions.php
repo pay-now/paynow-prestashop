@@ -58,6 +58,10 @@ class PaynowPaymentOptions
         }
 
         $payment_options = [];
+		$digital_wallets = [
+			Paynow\Model\PaymentMethods\Type::GOOGLE_PAY,
+			Paynow\Model\PaymentMethods\Type::APPLE_PAY,
+		];
 
         $this->context->smarty->assign([
             'action' => PaynowLinkHelper::getPaymentUrl(),
@@ -74,6 +78,8 @@ class PaynowPaymentOptions
         }
 
         $hiddenPaymentTypes = explode(',', Configuration::get('PAYNOW_HIDE_PAYMENT_TYPES'));
+		$digitalWalletsHidden = in_array('DIGITAL_WALLETS', $hiddenPaymentTypes);
+		$digitalWalletsPayments = [];
 
         $list = [];
         /** @var PaymentMethod $payment_method */
@@ -97,7 +103,13 @@ class PaynowPaymentOptions
                     PaynowLinkHelper::getPaymentUrl(),
                     'module:paynow/views/templates/front/1.7/payment_form.tpl'
                 );
-            } else {
+            } elseif (in_array($payment_method->getType(), $digital_wallets)) {
+				if (!$payment_method->isEnabled() || $digitalWalletsHidden) {
+					continue;
+				}
+
+				$digitalWalletsPayments[] = $payment_method;
+			} else {
                 if (!$payment_method->isEnabled()) {
                     continue;
                 }
@@ -113,6 +125,19 @@ class PaynowPaymentOptions
             }
             $list[$payment_method->getType()] = $payment_method->getId();
         }
+
+		if (!empty($digitalWalletsPayments)) {
+			$this->context->smarty->assign([
+				'paynowDigitalWalletsPayments' => $digitalWalletsPayments,
+			]);
+
+			$payment_options[] = $this->getPaymentOption(
+				$this->module->getPaymentMethodTitle('DIGITAL_WALLETS'),
+				count($digitalWalletsPayments) === 1 ? $digitalWalletsPayments[0]->getImage() : $this->module->getDigitalWalletsLogo(),
+				PaynowLinkHelper::getPaymentUrl(),
+				'module:paynow/views/templates/front/1.7/payment_method_digital_wallets_form.tpl'
+			);
+		}
 
         return $payment_options;
     }
@@ -131,7 +156,7 @@ class PaynowPaymentOptions
                 'action_token' => Tools::encrypt($this->context->customer->secure_key ?? ''),
                 'action_token_refresh' => Context::getContext()->link->getModuleLink('paynow', 'customerToken'),
                 'error_message' => $this->getMessage('An error occurred during the payment process'),
-                'terms_message' => $this->getMessage('You have to accept terms and conditions'),
+                'terms_message' => $this->getMessage('First accept the terms of service, then click pay.'),
                 'blik_autofocus' => Configuration::get('PAYNOW_BLIK_AUTOFOCUS_ENABLED') === '0' ? '0' : '1',
             ]);
         } elseif (Paynow\Model\PaymentMethods\Type::CARD == $payment_method->getType()) {
@@ -147,7 +172,13 @@ class PaynowPaymentOptions
                 'default_card_image' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->module->name . '/views/img/card-default.svg'),
                 'paynow_card_instruments' => $payment_method->getSavedInstruments(),
             ]);
-        }
+        } elseif (Paynow\Model\PaymentMethods\Type::PAYPO == $payment_method->getType()) {
+			$this->context->smarty->assign([
+				'action_paypo' => PaynowLinkHelper::getPaymentUrl([
+					'paymentMethodId' => $payment_method->getId()
+				]),
+			]);
+		}
     }
 
     private function getForm($payment_method): ?string
@@ -159,6 +190,10 @@ class PaynowPaymentOptions
         if (Paynow\Model\PaymentMethods\Type::CARD === $payment_method->getType()) {
             return 'module:paynow/views/templates/front/1.7/payment_method_card_form.tpl';
         }
+
+		if (Paynow\Model\PaymentMethods\Type::PAYPO === $payment_method->getType()) {
+			return 'module:paynow/views/templates/front/1.7/payment_method_paypo_form.tpl';
+		}
 
         return null;
     }
