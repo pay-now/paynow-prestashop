@@ -443,7 +443,8 @@ class Paynow extends PaymentModule
             'cta_text' => $this->getCallToActionText(),
             'logo' => $this->getLogo(),
             'paynow_url' => PaynowLinkHelper::getPaymentUrl(),
-            'data_processing_notices' => $gdpr_notices ?? null
+            'data_processing_notices' => $gdpr_notices ?? null,
+			'data_paynow_plugin_version' => $this->version,
         ]);
 
 		$digital_wallets = [
