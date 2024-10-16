@@ -17,7 +17,7 @@ if (!defined('_PS_VERSION_')) {
 /**
  * @throws PrestaShopDatabaseException
  */
-function upgrade_module_1_7_8($module)
+function upgrade_module_1_7_9($module)
 {
     try {
 
