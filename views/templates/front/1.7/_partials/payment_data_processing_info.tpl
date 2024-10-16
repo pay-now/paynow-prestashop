@@ -14,3 +14,7 @@
         {/foreach}
     </div>
 {/if}
+
+{if $data_paynow_plugin_version}
+    <span data-paynow-plugin-version="{$data_paynow_plugin_version}"></span>
+{/if}
