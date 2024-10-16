@@ -16,7 +16,7 @@ Wtyczka `paynow` dodaje bezpieczne płatności BLIK, szybkie przelewy internetow
 
 ## Wymgania
 
-- PHP od wersji 7.1
+- PHP od wersji 7.2
 - PrestaShop od wersji 1.6.0
 
 ## Instalacja

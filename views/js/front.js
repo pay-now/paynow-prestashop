@@ -163,13 +163,11 @@ var paynow = {
     },
 
     onPaymentOptionChange: function () {
-        if ($(paynow.selectors.blikCode).length != 1) {
-            return
+        if ($(paynow.selectors.blikCode).length === 1) {
+            $(paynow.selectors.blikCode).mask('000 000', {placeholder: "___ ___"})
         }
 
-        $(paynow.selectors.blikCode).mask('000 000', {placeholder: "___ ___"})
-
-        if ($(paynow.selectors.form).data('blik-autofocus') == '1') {
+        if ($(paynow.selectors.form).data('blik-autofocus') === '1') {
             $(paynow.selectors.blikCode).focus();
         }
 
@@ -178,6 +176,8 @@ var paynow = {
             paynow.paymentButton.hide()
         } else if ($(paynow.selectors.cardMethodOptions).is(':visible') && !$(paynow.selectors.cardMethod + ':checked').length) {
             paynow.paymentButton.disable()
+        } else if ($('div.paynow-payment-pbls .paynow-payment-option-pbl').is(':visible')) {
+            paynow.pblValidate()
         } else {
             paynow.paymentButton.enable()
             paynow.paymentButton.show()
@@ -190,7 +190,7 @@ var paynow = {
     },
 
     blikValidate: function () {
-        blik_code_value = $(paynow.selectors.blikCode).val().replace(/\s/g, '');
+        const blik_code_value = $(paynow.selectors.blikCode).val().replace(/\s/g, '');
 
         if (blik_code_value.length === 6 && !isNaN(parseInt(blik_code_value)) && parseInt(blik_code_value)) {
             $(paynow.selectors.blikErrorLabel).text('');
@@ -215,7 +215,7 @@ var paynow = {
     },
 
     pblValidate: function () {
-        if (paynow.config.validateTerms && paynow.isTermsChecked()) {
+        if (!(paynow.config.validateTerms && !paynow.isTermsChecked()) && $(paynow.selectors.pblMethod + ':checked').length > 0) {
             paynow.paymentButton.enable();
             return true
         } else {

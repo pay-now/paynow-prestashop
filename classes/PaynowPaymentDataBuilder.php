@@ -167,8 +167,12 @@ class PaynowPaymentDataBuilder
 			PaynowLogger::error('Cannot add addresses to payment data', ['msg' => $exception->getMessage()]);
 		}
 
-        if (!empty($id_customer) && $this->context->customer && $this->context->customer->is_guest === '0'){
-            $request['buyer']['externalId'] = PaynowKeysGenerator::generateBuyerExternalId($id_customer, $this->module);
+        if (!empty($id_customer) && $this->context->customer){
+			if (method_exists($this->context->customer, 'isGuest') && !$this->context->customer->isGuest()) {
+				$request['buyer']['externalId'] = PaynowKeysGenerator::generateBuyerExternalId($id_customer, $this->module);
+			} elseif ($this->context->customer->is_guest === '0') {
+				$request['buyer']['externalId'] = PaynowKeysGenerator::generateBuyerExternalId($id_customer, $this->module);
+			}
         }
 
         if (! empty($paymentMethodId)) {
