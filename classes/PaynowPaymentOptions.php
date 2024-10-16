@@ -65,7 +65,8 @@ class PaynowPaymentOptions
 
         $this->context->smarty->assign([
             'action' => PaynowLinkHelper::getPaymentUrl(),
-            'data_processing_notices' => $this->data_processing_notices
+            'data_processing_notices' => $this->data_processing_notices,
+			'data_paynow_plugin_version' => $this->module->version,
         ]);
 
         $isAnyPblEnabled = false;

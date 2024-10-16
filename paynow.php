@@ -49,7 +49,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.7.8';
+        $this->version = '1.7.9';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -443,7 +443,8 @@ class Paynow extends PaymentModule
             'cta_text' => $this->getCallToActionText(),
             'logo' => $this->getLogo(),
             'paynow_url' => PaynowLinkHelper::getPaymentUrl(),
-            'data_processing_notices' => $gdpr_notices ?? null
+            'data_processing_notices' => $gdpr_notices ?? null,
+			'data_paynow_plugin_version' => $this->version,
         ]);
 
 		$digital_wallets = [
