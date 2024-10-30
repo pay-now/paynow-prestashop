@@ -11,7 +11,7 @@
   "require": {
     "php": ">=7.2",
     "ext-json": "*",
-    "pay-now/paynow-php-sdk": "^2.4.2",
+    "pay-now/paynow-php-sdk": "2.4.3",
     "nyholm/psr7": "^1.2",
     "php-http/curl-client": "^2.1"
   },
