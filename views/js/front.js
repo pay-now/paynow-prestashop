@@ -60,8 +60,8 @@ var paynow = {
 
         paynow.config.useCssClassDisabled = $(paynow.selectors.paymentButton).hasClass('disabled');
 
-        $(document).on('click', paynow.selectors.blikButton, paynow.blikFormSubmit);
-        $(document).on('keyup', paynow.selectors.blikCode, paynow.blikValidate);
+        $(document).off('click').on('click', paynow.selectors.blikButton, paynow.blikFormSubmit);
+        $(document).off('keyup').on('keyup', paynow.selectors.blikCode, paynow.blikValidate);
         $(document).on('change', paynow.selectors.pblMethod, paynow.pblValidate);
         $(document).on('change', paynow.selectors.cardMethod, paynow.cardValidate);
         $(document).on('change', paynow.selectors.paymentMethod, paynow.onPaymentOptionChange);
