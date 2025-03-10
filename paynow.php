@@ -385,6 +385,8 @@ class Paynow extends PaymentModule
 				return $this->l('Pay by digital wallets');
 			case \Paynow\Model\PaymentMethods\Type::PAYPO:
 				return $this->l('PayPo - buy now, pay later');
+            case \Paynow\Model\PaymentMethods\Type::CLICK_TO_PAY:
+                return $this->l('Click To Pay - pay with pre-saved card');
         }
     }
 
@@ -450,6 +452,7 @@ class Paynow extends PaymentModule
 		$digital_wallets = [
 			Paynow\Model\PaymentMethods\Type::GOOGLE_PAY,
 			Paynow\Model\PaymentMethods\Type::APPLE_PAY,
+			Paynow\Model\PaymentMethods\Type::CLICK_TO_PAY,
 		];
         $payment_options = [];
         if ((int)Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS') === 1) {
@@ -520,13 +523,16 @@ class Paynow extends PaymentModule
                         $list[$payment_method->getType()] = $payment_method->getId();
 
 						if (!empty($digitalWalletsPayments)) {
-							array_push($payment_options, [
+                            $types = array_map(function($dw) {return $dw->getType();}, $digitalWalletsPayments);
+							$payment_options[] = [
 								'name' => $this->getPaymentMethodTitle('DIGITAL_WALLETS'),
-								'image' => count($digitalWalletsPayments) === 1 ? $digitalWalletsPayments[0]->getImage() : $this->getDigitalWalletsLogo(),
+								'image' => count($digitalWalletsPayments) === 1
+                                    ? $digitalWalletsPayments[0]->getImage()
+                                    : $this->getDigitalWalletsLogo($types),
 								'type' => 'DIGITAL_WALLETS',
 								'authorization' => '',
 								'pbls' => $digitalWalletsPayments
-							]);
+							];
 						}
                     }
                 }
@@ -688,10 +694,16 @@ class Paynow extends PaymentModule
         return false;
     }
 
-	public function getDigitalWalletsLogo()
-	{
-		return Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/digital-wallets.svg');
-	}
+    public function getDigitalWalletsLogo(array $wallets)
+    {
+        $wallets = array_map(function ($type) {
+            return strtolower(substr($type, 0, 1));
+        }, $wallets);
+        sort($wallets);
+        $wallets = implode('', $wallets);
+
+        return Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/digital-wallets-' . $wallets . '.svg');
+    }
 
     public function getLogo()
     {
