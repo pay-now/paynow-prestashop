@@ -1,0 +1,8 @@
+--- /dev/null
++++ ../src/Paynow/Model/PaymentMethods/Type.php
+@@ -10,4 +10,5 @@
+     public const APPLE_PAY = 'APPLE_PAY';
+     public const PBL = 'PBL';
+     public const PAYPO = 'PAYPO';
++    public const CLICK_TO_PAY = 'CLICK_TO_PAY';
+ }

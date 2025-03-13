@@ -588,8 +588,11 @@ class Paynow extends PaymentModule
      */
     public function hookActionOrderSlipAdd($params)
     {
-        if ((int)Configuration::get('PAYNOW_REFUNDS_ENABLED') === 1 && Tools::isSubmit('makeRefundViaPaynow') &&
-            $this->name == $params['order']->module) {
+        if ((int)Configuration::get('PAYNOW_REFUNDS_ENABLED') === 1
+            && Tools::isSubmit('makeRefundViaPaynow')
+            && $this->name == $params['order']->module
+        )
+        {
             (new PaynowRefundProcessor($this->getPaynowClient(), $this->displayName))
                 ->processFromOrderSlip($params['order']);
         }
