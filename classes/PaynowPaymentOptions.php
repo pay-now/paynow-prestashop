@@ -57,12 +57,11 @@ class PaynowPaymentOptions
             ];
         }
 
-        $payment_options = [];
-		$digital_wallets = [
-			Paynow\Model\PaymentMethods\Type::GOOGLE_PAY,
-			Paynow\Model\PaymentMethods\Type::APPLE_PAY,
-			Paynow\Model\PaymentMethods\Type::CLICK_TO_PAY,
-		];
+        $digital_wallets = [
+            Paynow\Model\PaymentMethods\Type::CLICK_TO_PAY => null,
+            Paynow\Model\PaymentMethods\Type::GOOGLE_PAY => null,
+            Paynow\Model\PaymentMethods\Type::APPLE_PAY => null,
+        ];
 
         $this->context->smarty->assign([
             'action' => PaynowLinkHelper::getPaymentUrl(),
@@ -81,21 +80,24 @@ class PaynowPaymentOptions
 
         $hiddenPaymentTypes = explode(',', Configuration::get('PAYNOW_HIDE_PAYMENT_TYPES'));
         $digitalWalletsHidden = in_array('DIGITAL_WALLETS', $hiddenPaymentTypes);
-        $digitalWalletsPayments = [];
+
         $list = [];
+        $payment_options = [];
         /** @var PaymentMethod $payment_method */
         foreach ($this->payment_methods->getAll() as $payment_method) {
-
             if (isset($list[$payment_method->getType()])) {
                 continue;
             }
+
             if (in_array($payment_method->getType(), $hiddenPaymentTypes)) {
                 continue;
             }
+
             if (Paynow\Model\PaymentMethods\Type::PBL == $payment_method->getType()) {
                 if (!$isAnyPblEnabled) {
                     continue;
                 }
+
                 $this->context->smarty->assign([
                     'paynowPbls' => $this->payment_methods->getOnlyPbls(),
                 ]);
@@ -105,44 +107,44 @@ class PaynowPaymentOptions
                     PaynowLinkHelper::getPaymentUrl(),
                     'module:paynow/views/templates/front/1.7/payment_form.tpl'
                 );
-            } elseif (in_array($payment_method->getType(), $digital_wallets)) {
-				if (!$payment_method->isEnabled() || $digitalWalletsHidden) {
-					continue;
-				}
+            } elseif (array_key_exists($payment_method->getType(), $digital_wallets)) {
+                if (!$payment_method->isEnabled() || $digitalWalletsHidden) {
+                    continue;
+                }
 
-				$digitalWalletsPayments[] = $payment_method;
-			} else {
+                $digital_wallets[$payment_method->getType()] = $payment_method;
+            } else {
                 if (!$payment_method->isEnabled()) {
                     continue;
                 }
+
                 $this->setUpAdditionalTemplateVariables($payment_method);
                 $payment_options[] = $this->getPaymentOption(
                     $this->module->getPaymentMethodTitle($payment_method->getType()),
                     $payment_method->getImage(),
                     PaynowLinkHelper::getPaymentUrl([
-                        'paymentMethodId' => $payment_method->getId()
+                        'paymentMethodId' => $payment_method->getId(),
                     ]),
                     $this->getForm($payment_method)
                 );
             }
+
             $list[$payment_method->getType()] = $payment_method->getId();
         }
 
-		if (!empty($digitalWalletsPayments)) {
-			$this->context->smarty->assign([
-				'paynowDigitalWalletsPayments' => $digitalWalletsPayments,
-			]);
+        $digital_wallets = array_values(array_filter($digital_wallets));
+        if (!empty($digital_wallets)) {
+            $this->context->smarty->assign([
+                'paynowDigitalWalletsPayments' => $digital_wallets,
+            ]);
 
-            $types = array_map(function($dw) {return $dw->getType();}, $digitalWalletsPayments);
-			$payment_options[] = $this->getPaymentOption(
-				$this->module->getPaymentMethodTitle('DIGITAL_WALLETS'),
-				count($digitalWalletsPayments) === 1
-                    ? $digitalWalletsPayments[0]->getImage()
-                    : $this->module->getDigitalWalletsLogo($types),
-				PaynowLinkHelper::getPaymentUrl(),
-				'module:paynow/views/templates/front/1.7/payment_method_digital_wallets_form.tpl'
-			);
-		}
+            $payment_options[] = $this->getPaymentOption(
+                $this->module->getPaymentMethodTitle('DIGITAL_WALLETS'),
+                $this->module->getDigitalWalletsLogo($digital_wallets),
+                PaynowLinkHelper::getPaymentUrl(),
+                'module:paynow/views/templates/front/1.7/payment_method_digital_wallets_form.tpl'
+            );
+        }
 
         return $payment_options;
     }

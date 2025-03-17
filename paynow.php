@@ -449,17 +449,18 @@ class Paynow extends PaymentModule
 			'data_paynow_plugin_version' => $this->version,
         ]);
 
-		$digital_wallets = [
-			Paynow\Model\PaymentMethods\Type::GOOGLE_PAY,
-			Paynow\Model\PaymentMethods\Type::APPLE_PAY,
-			Paynow\Model\PaymentMethods\Type::CLICK_TO_PAY,
-		];
-        $payment_options = [];
         if ((int)Configuration::get('PAYNOW_SEPARATE_PAYMENT_METHODS') === 1) {
             $payment_methods = $this->getPaymentMethods();
             if (!empty($payment_methods)) {
+
+                $digital_wallets = [
+                    Paynow\Model\PaymentMethods\Type::CLICK_TO_PAY => null,
+                    Paynow\Model\PaymentMethods\Type::GOOGLE_PAY => null,
+                    Paynow\Model\PaymentMethods\Type::APPLE_PAY => null,
+                ];
+
                 $list = [];
-				$digitalWalletsPayments = [];
+                $payment_options = [];
                 foreach ($payment_methods->getAll() as $payment_method) {
                     if (!isset($list[$payment_method->getType()])) {
                         if (Paynow\Model\PaymentMethods\Type::PBL == $payment_method->getType()) {
@@ -470,12 +471,12 @@ class Paynow extends PaymentModule
                                 'authorization' => $payment_method->getAuthorizationType(),
                                 'pbls' => $payment_methods->getOnlyPbls()
                             ]);
-                        } elseif (in_array($payment_method->getType(), $digital_wallets)) {
+                        } elseif (array_key_exists($payment_method->getType(), $digital_wallets)) {
 							if (!$payment_method->isEnabled()) {
 								continue;
 							}
 
-							$digitalWalletsPayments[] = $payment_method;
+                            $digital_wallets[$payment_method->getType()] = $payment_method;
 						} else {
                             if (Paynow\Model\PaymentMethods\Type::BLIK == $payment_method->getType()) {
                                 $this->context->smarty->assign([
@@ -522,16 +523,14 @@ class Paynow extends PaymentModule
                         }
                         $list[$payment_method->getType()] = $payment_method->getId();
 
-						if (!empty($digitalWalletsPayments)) {
-                            $types = array_map(function($dw) {return $dw->getType();}, $digitalWalletsPayments);
+                        array_filter($digital_wallets);
+						if (!empty($digital_wallets)) {
 							$payment_options[] = [
 								'name' => $this->getPaymentMethodTitle('DIGITAL_WALLETS'),
-								'image' => count($digitalWalletsPayments) === 1
-                                    ? $digitalWalletsPayments[0]->getImage()
-                                    : $this->getDigitalWalletsLogo($types),
+								'image' => $this->getDigitalWalletsLogo($digital_wallets),
 								'type' => 'DIGITAL_WALLETS',
 								'authorization' => '',
-								'pbls' => $digitalWalletsPayments
+								'pbls' => $digital_wallets
 							];
 						}
                     }
@@ -697,15 +696,20 @@ class Paynow extends PaymentModule
         return false;
     }
 
-    public function getDigitalWalletsLogo(array $wallets)
+    public function getDigitalWalletsLogo(array $wallets): string
     {
-        $wallets = array_map(function ($type) {
-            return strtolower(substr($type, 0, 1));
-        }, $wallets);
-        sort($wallets);
-        $wallets = implode('', $wallets);
+        if(count($wallets) === 1) {
+            return $wallets[0]->getImage();
+        }
 
-        return Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/digital-wallets-' . $wallets . '.svg');
+        $types = array_map(function($dw) {
+            return strtolower(substr($dw->getType(), 0, 1));
+        }, $wallets);
+
+        sort($types);
+        $types = implode('', $types);
+
+        return Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/digital-wallets-' . $types . '.svg');
     }
 
     public function getLogo()
