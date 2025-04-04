@@ -18,6 +18,9 @@ use Paynow\Exception\PaynowException;
  */
 class PaynowGDPRHelper
 {
+	// in seconds
+	private const OPTION_VALIDITY_TIME = 86400;
+
     private $cart;
 
     /**
@@ -42,10 +45,10 @@ class PaynowGDPRHelper
      */
     public function getNotices(?string $locale)
     {
-        $configurationId = 'PAYNOW_' . ($this->isSandbox() ? 'SANDBOX_' : '') .'GDPR_' . $this->cleanLocale($locale);
+        $configurationId = 'PAYNOW_' . ( $this->isSandbox() ? 'SANDBOX_' : '') .'GDPR_' . $this->cleanLocale($locale);
         $configurationOption = Configuration::get($configurationId);
 
-        if (! $configurationOption) {
+        if ( !$configurationOption || !$this->isValid( $locale ) ) {
             $gdpr_notices = $this->retrieve($locale);
 
             if ($gdpr_notices) {
@@ -58,6 +61,7 @@ class PaynowGDPRHelper
                     ]);
                 }
                 Configuration::updateValue($configurationId, serialize($notices));
+                Configuration::updateValue($this->getOptionValidityKey($locale), time() + self::OPTION_VALIDITY_TIME);
                 $configurationOption = Configuration::get($configurationId);
             }
         }
@@ -105,4 +109,20 @@ class PaynowGDPRHelper
     {
         return Tools::strtoupper(str_replace('-', '_', $locale));
     }
+
+	private function isValid( ?string $locale ): bool
+	{
+		$optionValidity = Configuration::get($this->getOptionValidityKey($locale));
+
+		if ( empty( $optionValidity ) ) {
+			return false;
+		}
+
+		return time() < (int) $optionValidity;
+	}
+
+	private function getOptionValidityKey( ?string $locale ): string
+	{
+		return 'PAYNOW_'.( $this->isSandbox() ? 'SANDBOX_' : '' ).'GDPR_VALIDITY_' . $this->cleanLocale($locale);
+	}
 }
