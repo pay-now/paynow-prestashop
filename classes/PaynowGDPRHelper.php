@@ -42,7 +42,7 @@ class PaynowGDPRHelper
      */
     public function getNotices(?string $locale)
     {
-        $configurationId = 'PAYNOW_'.$this->isSandbox() ? 'SANDBOX_' : ''.'GDPR_' . $this->cleanLocale($locale);
+        $configurationId = 'PAYNOW_' . ($this->isSandbox() ? 'SANDBOX_' : '') .'GDPR_' . $this->cleanLocale($locale);
         $configurationOption = Configuration::get($configurationId);
 
         if (! $configurationOption) {

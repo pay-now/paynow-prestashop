@@ -11,7 +11,7 @@ mkdir dist
 cd dist
 
 echo "Copying sources"
-rsync -a --exclude={'*.md',dist,'.gitignore',instruction,scripts,'.*'} ../* paynow
+rsync -a --exclude={'*.md',Dockerfile,'docker-compose.yml',dist,'.gitignore',instruction,scripts,'.*'} ../* paynow
 
 echo "Add index files"
 git clone https://github.com/PrestaShopCorp/autoindex
