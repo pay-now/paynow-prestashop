@@ -86,6 +86,7 @@ class Paynow extends PaymentModule
             return false;
         }
 
+		$this->sendShopPluginStatus(Paynow\Service\ShopConfiguration::STATUS_UPDATED);
         return true;
     }
 
@@ -94,8 +95,30 @@ class Paynow extends PaymentModule
         if (!$this->unregisterHooks() || !$this->deleteModuleSettings() || !parent::uninstall()) {
             return false;
         }
+
+		$this->sendShopPluginStatus(Paynow\Service\ShopConfiguration::STATUS_UNINSTALLED);
         return true;
     }
+
+	public function enable($force_all = false)
+	{
+		if (!parent::enable($force_all)) {
+			return false;
+		}
+
+		$this->sendShopPluginStatus(Paynow\Service\ShopConfiguration::STATUS_ENABLED);
+		return true;
+	}
+
+	public function disable($force_all = false)
+	{
+		if (!parent::disable($force_all)) {
+			return false;
+		}
+
+		$this->sendShopPluginStatus(Paynow\Service\ShopConfiguration::STATUS_DISABLED);
+		return true;
+	}
 
     private function createDbTables()
     {
@@ -794,6 +817,22 @@ class Paynow extends PaymentModule
             }
         }
     }
+
+	private function sendShopPluginStatus($status)
+	{
+		$shop_configuration = new Paynow\Service\ShopConfiguration($this->getPaynowClient());
+		try {
+			$shop_configuration->status($status);
+		} catch (Paynow\Exception\PaynowException $exception) {
+			PaynowLogger::error(
+				'An error occurred during shop plugin status send {code={}, message={}}',
+				[
+					$exception->getCode(),
+					$exception->getPrevious()->getMessage()
+				]
+			);
+		}
+	}
 
     public function getContent()
     {
