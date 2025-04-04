@@ -60,18 +60,20 @@ var paynow = {
 
         paynow.config.useCssClassDisabled = $(paynow.selectors.paymentButton).hasClass('disabled');
 
-        $(document).off('click').on('click', paynow.selectors.blikButton, paynow.blikFormSubmit);
-        $(document).off('keyup').on('keyup', paynow.selectors.blikCode, paynow.blikValidate);
-        $(document).on('change', paynow.selectors.pblMethod, paynow.pblValidate);
-        $(document).on('change', paynow.selectors.cardMethod, paynow.cardValidate);
-        $(document).on('change', paynow.selectors.paymentMethod, paynow.onPaymentOptionChange);
-        $(document).on('change', paynow.selectors.terms, function(){
+        $(document).off('.paynow');
+
+        $(document).on('click.paynow', paynow.selectors.blikButton, paynow.blikFormSubmit);
+        $(document).on('keyup.paynow', paynow.selectors.blikCode, paynow.blikValidate);
+        $(document).on('change.paynow', paynow.selectors.pblMethod, paynow.pblValidate);
+        $(document).on('change.paynow', paynow.selectors.cardMethod, paynow.cardValidate);
+        $(document).on('change.paynow', paynow.selectors.paymentMethod, paynow.onPaymentOptionChange);
+        $(document).on('change.paynow', paynow.selectors.terms, function(){
             paynow.onPaymentOptionChange()
             paynow.termsValidate()
         });
-        $(document).on('click', paynow.selectors.cardMethodMiniMenuOpen, paynow.toggleCardMiniMenu);
-        $(document).on('click', paynow.selectors.cardMethodRemove, paynow.removeSavedInstrument);
-        $(document).on('click', function (ev) {
+        $(document).on('click.paynow', paynow.selectors.cardMethodMiniMenuOpen, paynow.toggleCardMiniMenu);
+        $(document).on('click.paynow', paynow.selectors.cardMethodRemove, paynow.removeSavedInstrument);
+        $(document).on('click.paynow', function (ev) {
             paynow.closeMiniMenu(ev)
         });
 
