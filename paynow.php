@@ -522,19 +522,20 @@ class Paynow extends PaymentModule
                             array_push($payment_options, $payment_option);
                         }
                         $list[$payment_method->getType()] = $payment_method->getId();
-
-                        array_filter($digital_wallets);
-						if (!empty($digital_wallets)) {
-							$payment_options[] = [
-								'name' => $this->getPaymentMethodTitle('DIGITAL_WALLETS'),
-								'image' => $this->getDigitalWalletsLogo($digital_wallets),
-								'type' => 'DIGITAL_WALLETS',
-								'authorization' => '',
-								'pbls' => $digital_wallets
-							];
-						}
                     }
                 }
+
+                $digital_wallets = array_values(array_filter($digital_wallets));
+                if (!empty($digital_wallets)) {
+                    $payment_options[] = [
+                        'name' => $this->getPaymentMethodTitle('DIGITAL_WALLETS'),
+                        'image' => $this->getDigitalWalletsLogo($digital_wallets),
+                        'type' => 'DIGITAL_WALLETS',
+                        'authorization' => '',
+                        'pbls' => $digital_wallets
+                    ];
+                }
+
                 $this->context->smarty->assign([
                     'payment_options' => $payment_options
                 ]);
