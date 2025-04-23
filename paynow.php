@@ -49,7 +49,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.7.10';
+        $this->version = '1.7.11';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -545,19 +545,20 @@ class Paynow extends PaymentModule
                             array_push($payment_options, $payment_option);
                         }
                         $list[$payment_method->getType()] = $payment_method->getId();
-
-                        array_filter($digital_wallets);
-						if (!empty($digital_wallets)) {
-							$payment_options[] = [
-								'name' => $this->getPaymentMethodTitle('DIGITAL_WALLETS'),
-								'image' => $this->getDigitalWalletsLogo($digital_wallets),
-								'type' => 'DIGITAL_WALLETS',
-								'authorization' => '',
-								'pbls' => $digital_wallets
-							];
-						}
                     }
                 }
+
+                $digital_wallets = array_values(array_filter($digital_wallets));
+                if (!empty($digital_wallets)) {
+                    $payment_options[] = [
+                        'name' => $this->getPaymentMethodTitle('DIGITAL_WALLETS'),
+                        'image' => $this->getDigitalWalletsLogo($digital_wallets),
+                        'type' => 'DIGITAL_WALLETS',
+                        'authorization' => '',
+                        'pbls' => $digital_wallets
+                    ];
+                }
+
                 $this->context->smarty->assign([
                     'payment_options' => $payment_options
                 ]);
