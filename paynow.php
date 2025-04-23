@@ -820,6 +820,10 @@ class Paynow extends PaymentModule
 
 	private function sendShopPluginStatus($status)
 	{
+		if ( empty( $this->getApiKey() ) ) {
+			return;
+		}
+
 		$shop_configuration = new Paynow\Service\ShopConfiguration($this->getPaynowClient());
 		try {
 			$shop_configuration->status($status);
