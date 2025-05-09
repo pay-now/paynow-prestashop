@@ -86,7 +86,7 @@ class Paynow extends PaymentModule
             return false;
         }
 
-		$this->sendShopPluginStatus(Paynow\Service\ShopConfiguration::STATUS_UPDATED);
+		$this->saveShopPluginStatus(Paynow\Service\ShopConfiguration::STATUS_UPDATED);
         return true;
     }
 
@@ -96,7 +96,7 @@ class Paynow extends PaymentModule
             return false;
         }
 
-		$this->sendShopPluginStatus(Paynow\Service\ShopConfiguration::STATUS_UNINSTALLED);
+		$this->saveShopPluginStatus(Paynow\Service\ShopConfiguration::STATUS_UNINSTALLED);
         return true;
     }
 
@@ -106,7 +106,7 @@ class Paynow extends PaymentModule
 			return false;
 		}
 
-		$this->sendShopPluginStatus(Paynow\Service\ShopConfiguration::STATUS_ENABLED);
+		$this->saveShopPluginStatus(Paynow\Service\ShopConfiguration::STATUS_ENABLED);
 		return true;
 	}
 
@@ -116,7 +116,7 @@ class Paynow extends PaymentModule
 			return false;
 		}
 
-		$this->sendShopPluginStatus(Paynow\Service\ShopConfiguration::STATUS_DISABLED);
+		$this->saveShopPluginStatus(Paynow\Service\ShopConfiguration::STATUS_DISABLED);
 		return true;
 	}
 
@@ -679,6 +679,8 @@ class Paynow extends PaymentModule
             return $this->fetchTemplate('/views/templates/admin/_partials/upgrade.tpl');
         }
 
+		$this->sendShopPluginStatus();
+
         return null;
     }
 
@@ -818,15 +820,45 @@ class Paynow extends PaymentModule
         }
     }
 
-	private function sendShopPluginStatus($status)
+	private function saveShopPluginStatus($status)
+	{
+		$statuses = Configuration::get('PAYNOW_PLUGIN_STATUSES');
+		if (empty($statuses)) {
+			$statuses = [];
+		} else {
+			$statuses = json_decode($statuses, true);
+		}
+
+		$statuses[] = [
+			'status' => $status,
+			'timestamp' => date(DATE_ATOM),
+		];
+
+		Configuration::updateValue('PAYNOW_PLUGIN_STATUSES', json_encode($statuses));
+	}
+
+	private function sendShopPluginStatus()
 	{
 		if ( empty( $this->getApiKey() ) ) {
 			return;
 		}
 
+		$statuses = Configuration::get('PAYNOW_PLUGIN_STATUSES');
+		Configuration::updateValue('PAYNOW_PLUGIN_STATUSES', json_encode([]));
+
+		if (empty($statuses)) {
+			return;
+		} else {
+			$statuses = json_decode($statuses, true);
+		}
+
+		if (empty($statuses)) {
+			return;
+		}
+
 		$shop_configuration = new Paynow\Service\ShopConfiguration($this->getPaynowClient());
 		try {
-			$shop_configuration->status($status);
+			$shop_configuration->status($statuses);
 		} catch (Paynow\Exception\PaynowException $exception) {
 			PaynowLogger::error(
 				'An error occurred during shop plugin status send {code={}, message={}}',
