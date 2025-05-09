@@ -831,7 +831,7 @@ class Paynow extends PaymentModule
 
 		$statuses[] = [
 			'status' => $status,
-			'timestamp' => date(DATE_ATOM),
+			'timestamp' => date('Y-m-d\TH:i:s.v\Z'),
 		];
 
 		Configuration::updateValue('PAYNOW_PLUGIN_STATUSES', json_encode($statuses));
