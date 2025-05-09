@@ -829,6 +829,7 @@ class Paynow extends PaymentModule
 			$statuses = json_decode($statuses, true);
 		}
 
+		date_default_timezone_set('UTC');
 		$statuses[] = [
 			'status' => $status,
 			'timestamp' => date('Y-m-d\TH:i:s.v\Z'),
@@ -867,6 +868,9 @@ class Paynow extends PaymentModule
 					$exception->getPrevious()->getMessage()
 				]
 			);
+			foreach ($exception->getErrors() as $error) {
+				PaynowLogger::error('Error', ['mes' => $error->getMessage()]);
+			}
 		}
 	}
 
