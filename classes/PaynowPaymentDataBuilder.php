@@ -12,6 +12,7 @@
 
 class PaynowPaymentDataBuilder
 {
+    private const MAX_ORDER_ITEM_NAME_LENGTH = 120;
     private $context;
 
     /**
@@ -200,7 +201,7 @@ class PaynowPaymentDataBuilder
             $order_items = [];
             foreach ($products as $product) {
                 $order_items[] = [
-                    'name'     => $product['name'],
+                    'name'     => self::truncateOrderItemName($product['name']),
                     'category' => $this->getCategoriesNames($product['id_category_default']),
                     'quantity' => $product['quantity'],
                     'price'    => number_format($product['price'] * 100, 0, '', '')
@@ -229,5 +230,16 @@ class PaynowPaymentDataBuilder
             }
         }
         return implode(", ", $categoriesNames);
+    }
+
+    public static function truncateOrderItemName(string $name): string
+    {
+        $name = trim($name);
+
+        if(strlen($name) <= self::MAX_ORDER_ITEM_NAME_LENGTH) {
+            return $name;
+        }
+
+        return substr($name, 0, self::MAX_ORDER_ITEM_NAME_LENGTH - 3) . '...';
     }
 }

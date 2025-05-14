@@ -1,47 +1,54 @@
 {
-  "name": "pay-now/paynow-prestashop",
-  "description": "Paynow gateway module for PrestaShop",
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "mElements S.A.",
-      "email": "kontakt@paynow.pl"
-    }
-  ],
-  "require": {
-    "php": ">=7.2",
-    "ext-json": "*",
-    "pay-now/paynow-php-sdk": "2.4.3",
-    "nyholm/psr7": "^1.2",
-    "php-http/curl-client": "^2.1"
-  },
-  "require-dev": {
-    "prestashop/autoindex": "^1.0",
-    "friendsofphp/php-cs-fixer": "^2.18",
-    "squizlabs/php_codesniffer": "^3.6"
-  },
-  "config": {
-    "platform": {
-      "php": "7.2"
-    },
-    "prepend-autoloader": false,
-    "optimize-autoloader": true
-  },
-  "type": "prestashop-module",
-  "minimum-stability": "stable",
-  "scripts": {
-    "cs": [
-      "vendor/bin/phpcs --standard=PSR2 --ignore=*/vendor/*,*/Test/* ."
+    "name": "pay-now/paynow-prestashop",
+    "description": "Paynow gateway module for PrestaShop",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "mElements S.A.",
+            "email": "kontakt@paynow.pl"
+        }
     ],
-    "cs-fix": [
-      "php vendor/bin/phpcbf --standard=PSR2 --ignore=*/vendor/* ."
-    ]
-  },
-  "extra": {
-    "hooks": {
-      "pre-commit": [
-        "php vendor/bin/phpcbf --standard=PSR2 --ignore=*/vendor/* ."
-      ]
+    "require": {
+        "php": ">=7.2",
+        "ext-json": "*",
+        "pay-now/paynow-php-sdk": "2.4.4",
+        "nyholm/psr7": "^1.2",
+        "php-http/curl-client": "^2.1",
+        "cweagans/composer-patches": "^1.7"
+    },
+    "require-dev": {
+        "prestashop/autoindex": "^1.0",
+        "friendsofphp/php-cs-fixer": "^2.18",
+        "squizlabs/php_codesniffer": "^3.6",
+        "symfony/var-dumper": "^4.4",
+        "symplify/vendor-patches": "^11.4"
+    },
+    "config": {
+        "platform": {
+            "php": "7.2"
+        },
+        "prepend-autoloader": false,
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "php-http/discovery": true,
+            "cweagans/composer-patches": true
+        }
+    },
+    "type": "prestashop-module",
+    "minimum-stability": "stable",
+    "scripts": {
+        "cs": [
+            "vendor/bin/phpcs --standard=PSR2 --ignore=*/vendor/*,*/Test/* ."
+        ],
+        "cs-fix": [
+            "php vendor/bin/phpcbf --standard=PSR2 --ignore=*/vendor/* ."
+        ]
+    },
+    "extra": {
+        "hooks": {
+            "pre-commit": [
+                "php vendor/bin/phpcbf --standard=PSR2 --ignore=*/vendor/* ."
+            ]
+        }
     }
-  }
 }
