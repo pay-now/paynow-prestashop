@@ -11,7 +11,7 @@
     "require": {
         "php": ">=7.2",
         "ext-json": "*",
-        "pay-now/paynow-php-sdk": "^2.4.3",
+        "pay-now/paynow-php-sdk": "2.4.4",
         "nyholm/psr7": "^1.2",
         "php-http/curl-client": "^2.1",
         "cweagans/composer-patches": "^1.7"
@@ -45,11 +45,6 @@
         ]
     },
     "extra": {
-        "patches": {
-            "pay-now/paynow-php-sdk": [
-                "patches/pay-now-paynow-php-sdk-src-paynow-model-paymentmethods-type-php.patch"
-            ]
-        },
         "hooks": {
             "pre-commit": [
                 "php vendor/bin/phpcbf --standard=PSR2 --ignore=*/vendor/* ."
