@@ -155,7 +155,7 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         ])) {
             return PaynowLinkHelper::getReturnUrl(
                 $payment_data['external_id'],
-                Tools::encrypt($payment_data['external_id'])
+				PaynowCompatibilityHelper::encrypt($payment_data['external_id'])
             );
         }
 

@@ -160,7 +160,7 @@ class PaynowPaymentOptions
                         'paymentMethodId' => $payment_method->getId()
                     ]
                 ),
-                'action_token' => Tools::encrypt($this->context->customer->secure_key ?? ''),
+                'action_token' => PaynowCompatibilityHelper::encrypt($this->context->customer->secure_key ?? ''),
                 'action_token_refresh' => Context::getContext()->link->getModuleLink('paynow', 'customerToken'),
                 'error_message' => $this->getMessage('An error occurred during the payment process'),
                 'terms_message' => $this->getMessage('First accept the terms of service, then click pay.'),
@@ -175,7 +175,7 @@ class PaynowPaymentOptions
                     'paynow',
                     'removeSavedInstrument'
                 ),
-                'action_remove_saved_instrument_token' => Tools::encrypt($this->context->customer->secure_key ?? ''),
+                'action_remove_saved_instrument_token' => PaynowCompatibilityHelper::encrypt($this->context->customer->secure_key ?? ''),
                 'default_card_image' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->module->name . '/views/img/card-default.svg'),
                 'paynow_card_instruments' => $payment_method->getSavedInstruments(),
             ]);

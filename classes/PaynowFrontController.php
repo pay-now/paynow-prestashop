@@ -36,7 +36,7 @@ class PaynowFrontController extends ModuleFrontControllerCore
 
     public function generateToken(): string
     {
-        return Tools::encrypt($this->context->customer->secure_key);
+        return PaynowCompatibilityHelper::encrypt($this->context->customer->secure_key);
     }
 
     public function isTokenValid(): bool
