@@ -45,6 +45,17 @@ function upgrade_module_1_7_11($module)
 			Db::getInstance()->Execute("ALTER TABLE `" . _DB_PREFIX_ . "paynow_payments` ADD `sent_at` datetime NULL AFTER `active`;");
 		}
 
+		Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paynow_payment_locks` (
+			`id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+			`id_order` INT(10) UNSIGNED NOT NULL DEFAULT 0,
+			`id_cart` INT(10) UNSIGNED NOT NULL DEFAULT 0,
+			`counter` tinyint(1) NOT NULL DEFAULT 0,
+			`created_at` datetime,
+			`modified_at` datetime,
+			INDEX `index_payment_cart_reference` (`id_cart`),
+			INDEX `index_payment_order_reference` (`id_order`)
+		)');
+
 	} catch (PrestaShopDatabaseException $exception) {
         PaynowLogger::error('Fatal error on upgrade: ' . $exception->getMessage() . ' ' . $exception->getTraceAsString());
     }

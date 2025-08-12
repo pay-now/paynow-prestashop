@@ -32,6 +32,7 @@ include_once(dirname(__FILE__) . '/classes/PaynowAdminFormHelper.php');
 include_once(dirname(__FILE__) . '/classes/PaynowOrderCreateProcessor.php');
 include_once(dirname(__FILE__) . '/classes/PaynowOrderStateProcessor.php');
 include_once(dirname(__FILE__) . '/models/PaynowPaymentData.php');
+include_once(dirname(__FILE__) . '/models/PaynowPaymentLockData.php');
 include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
 include_once(dirname(__FILE__) . '/classes/PaynowPaymentProcessor.php');
 include_once(dirname(__FILE__) . '/classes/PaynowPaymentDataBuilder.php');
@@ -49,7 +50,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.7.11';
+        $this->version = '1.7.12';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -122,7 +123,7 @@ class Paynow extends PaymentModule
 
     private function createDbTables()
     {
-		return Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paynow_payments` (
+		$result = Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paynow_payments` (
 			`id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ,
 			`id_order` INT(10) UNSIGNED NOT NULL,
 			`id_cart` INT(10) UNSIGNED NOT NULL,
@@ -139,6 +140,17 @@ class Paynow extends PaymentModule
 			`modified_at` datetime,
 			UNIQUE (`id_payment`, `status`),
 			INDEX `index_order_cart_payment_reference` (`id_order`, `id_cart`, `id_payment`, `order_reference`)
+		)');
+
+		return $result && Db::getInstance()->Execute('CREATE TABLE IF NOT EXISTS `' . _DB_PREFIX_ . 'paynow_payment_locks` (
+			`id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+			`id_order` INT(10) UNSIGNED NOT NULL DEFAULT 0,
+			`id_cart` INT(10) UNSIGNED NOT NULL DEFAULT 0,
+			`counter` tinyint(1) NOT NULL DEFAULT 0,
+			`created_at` datetime,
+			`modified_at` datetime,
+			INDEX `index_payment_cart_reference` (`id_cart`),
+			INDEX `index_payment_order_reference` (`id_order`)
 		)');
     }
 

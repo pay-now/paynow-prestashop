@@ -131,6 +131,13 @@ class PaynowPaymentProcessor
         $idempotency_key      = PaynowKeysGenerator::generateIdempotencyKey($external_id);
         $payment_request_data = $this->paymentDataBuilder->fromOrder($order);
 
+		if ( !PaynowPaymentLockData::checkIsCartLocked($order->id_cart, $order->id) ) {
+			throw new PaynowPaymentAuthorizeException(
+				'Cannot create another payment transaction',
+				$external_id
+			);
+		}
+
         return $this->sendPaymentRequest($payment_request_data, $idempotency_key);
     }
 
@@ -148,6 +155,13 @@ class PaynowPaymentProcessor
         );
         $idempotency_key      = PaynowKeysGenerator::generateIdempotencyKey($external_id);
         $payment_request_data = $this->paymentDataBuilder->fromCart($cart, $external_id);
+
+		if ( !PaynowPaymentLockData::checkIsCartLocked($cart->id) ) {
+			throw new PaynowPaymentAuthorizeException(
+				'Cannot create another payment transaction',
+				$external_id
+			);
+		}
 
         return $this->sendPaymentRequest($payment_request_data, $idempotency_key);
     }
