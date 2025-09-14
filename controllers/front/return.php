@@ -69,7 +69,7 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
             Tools::redirectLink(PaynowLinkHelper::getContinueUrl(
                 $this->order->id_cart,
                 $this->module->id,
-                $this->order->secure_key,
+				$this->context->customer->secure_key,
                 $this->payment->external_id
             ));
         }
