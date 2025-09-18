@@ -177,6 +177,7 @@ var paynow = {
         } else if ($(paynow.selectors.cardMethodOptions).is(':visible') && !$(paynow.selectors.cardMethod + ':checked').length) {
             paynow.paymentButton.disable()
         } else if ($('div.paynow-payment-pbls .paynow-payment-option-pbl').is(':visible')) {
+            paynow.paymentButton.show()
             paynow.pblValidate()
         } else {
             paynow.paymentButton.enable()
