@@ -99,6 +99,7 @@ p.payment_module .paynow img {
     padding: 0;
 }
 
+button.payment__option,
 button.payment-option {
     width: 100%;
     padding: 33px 40px 34px 17px;
@@ -137,6 +138,8 @@ p.payment_module.paynow button:after {
     height: auto !important;
 }
 
+
+.payment__option img,
 .payment-option img {
     max-height: 1rem !important;
     /*max-width: 80px !important;*/
@@ -145,6 +148,7 @@ p.payment_module.paynow button:after {
     margin-left: 10px;
 }
 
+.paynow .payment__option:disabled img,
 .paynow .payment-option:disabled img {
     opacity: 0.3;
     filter: grayscale(1);

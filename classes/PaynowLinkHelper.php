@@ -29,7 +29,7 @@ class PaynowLinkHelper
             );
         }
 
-        return PaynowLinkHelper::getReturnUrl($external_id, Tools::encrypt($secure_key));
+        return PaynowLinkHelper::getReturnUrl($external_id, PaynowCompatibilityHelper::encrypt($secure_key));
     }
 
     public static function getPaymentUrl($url_params = null): string
