@@ -1,8 +1,5 @@
 <?php
 
-use Paynow\Exception\PaynowException;
-use Paynow\Model\Payment\Status;
-
 /**
  * NOTICE OF LICENSE
  *
@@ -24,4 +21,13 @@ class PaynowCompatibilityHelper
 			return Tools::encrypt($to_encrypt);
 		}
     }
+
+	public static function redirect($url)
+	{
+		if (method_exists('Tools', 'redirect')) {
+			return Tools::redirect($url);
+		} else {
+			return Tools::redirectLink($url);
+		}
+	}
 }
