@@ -66,12 +66,14 @@ class PaynowReturnModuleFrontController extends PaynowFrontController
                 PaynowLogger::debug('Return: status processing failed', $statusToProcess);
             }
 
-            Tools::redirectLink(PaynowLinkHelper::getContinueUrl(
-                $this->order->id_cart,
-                $this->module->id,
-                $this->order->secure_key,
-                $this->payment->external_id
-            ));
+            PaynowCompatibilityHelper::redirect(
+				PaynowLinkHelper::getContinueUrl(
+					$this->order->id_cart,
+					$this->module->id,
+					$this->order->secure_key,
+					$this->payment->external_id
+            	)
+			);
         }
 
         $currentState = $this->order->getCurrentStateFull($this->context->language->id);
