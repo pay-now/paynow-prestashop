@@ -272,7 +272,16 @@ class PaynowOrderStateProcessor
         } else {
             $payment->status = $data['status'];
             $payment->sent_at = $data['modifiedAt'];
-            $payment->save();
+            $result = $payment->save();
+
+			if (!$result) {
+				PaynowLogger::debug(
+					'Can\'t update paynow data entry on notification processing end',
+					[
+						'DB error' => Db::getInstance()->getMsgError(),
+					]
+				);
+			}
         }
 
         $this->lockingHelper->delete($externalIdForLockingSystem);
