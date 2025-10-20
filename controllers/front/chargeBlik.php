@@ -81,7 +81,7 @@ class PaynowChargeBlikModuleFrontController extends PaynowFrontController
                             'external_id'   => $payment_data['external_id'],
                             'paymentId'     => $payment_data['payment_id'],
                             'paymentStatus' => $payment_data['status'],
-                            'token'         => Tools::encrypt($this->context->customer->secure_key)
+                            'token'         => PaynowCompatibilityHelper::encrypt($this->context->customer->secure_key)
                         ])
                     ]);
 

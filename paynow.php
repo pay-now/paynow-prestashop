@@ -16,6 +16,7 @@ if (!defined('_PS_VERSION_')) {
 
 include_once(dirname(__FILE__) . '/vendor/autoload.php');
 include_once(dirname(__FILE__) . '/classes/PaynowFrontController.php');
+include_once(dirname(__FILE__) . '/classes/PaynowCompatibilityHelper.php');
 include_once(dirname(__FILE__) . '/classes/PaynowLogger.php');
 include_once(dirname(__FILE__) . '/classes/PaynowHelper.php');
 include_once(dirname(__FILE__) . '/classes/PaynowKeysGenerator.php');
@@ -50,7 +51,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.7.12';
+        $this->version = '1.7.13';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -522,7 +523,7 @@ class Paynow extends PaymentModule
                                             'paymentMethodId' => $payment_method->getId()
                                         ]
                                     ),
-                                    'action_token' => Tools::encrypt($this->context->customer->secure_key),
+                                    'action_token' => PaynowCompatibilityHelper::encrypt($this->context->customer->secure_key),
                                     'action_token_refresh' => Context::getContext()->link->getModuleLink('paynow', 'customerToken'),
                                     'error_message' => $this->getTranslationsArray()['An error occurred during the payment process'],
                                     'terms_message' => $this->getTranslationsArray()['First accept the terms of service, then click pay.'],
@@ -548,7 +549,7 @@ class Paynow extends PaymentModule
                                         'paynow',
                                         'removeSavedInstrument'
                                     ),
-                                    'action_token' => Tools::encrypt($this->context->customer->secure_key),
+                                    'action_token' => PaynowCompatibilityHelper::encrypt($this->context->customer->secure_key),
                                     'default_card_image' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/card-default.svg'),
                                     'instruments' => $payment_method->getSavedInstruments(),
                                 ]);
@@ -680,7 +681,7 @@ class Paynow extends PaymentModule
     public function hookDisplayAdminAfterHeader()
     {
         $file_name = 'paynow-' . date('Y-m-d');
-        $file_path = dirname(__FILE__) . '/log/' . $file_name . '-' . Tools::encrypt($file_name) . '.log';
+        $file_path = dirname(__FILE__) . '/log/' . $file_name . '-' . PaynowCompatibilityHelper::encrypt($file_name) . '.log';
 
         if (Tools::getValue('show_paynow_logs')) {
             echo '<pre>';
@@ -708,7 +709,9 @@ class Paynow extends PaymentModule
     public function hookActionAdminControllerSetMedia($params)
     {
         if (Tools::getValue("configure") && Tools::getValue("configure") == "paynow") {
-            ContextCore::getContext()->controller->addJquery();
+			if (method_exists(ContextCore::getContext()->controller, 'addJquery')) {
+				ContextCore::getContext()->controller->addJquery();
+			}
             ContextCore::getContext()->controller->addJS(($this->_path) . '/views/js/admin.js', 'all');
         }
     }

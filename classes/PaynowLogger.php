@@ -21,7 +21,7 @@ class PaynowLogger
     {
         if ((int)Configuration::get('PAYNOW_DEBUG_LOGS_ENABLED') === 1) {
             $file_name = 'paynow-' . date('Y-m-d');
-            $file_path = dirname(__FILE__) . '/../log/' . $file_name . '-' . Tools::encrypt($file_name) . '.log';
+            $file_path = dirname(__FILE__) . '/../log/' . $file_name . '-' . PaynowCompatibilityHelper::encrypt($file_name) . '.log';
 
             file_put_contents($file_path, self::processRecord($type, $message, $context), FILE_APPEND);
         }
