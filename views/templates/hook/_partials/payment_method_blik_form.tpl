@@ -10,7 +10,7 @@
 *}
 <form class="payment-form paynow-blik-form" data-method="POST" data-action="{$action_blik}" data-token="{$action_token}" data-token-refresh="{$action_token_refresh}" data-error-message="{$error_message}" data-terms-message="{$terms_message}" data-blik-autofocus="{$blik_autofocus}">
     <div class="paynow-option-content-{$method.type} collapse" id="paynow-option-{$method.type}">
-        <div class="paynow-payment-option-blik">
+        <div class="paynow-payment-option-container paynow-payment-option-blik">
             <div class="form-group row">
                 <label for="paynow_blik_code" class="col-md-2 form-control-label required">
                     {l s='Enter the BLIK code' mod='paynow'}

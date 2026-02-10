@@ -459,7 +459,6 @@ class Paynow extends PaymentModule
         if (!$this->arePaymentOptionsEnabled($params)) {
             return;
         }
-
         $payment_options = new PaynowPaymentOptions(
             $this->context,
             $this,
