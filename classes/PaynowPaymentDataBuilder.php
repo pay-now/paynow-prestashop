@@ -185,7 +185,7 @@ class PaynowPaymentDataBuilder
         }
 
         if (! empty(Tools::getValue('blikCode'))) {
-            $request['authorizationCode'] = (int)preg_replace('/\s+/', '', Tools::getValue('blikCode'));
+            $request['authorizationCode'] = preg_replace('/\s+/', '', Tools::getValue('blikCode'));
         }
 
         if (!empty(Tools::getValue('paymentMethodToken'))) {
