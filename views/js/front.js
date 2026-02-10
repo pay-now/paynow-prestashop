@@ -56,6 +56,12 @@ var paynow = {
     },
 
     init: function(){
+        if (window && window.paynow_initialized) {
+            return;
+        }
+
+        window.paynow_initialized = true;
+
         paynow.overrideDefaults();
 
         paynow.config.useCssClassDisabled = $(paynow.selectors.paymentButton).hasClass('disabled');
