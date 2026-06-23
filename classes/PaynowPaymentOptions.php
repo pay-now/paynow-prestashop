@@ -58,7 +58,6 @@ class PaynowPaymentOptions
         }
 
         $digital_wallets = [
-            Paynow\Model\PaymentMethods\Type::CLICK_TO_PAY => null,
             Paynow\Model\PaymentMethods\Type::GOOGLE_PAY => null,
             Paynow\Model\PaymentMethods\Type::APPLE_PAY => null,
         ];
@@ -80,6 +79,17 @@ class PaynowPaymentOptions
 
         $hiddenPaymentTypes = explode(',', Configuration::get('PAYNOW_HIDE_PAYMENT_TYPES'));
         $digitalWalletsHidden = in_array('DIGITAL_WALLETS', $hiddenPaymentTypes);
+
+        $clickToPayPaymentMethod = null;
+        foreach ($this->payment_methods->getAll() as $payment_method) {
+            if (Paynow\Model\PaymentMethods\Type::CLICK_TO_PAY === $payment_method->getType()
+                && $payment_method->isEnabled()
+                && !in_array(Paynow\Model\PaymentMethods\Type::CLICK_TO_PAY, $hiddenPaymentTypes)
+            ) {
+                $clickToPayPaymentMethod = $payment_method;
+                break;
+            }
+        }
 
         $list = [];
         $payment_options = [];
@@ -107,6 +117,18 @@ class PaynowPaymentOptions
                     PaynowLinkHelper::getPaymentUrl(),
                     'module:paynow/views/templates/front/1.7/payment_form.tpl'
                 );
+            } elseif (Paynow\Model\PaymentMethods\Type::CLICK_TO_PAY == $payment_method->getType()) {
+                if (!$payment_method->isEnabled()) {
+                    continue;
+                }
+
+                $payment_options[] = $this->getPaymentOption(
+                    $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::CARD),
+                    $payment_method->getImage(),
+                    PaynowLinkHelper::getPaymentUrl([
+                        'paymentMethodId' => $payment_method->getId(),
+                    ])
+                );
             } elseif (array_key_exists($payment_method->getType(), $digital_wallets)) {
                 if (!$payment_method->isEnabled() || $digitalWalletsHidden) {
                     continue;
@@ -115,6 +137,10 @@ class PaynowPaymentOptions
                 $digital_wallets[$payment_method->getType()] = $payment_method;
             } else {
                 if (!$payment_method->isEnabled()) {
+                    continue;
+                }
+
+                if (Paynow\Model\PaymentMethods\Type::CARD === $payment_method->getType() && null !== $clickToPayPaymentMethod) {
                     continue;
                 }
 
