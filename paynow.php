@@ -529,7 +529,7 @@ class Paynow extends PaymentModule
 
                             array_push($payment_options, [
                                 'name' => $this->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::CARD),
-                                'image' => $payment_method->getImage(),
+                                'image' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/click-to-pay.svg'),
                                 'id' => $payment_method->getId(),
                                 'enabled' => $payment_method->isEnabled(),
                                 'type' => Paynow\Model\PaymentMethods\Type::CARD,

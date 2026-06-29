@@ -124,7 +124,7 @@ class PaynowPaymentOptions
 
                 $payment_options[] = $this->getPaymentOption(
                     $this->module->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::CARD),
-                    $payment_method->getImage(),
+                    Media::getMediaPath(_PS_MODULE_DIR_ . $this->module->name . '/views/img/click-to-pay.svg'),
                     PaynowLinkHelper::getPaymentUrl([
                         'paymentMethodId' => $payment_method->getId(),
                     ])
