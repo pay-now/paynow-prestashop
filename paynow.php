@@ -51,7 +51,7 @@ class Paynow extends PaymentModule
     {
         $this->name = 'paynow';
         $this->tab = 'payments_gateways';
-        $this->version = '1.7.14';
+        $this->version = '1.7.15';
         $this->ps_versions_compliancy = ['min' => '1.6.0', 'max' => _PS_VERSION_];
         $this->author = 'mElements S.A.';
         $this->is_eu_compatible = 1;
@@ -488,8 +488,20 @@ class Paynow extends PaymentModule
             $payment_methods = $this->getPaymentMethods();
             if (!empty($payment_methods)) {
 
+                $hiddenPaymentTypes = explode(',', Configuration::get('PAYNOW_HIDE_PAYMENT_TYPES'));
+
+                $clickToPayPaymentMethod = null;
+                foreach ($payment_methods->getAll() as $payment_method) {
+                    if (Paynow\Model\PaymentMethods\Type::CLICK_TO_PAY === $payment_method->getType()
+                        && $payment_method->isEnabled()
+                        && !in_array(Paynow\Model\PaymentMethods\Type::CLICK_TO_PAY, $hiddenPaymentTypes)
+                    ) {
+                        $clickToPayPaymentMethod = $payment_method;
+                        break;
+                    }
+                }
+
                 $digital_wallets = [
-                    Paynow\Model\PaymentMethods\Type::CLICK_TO_PAY => null,
                     Paynow\Model\PaymentMethods\Type::GOOGLE_PAY => null,
                     Paynow\Model\PaymentMethods\Type::APPLE_PAY => null,
                 ];
@@ -506,6 +518,23 @@ class Paynow extends PaymentModule
                                 'authorization' => $payment_method->getAuthorizationType(),
                                 'pbls' => $payment_methods->getOnlyPbls()
                             ]);
+                        } elseif (Paynow\Model\PaymentMethods\Type::CLICK_TO_PAY == $payment_method->getType()) {
+                            if (in_array($payment_method->getType(), $hiddenPaymentTypes)) {
+                                continue;
+                            }
+
+                            if (!$payment_method->isEnabled()) {
+                                continue;
+                            }
+
+                            array_push($payment_options, [
+                                'name' => $this->getPaymentMethodTitle(Paynow\Model\PaymentMethods\Type::CARD),
+                                'image' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/views/img/click-to-pay.svg'),
+                                'id' => $payment_method->getId(),
+                                'enabled' => $payment_method->isEnabled(),
+                                'type' => Paynow\Model\PaymentMethods\Type::CARD,
+                                'authorization' => $payment_method->getAuthorizationType(),
+                            ]);
                         } elseif (array_key_exists($payment_method->getType(), $digital_wallets)) {
 							if (!$payment_method->isEnabled()) {
 								continue;
@@ -513,6 +542,10 @@ class Paynow extends PaymentModule
 
                             $digital_wallets[$payment_method->getType()] = $payment_method;
 						} else {
+                            if (Paynow\Model\PaymentMethods\Type::CARD == $payment_method->getType() && null !== $clickToPayPaymentMethod) {
+                                continue;
+                            }
+
                             if (Paynow\Model\PaymentMethods\Type::BLIK == $payment_method->getType()) {
                                 $this->context->smarty->assign([
                                     'action_blik' => Context::getContext()->link->getModuleLink(
