@@ -187,7 +187,11 @@ class PaynowPaymentDataBuilder
         if (! empty(Tools::getValue('blikCode'))) {
             $request['authorizationCode'] = preg_replace('/\s+/', '', Tools::getValue('blikCode'));
             $request['buyer']['ipAddress'] = Tools::getRemoteAddr();
-            $request['buyer']['userAgent'] = $_SERVER['HTTP_USER_AGENT'] ?? null;
+
+            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+            $request['buyer']['userAgent'] = ($userAgent !== null && mb_check_encoding($userAgent, 'UTF-8'))
+                ? $userAgent
+                : null;
         }
 
         if (!empty(Tools::getValue('paymentMethodToken'))) {
