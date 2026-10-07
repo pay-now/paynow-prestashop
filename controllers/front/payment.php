@@ -47,6 +47,19 @@ class PaynowPaymentModuleFrontController extends PaynowFrontController
         }
 
         $this->order = new Order($id_order);
+
+		// Ensure context is proper, if two shops use different API credentials
+        if($this->order->id_shop != Context::getContext()->shop->id){
+            $url_params = [];
+            if($id_order) $url_params['id_order'] = $id_order;
+            if($order_reference) $url_params['order_reference'] = $order_reference;
+            Tools::redirect(Context::getContext()->link->getModuleLink(
+                'paynow',
+                'payment',
+                ! empty($url_params) ? $url_params : [], true, Context::getContext()->language->id, $this->order->id_shop
+            ));
+        }
+		
         $this->module->currentOrder = $this->order->id;
 
         if (! Validate::isLoadedObject($this->order) || $this->order->reference !== $order_reference) {
